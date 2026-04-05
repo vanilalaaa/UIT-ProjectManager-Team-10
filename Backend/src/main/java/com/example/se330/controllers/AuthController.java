@@ -17,6 +17,12 @@ public class AuthController {
     @PostMapping("/verify")
     public ResponseEntity<AuthResponse> verifyToken(
             @RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body(
+                new AuthResponse(null, null, null, "Missing or invalid Authorization header")
+            );
+        }
+
         try {
             String token = authHeader.replace("Bearer ", "");
             FirebaseToken firebaseToken = firebaseAuthService.verifyToken(token);
@@ -39,6 +45,12 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthResponse> getCurrentUser(
             @RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body(
+                new AuthResponse(null, null, null, "Missing or invalid Authorization header")
+            );
+        }
+
         try {
             String token = authHeader.replace("Bearer ", "");
             FirebaseToken firebaseToken = firebaseAuthService.verifyToken(token);
@@ -50,7 +62,9 @@ public class AuthController {
                 "Success"
             ));
         } catch (Exception e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(
+                new AuthResponse(null, null, null, "Invalid token")
+            );
         }
     }
 }

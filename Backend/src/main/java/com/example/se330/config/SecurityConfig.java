@@ -23,8 +23,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()  
-                .anyRequest().authenticated()                  
+                .requestMatchers("/api/auth/verify").permitAll()
+                .requestMatchers("/api/auth/me").authenticated()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(firebaseTokenFilter,
                 UsernamePasswordAuthenticationFilter.class);

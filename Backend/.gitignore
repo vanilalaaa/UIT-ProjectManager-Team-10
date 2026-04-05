@@ -33,3 +33,8 @@ build/
 .vscode/
 
 src/main/resources/se330-6d2ee-firebase-adminsdk-fbsvc-08913dc476.json
+
+# Environment files
+.env
+.env.*
+!.env.example
