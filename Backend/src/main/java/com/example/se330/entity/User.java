@@ -24,8 +24,11 @@ public class User {
     @Column(nullable = false, unique = true)
     private String uid;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     private String name;
 
@@ -37,4 +40,15 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Builder.Default
+    private boolean enabled = false;
+
+    private String verificationToken;
+
+    private LocalDateTime verificationTokenExpiry;
+
+    private String resetPasswordToken;
+
+    private LocalDateTime resetPasswordTokenExpiry;
 }
