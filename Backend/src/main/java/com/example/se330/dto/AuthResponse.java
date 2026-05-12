@@ -1,7 +1,5 @@
 package com.example.se330.dto;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,9 +9,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ForgotPasswordRequest {
+public class AuthResponse {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    private String accessToken;
+    private String tokenType;
+    private Long expiresIn;
+    private String uid;
     private String email;
+    private String name;
+    private String role;
+    private String message;
 }

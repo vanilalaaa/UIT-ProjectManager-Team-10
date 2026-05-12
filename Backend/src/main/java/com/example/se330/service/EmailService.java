@@ -1,7 +1,7 @@
 package com.example.se330.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,80 +57,50 @@ public class EmailService {
     }
 
     private String buildVerificationEmailContent(String verificationUrl) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
-                    .content { padding: 30px; background-color: #f9f9f9; }
-                    .button { display: inline-block; padding: 12px 30px; background-color: #4CAF50; 
-                              color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Email Verification</h1>
-                    </div>
-                    <div class="content">
-                        <p>Thank you for registering! Please verify your email address by clicking the button below:</p>
-                        <div style="text-align: center;">
-                            <a href="%s" class="button">Verify Email</a>
-                        </div>
-                        <p>Or copy and paste this link into your browser:</p>
-                        <p style="word-break: break-all; color: #666;">%s</p>
-                        <p>This link will expire in 24 hours.</p>
-                    </div>
-                    <div class="footer">
-                        <p>If you did not create an account, please ignore this email.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(verificationUrl, verificationUrl);
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
+        sb.append("<style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }");
+        sb.append(".container { max-width: 600px; margin: 0 auto; padding: 20px; }");
+        sb.append(".header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }");
+        sb.append(".content { padding: 30px; background-color: #f9f9f9; }");
+        sb.append(".button { display: inline-block; padding: 12px 30px; background-color: #4CAF50; ");
+        sb.append("color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }");
+        sb.append(".footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }</style></head>");
+        sb.append("<body><div class=\"container\">");
+        sb.append("<div class=\"header\"><h1>Email Verification</h1></div>");
+        sb.append("<div class=\"content\">");
+        sb.append("<p>Thank you for registering! Please verify your email address by clicking the button below:</p>");
+        sb.append("<div style=\"text-align: center;\">");
+        sb.append("<a href=\"").append(verificationUrl).append("\" class=\"button\">Verify Email</a></div>");
+        sb.append("<p>Or copy and paste this link into your browser:</p>");
+        sb.append("<p style=\"word-break: break-all; color: #666;\">").append(verificationUrl).append("</p>");
+        sb.append("<p>This link will expire in 24 hours.</p></div>");
+        sb.append("<div class=\"footer\"><p>If you did not create an account, please ignore this email.</p></div>");
+        sb.append("</div></body></html>");
+        return sb.toString();
     }
 
     private String buildPasswordResetEmailContent(String resetUrl) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background-color: #f44336; color: white; padding: 20px; text-align: center; }
-                    .content { padding: 30px; background-color: #f9f9f9; }
-                    .button { display: inline-block; padding: 12px 30px; background-color: #f44336; 
-                              color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Password Reset</h1>
-                    </div>
-                    <div class="content">
-                        <p>You have requested to reset your password. Click the button below to proceed:</p>
-                        <div style="text-align: center;">
-                            <a href="%s" class="button">Reset Password</a>
-                        </div>
-                        <p>Or copy and paste this link into your browser:</p>
-                        <p style="word-break: break-all; color: #666;">%s</p>
-                        <p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p>
-                    </div>
-                    <div class="footer">
-                        <p>For security reasons, please do not share this link with anyone.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(resetUrl, resetUrl);
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
+        sb.append("<style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }");
+        sb.append(".container { max-width: 600px; margin: 0 auto; padding: 20px; }");
+        sb.append(".header { background-color: #f44336; color: white; padding: 20px; text-align: center; }");
+        sb.append(".content { padding: 30px; background-color: #f9f9f9; }");
+        sb.append(".button { display: inline-block; padding: 12px 30px; background-color: #f44336; ");
+        sb.append("color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }");
+        sb.append(".footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }</style></head>");
+        sb.append("<body><div class=\"container\">");
+        sb.append("<div class=\"header\"><h1>Password Reset</h1></div>");
+        sb.append("<div class=\"content\">");
+        sb.append("<p>You have requested to reset your password. Click the button below to proceed:</p>");
+        sb.append("<div style=\"text-align: center;\">");
+        sb.append("<a href=\"").append(resetUrl).append("\" class=\"button\">Reset Password</a></div>");
+        sb.append("<p>Or copy and paste this link into your browser:</p>");
+        sb.append("<p style=\"word-break: break-all; color: #666;\">").append(resetUrl).append("</p>");
+        sb.append("<p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p></div>");
+        sb.append("<div class=\"footer\"><p>For security reasons, please do not share this link with anyone.</p></div>");
+        sb.append("</div></body></html>");
+        return sb.toString();
     }
 }

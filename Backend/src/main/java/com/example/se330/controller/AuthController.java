@@ -5,8 +5,6 @@ import com.example.se330.entity.User;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.service.EmailService;
 import com.example.se330.service.JwtService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,14 +12,16 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
+@Validated
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -29,6 +29,16 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                          JwtService jwtService, AuthenticationManager authenticationManager,
+                          EmailService emailService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.emailService = emailService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
@@ -45,7 +55,7 @@ public class AuthController {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .enabled(false)
+                .isActive(false)
                 .verificationToken(verificationToken)
                 .verificationTokenExpiry(LocalDateTime.now().plusHours(24))
                 .build();
@@ -77,7 +87,7 @@ public class AuthController {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-            if (!user.isEnabled()) {
+            if (!user.getIsActive()) {
                 String verificationToken = jwtService.generateVerificationToken(request.getEmail());
                 user.setVerificationToken(verificationToken);
                 user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24));
@@ -88,7 +98,9 @@ public class AuthController {
                         .body(ApiResponse.error("Account not verified. A new verification email has been sent."));
             }
 
-            String token = jwtService.generateToken(authentication);
+            org.springframework.security.core.userdetails.UserDetails userDetails = 
+                    (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
+            String token = jwtService.generateToken(userDetails);
 
             AuthResponse response = AuthResponse.builder()
                     .accessToken(token)
@@ -132,7 +144,7 @@ public class AuthController {
                     .body(ApiResponse.error("Verification token has expired"));
         }
 
-        user.setEnabled(true);
+        user.setIsActive(true);
         user.setVerificationToken(null);
         user.setVerificationTokenExpiry(null);
         userRepository.save(user);
@@ -148,7 +160,7 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.success("If the email exists, a verification link has been sent"));
         }
 
-        if (user.isEnabled()) {
+        if (user.getIsActive()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Account is already verified"));
         }
@@ -211,7 +223,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserDto userDto = UserDto.builder()
-                .id(user.getId())
+                .id(user.getUserId())
                 .uid(user.getUid())
                 .email(user.getEmail())
                 .name(user.getName())
