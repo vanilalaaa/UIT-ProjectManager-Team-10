@@ -10,42 +10,44 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf().disable()
-            .authorizeRequests()
-                .antMatchers(
-                    "/api/auth/register",
-                    "/api/auth/login",
-                    "/api/auth/forgot-password",
-                    "/api/auth/reset-password",
-                    "/api/auth/verify-email",
-                    "/api/auth/resend-verification"
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(
+                    new AntPathRequestMatcher("/api/auth/register"),
+                    new AntPathRequestMatcher("/api/auth/login"),
+                    new AntPathRequestMatcher("/api/auth/forgot-password"),
+                    new AntPathRequestMatcher("/api/auth/reset-password"),
+                    new AntPathRequestMatcher("/api/auth/verify-email"),
+                    new AntPathRequestMatcher("/api/auth/resend-verification")
                 ).permitAll()
-                .antMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")
                 .anyRequest().authenticated()
-            .and()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider());
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
@@ -57,9 +59,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 
     @Bean

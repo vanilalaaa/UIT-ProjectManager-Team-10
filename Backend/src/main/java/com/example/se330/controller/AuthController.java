@@ -71,7 +71,7 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("User registered successfully", response));
+            .body(ApiResponse.<AuthResponse>success("User registered successfully", response));
     }
 
     @PostMapping("/login")
@@ -84,8 +84,9 @@ public class AuthController {
                     )
             );
 
-            User user = userRepository.findByEmail(request.getEmail())
+                User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                java.util.Objects.requireNonNull(user, "User must not be null");
 
             if (!user.getIsActive()) {
                 String verificationToken = jwtService.generateVerificationToken(request.getEmail());
@@ -94,8 +95,8 @@ public class AuthController {
                 userRepository.save(user);
                 emailService.sendVerificationEmail(request.getEmail(), verificationToken);
 
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.error("Account not verified. A new verification email has been sent."));
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.<AuthResponse>error("Account not verified. A new verification email has been sent."));
             }
 
             org.springframework.security.core.userdetails.UserDetails userDetails = 
@@ -113,7 +114,7 @@ public class AuthController {
                     .message("Login successful")
                     .build();
 
-            return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+            return ResponseEntity.ok(ApiResponse.<AuthResponse>success("Login successful", response));
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -132,7 +133,7 @@ public class AuthController {
     @GetMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String token) {
         User user = userRepository.findByVerificationToken(token)
-                .orElse(null);
+            .orElse(null);
 
         if (user == null) {
             return ResponseEntity.badRequest()
@@ -196,7 +197,7 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         User user = userRepository.findByResetPasswordToken(request.getToken())
-                .orElse(null);
+            .orElse(null);
 
         if (user == null) {
             return ResponseEntity.badRequest()
@@ -220,7 +221,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserDto>> getCurrentUser(Authentication authentication) {
         String email = authentication.getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        java.util.Objects.requireNonNull(user, "User must not be null");
 
         UserDto userDto = UserDto.builder()
                 .id(user.getUserId())

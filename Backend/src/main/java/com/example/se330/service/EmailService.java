@@ -1,10 +1,12 @@
 package com.example.se330.service;
 
 import javax.mail.MessagingException;
+import java.util.Objects;
 import javax.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -18,10 +20,12 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
-    private String fromEmail;
+    @NonNull
+    private String fromEmail = "";
 
     @Value("${app.base-url}")
-    private String baseUrl;
+    @NonNull
+    private String baseUrl = "";
 
     @Async
     public void sendVerificationEmail(String to, String token) {
@@ -41,6 +45,10 @@ public class EmailService {
 
     private void sendEmail(String to, String subject, String content) {
         try {
+            Objects.requireNonNull(fromEmail, "spring.mail.username must not be null");
+            Objects.requireNonNull(to, "recipient (to) must not be null");
+            Objects.requireNonNull(subject, "subject must not be null");
+            Objects.requireNonNull(content, "content must not be null");
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
