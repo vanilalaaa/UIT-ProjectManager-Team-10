@@ -1,4 +1,4 @@
-package com.example.se330.dto;
+package com.example.se330.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,5 +18,4 @@ public class AuthResponse {
     private String email;
     private String name;
     private String role;
-    private String message;
 }

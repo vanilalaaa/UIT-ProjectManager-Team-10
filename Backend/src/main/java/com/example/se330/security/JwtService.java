@@ -1,4 +1,4 @@
-package com.example.se330.service;
+package com.example.se330.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

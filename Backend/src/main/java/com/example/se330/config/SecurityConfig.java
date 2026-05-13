@@ -1,6 +1,6 @@
 package com.example.se330.config;
 
-import com.example.se330.service.CustomUserDetailsService;
+import com.example.se330.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,21 +29,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(
-                    new AntPathRequestMatcher("/api/auth/register"),
-                    new AntPathRequestMatcher("/api/auth/login"),
-                    new AntPathRequestMatcher("/api/auth/forgot-password"),
-                    new AntPathRequestMatcher("/api/auth/reset-password"),
-                    new AntPathRequestMatcher("/api/auth/verify-email"),
-                    new AntPathRequestMatcher("/api/auth/resend-verification")
-                ).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authenticationProvider(authenticationProvider());
+                .csrf().disable()
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/api/auth/register"),
+                                new AntPathRequestMatcher("/api/auth/login"),
+                                new AntPathRequestMatcher("/api/auth/forgot-password"),
+                                new AntPathRequestMatcher("/api/auth/reset-password"),
+                                new AntPathRequestMatcher("/api/auth/verify-email"),
+                                new AntPathRequestMatcher("/api/auth/resend-verification"))
+                        .permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

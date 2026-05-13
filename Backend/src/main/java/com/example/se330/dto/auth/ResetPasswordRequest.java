@@ -1,4 +1,4 @@
-package com.example.se330.dto;
+package com.example.se330.dto.auth;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
