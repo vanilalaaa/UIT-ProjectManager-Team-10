@@ -1,7 +1,7 @@
 package com.example.se330.entity;
 
 import com.example.se330.enums.Role;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

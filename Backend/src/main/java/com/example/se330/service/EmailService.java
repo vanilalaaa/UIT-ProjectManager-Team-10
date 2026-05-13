@@ -1,16 +1,17 @@
 package com.example.se330.service;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 import java.util.Objects;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import jakarta.validation.constraints.NotNull;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +21,11 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
-    @NonNull
+    @NotNull
     private String fromEmail = "";
 
     @Value("${app.base-url}")
-    @NonNull
+    @NotNull
     private String baseUrl = "";
 
     @Async
@@ -106,8 +107,10 @@ public class EmailService {
         sb.append("<a href=\"").append(resetUrl).append("\" class=\"button\">Reset Password</a></div>");
         sb.append("<p>Or copy and paste this link into your browser:</p>");
         sb.append("<p style=\"word-break: break-all; color: #666;\">").append(resetUrl).append("</p>");
-        sb.append("<p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p></div>");
-        sb.append("<div class=\"footer\"><p>For security reasons, please do not share this link with anyone.</p></div>");
+        sb.append(
+                "<p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p></div>");
+        sb.append(
+                "<div class=\"footer\"><p>For security reasons, please do not share this link with anyone.</p></div>");
         sb.append("</div></body></html>");
         return sb.toString();
     }
