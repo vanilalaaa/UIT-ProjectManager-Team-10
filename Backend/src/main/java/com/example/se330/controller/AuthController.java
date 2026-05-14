@@ -2,6 +2,7 @@ package com.example.se330.controller;
 
 import com.example.se330.dto.*;
 import com.example.se330.dto.auth.AuthResponse;
+import com.example.se330.dto.auth.ChangePasswordRequest;
 import com.example.se330.dto.auth.ForgotPasswordRequest;
 import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
@@ -72,6 +73,16 @@ public class AuthController {
         authService.resetPassword(request);
 
         return ApiResponse.success("Password reset successful");
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        authService.changePassword(authentication, request);
+
+        return ApiResponse.success("Password changed successfully");
     }
 
     @PutMapping("/me")
