@@ -64,4 +64,12 @@ public class AdminUserController {
         UserDto userDto = adminUserService.updateUserStatus(id, request);
         return ApiResponse.success(userDto, "User status updated successfully");
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserDto>> getUserById(
+            @PathVariable Long id) {
+
+        UserDto userDto = adminUserService.getUserById(id);
+        return ApiResponse.success(userDto, "User detail retrieved successfully");
+    }
 }

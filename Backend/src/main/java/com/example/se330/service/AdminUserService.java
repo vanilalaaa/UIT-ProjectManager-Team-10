@@ -95,6 +95,13 @@ public class AdminUserService {
         return toUserDto(saved);
     }
 
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return toUserDto(user);
+    }
+
     private UserDto toUserDto(User user) {
         return UserDto.builder()
                 .id(user.getUserId())
