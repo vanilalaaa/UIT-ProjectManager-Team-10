@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.se330.dto.UserDto;
 import com.example.se330.dto.auth.AuthResponse;
+import com.example.se330.dto.auth.ChangePasswordRequest;
 import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
@@ -208,6 +209,54 @@ public class AuthService {
         user.setResetPasswordTokenExpiry(null);
 
         userRepository.save(user);
+    }
+
+    public void changePassword(
+            Authentication authentication,
+            ChangePasswordRequest request) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    public UserDto updateCurrentUser(
+            Authentication authentication,
+            com.example.se330.dto.auth.UpdateUserRequest request) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (!request.getEmail().equals(user.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+                throw new RuntimeException("Email is already in use");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName());
+        }
+
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        return UserDto.builder()
+                .id(user.getUserId())
+                .uid(user.getUid())
+                .email(user.getEmail())
+                .name(user.getName())
+                .role(user.getRole().name())
+                .build();
     }
 
     public UserDto getCurrentUser(

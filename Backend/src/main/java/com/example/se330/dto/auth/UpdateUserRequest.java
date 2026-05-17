@@ -1,5 +1,6 @@
-package com.example.se330.dto;
+package com.example.se330.dto.auth;
 
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,12 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class UpdateUserRequest {
 
-    private Long id;
-    private String uid;
-    private String email;
     private String name;
-    private String role;
-    private Boolean isActive;
+
+    @Email(message = "Email must be valid")
+    private String email;
 }

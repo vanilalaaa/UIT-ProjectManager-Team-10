@@ -6,13 +6,12 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.se330.dto.ApiResponse;
-
-import lombok.var;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,7 +31,7 @@ public class GlobalExceptionHandler {
                         MethodArgumentNotValidException ex) {
 
                 Map<String, Object> errors = new HashMap<>();
-                var fieldError = ex.getBindingResult().getFieldErrors().get(0);
+                FieldError fieldError = ex.getBindingResult().getFieldErrors().get(0);
 
                 String fieldName = fieldError.getField();
                 String errorMessage = fieldError.getDefaultMessage();
