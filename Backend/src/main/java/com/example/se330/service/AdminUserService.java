@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.example.se330.dto.UserDto;
 import com.example.se330.dto.auth.AdminCreateUserRequest;
 import com.example.se330.dto.auth.AdminUpdateUserRequest;
+import com.example.se330.dto.auth.AdminUpdateUserStatusRequest;
 import com.example.se330.entity.User;
 import com.example.se330.repository.UserRepository;
 
@@ -79,6 +80,17 @@ public class AdminUserService {
         }
 
         user.setUpdatedAt(LocalDateTime.now());
+        User saved = userRepository.save(user);
+        return toUserDto(saved);
+    }
+
+    public UserDto updateUserStatus(Long id, AdminUpdateUserStatusRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setIsActive(request.getIsActive());
+        user.setUpdatedAt(LocalDateTime.now());
+
         User saved = userRepository.save(user);
         return toUserDto(saved);
     }
