@@ -1,4 +1,6 @@
-const userNguyenMinhAn = {
+import type { Course, Group, Task, User } from './types'
+
+const userNguyenMinhAn: User = {
   userId: 1,
   uid: 'SV22520001',
   email: '22520001@gm.uit.edu.vn',
@@ -23,7 +25,7 @@ const userNguyenMinhAn = {
   },
 }
 
-const userLeHoangVy = {
+const userLeHoangVy: User = {
   userId: 2,
   uid: 'SV22520002',
   email: '22520002@gm.uit.edu.vn',
@@ -48,7 +50,7 @@ const userLeHoangVy = {
   },
 }
 
-const userTranGiaBao = {
+const userTranGiaBao: User = {
   userId: 3,
   uid: 'SV22520003',
   email: '22520003@gm.uit.edu.vn',
@@ -73,7 +75,7 @@ const userTranGiaBao = {
   },
 }
 
-const userPhamQuynhNhu = {
+const userPhamQuynhNhu: User = {
   userId: 4,
   uid: 'SV22520004',
   email: '22520004@gm.uit.edu.vn',
@@ -98,7 +100,7 @@ const userPhamQuynhNhu = {
   },
 }
 
-const softwareEngineeringCourse = {
+const softwareEngineeringCourse: Course = {
   courseId: 1,
   name: 'SE330 - Công nghệ phần mềm',
   lecturer: null,
@@ -109,7 +111,7 @@ const softwareEngineeringCourse = {
   projects: [],
 }
 
-const projectManagementCourse = {
+const projectManagementCourse: Course = {
   courseId: 2,
   name: 'PM301 - Quản lý dự án phần mềm',
   lecturer: null,
@@ -120,7 +122,7 @@ const projectManagementCourse = {
   projects: [],
 }
 
-const groupPhoenix = {
+const groupPhoenix: Group = {
   groupId: 1,
   name: 'Nhóm 01 - Phoenix',
   description: 'Nhóm thực hiện đồ án Website quản lý đồ án môn SE330.',
@@ -130,7 +132,7 @@ const groupPhoenix = {
   tasks: [],
 }
 
-const groupAster = {
+const groupAster: Group = {
   groupId: 2,
   name: 'Nhóm 02 - Aster',
   description: 'Nhóm thực hiện ứng dụng điểm danh lớp học bằng QR.',
@@ -140,7 +142,7 @@ const groupAster = {
   tasks: [],
 }
 
-const groupNimbus = {
+const groupNimbus: Group = {
   groupId: 3,
   name: 'Nhóm 03 - Nimbus',
   description: 'Nhóm thực hiện hệ thống đăng ký đề tài môn học.',
@@ -150,7 +152,7 @@ const groupNimbus = {
   tasks: [],
 }
 
-const groupOrion = {
+const groupOrion: Group = {
   groupId: 4,
   name: 'Nhóm 04 - Orion',
   description: 'Nhóm chuẩn bị nền tảng nhắc lịch nộp bài nhóm.',
@@ -160,7 +162,7 @@ const groupOrion = {
   tasks: [],
 }
 
-const groupLumos = {
+const groupLumos: Group = {
   groupId: 5,
   name: 'Nhóm 05 - Lumos',
   description: 'Nhóm thực hiện dashboard đánh giá tiến độ đồ án.',
@@ -170,7 +172,7 @@ const groupLumos = {
   tasks: [],
 }
 
-export const mockTasks = [
+export const mockTasks: Task[] = [
   {
     taskId: 1,
     title: 'Hoàn thiện luồng đăng nhập mock',

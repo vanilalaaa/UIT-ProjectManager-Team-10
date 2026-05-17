@@ -1,4 +1,6 @@
-export const mockLoginResponse = {
+import type { ApiResponse, AuthResponse, UserDto } from './types'
+
+export const mockLoginResponse: ApiResponse<AuthResponse> = {
   status: 'success',
   message: 'Call API success.',
   data: {
@@ -14,7 +16,7 @@ export const mockLoginResponse = {
   timestamp: '2026-05-17T10:00:00',
 }
 
-export const mockMeResponse = {
+export const mockMeResponse: ApiResponse<UserDto> = {
   status: 'success',
   message: 'Call API success.',
   data: {

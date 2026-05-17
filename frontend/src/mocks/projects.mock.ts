@@ -1,4 +1,6 @@
-const lecturerTranMinhKhoa = {
+import type { Category, Course, Project, User } from './types'
+
+const lecturerTranMinhKhoa: User = {
   userId: 101,
   uid: 'GV000101',
   email: 'khoa.tran@uit.edu.vn',
@@ -23,7 +25,7 @@ const lecturerTranMinhKhoa = {
   },
 }
 
-const lecturerPhamThuHang = {
+const lecturerPhamThuHang: User = {
   userId: 102,
   uid: 'GV000102',
   email: 'hang.pham@uit.edu.vn',
@@ -48,7 +50,7 @@ const lecturerPhamThuHang = {
   },
 }
 
-const softwareEngineeringCourse = {
+const softwareEngineeringCourse: Course = {
   courseId: 1,
   name: 'SE330 - Công nghệ phần mềm',
   lecturer: lecturerTranMinhKhoa,
@@ -59,7 +61,7 @@ const softwareEngineeringCourse = {
   projects: [],
 }
 
-const projectManagementCourse = {
+const projectManagementCourse: Course = {
   courseId: 2,
   name: 'PM301 - Quản lý dự án phần mềm',
   lecturer: lecturerPhamThuHang,
@@ -70,28 +72,28 @@ const projectManagementCourse = {
   projects: [],
 }
 
-const webCategory = {
+const webCategory: Category = {
   categoryId: 1,
   name: 'Ứng dụng Web',
   description: 'Đồ án tập trung vào giao diện web, API và quản lý dữ liệu.',
   isActive: true,
 }
 
-const mobileCategory = {
+const mobileCategory: Category = {
   categoryId: 2,
   name: 'Ứng dụng di động',
   description: 'Đồ án xây dựng trải nghiệm trên thiết bị di động.',
   isActive: true,
 }
 
-const analyticsCategory = {
+const analyticsCategory: Category = {
   categoryId: 3,
   name: 'Phân tích dữ liệu',
   description: 'Đồ án khai thác dữ liệu tiến độ, điểm số và báo cáo.',
   isActive: true,
 }
 
-export const mockProjects = [
+export const mockProjects: Project[] = [
   {
     projectId: 1,
     title: 'Website quản lý đồ án môn SE330',

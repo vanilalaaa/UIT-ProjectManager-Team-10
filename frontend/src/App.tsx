@@ -1,121 +1,71 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import MainLayout from './components/layout/MainLayout'
+
+const overviewCards = [
+  { label: 'Đồ án đang chạy', value: '3', note: '2 đồ án cần cập nhật tiến độ' },
+  { label: 'Công việc tuần này', value: '10', note: '4 task sắp đến hạn' },
+  { label: 'Môn học', value: '3', note: 'SE330 đang hoạt động' },
+]
+
+function DashboardPage() {
+  return (
+    <section className="space-y-6">
+      <div>
+        <p className="text-sm font-semibold uppercase text-text-soft">Tổng quan</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-normal text-text">
+          Quản lý đồ án môn học
+        </h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {overviewCards.map((card) => (
+          <article
+            className="rounded-card border border-border bg-surface p-4 shadow-soft"
+            key={card.label}
+          >
+            <p className="text-sm text-text-soft">{card.label}</p>
+            <p className="mt-3 text-3xl font-semibold text-primary">{card.value}</p>
+            <p className="mt-2 text-sm text-text-soft">{card.note}</p>
+          </article>
+        ))}
+      </div>
+
+      <section className="rounded-card border border-border bg-surface p-5 shadow-soft">
+        <p className="text-sm font-semibold uppercase text-text-soft">Hoạt động gần đây</p>
+        <div className="mt-4 space-y-3">
+          <p className="text-sm text-text">Nhóm Phoenix đã hoàn thiện luồng đăng nhập mock.</p>
+          <p className="text-sm text-text">Nhóm Aster đang review prototype màn hình quét QR.</p>
+          <p className="text-sm text-text">Dashboard tiến độ cần bổ sung bộ lọc theo lớp.</p>
+        </div>
+      </section>
+    </section>
+  )
+}
+
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <section className="rounded-card border border-border bg-surface p-5 shadow-soft">
+      <p className="text-sm font-semibold uppercase text-text-soft">Workspace</p>
+      <h2 className="mt-2 text-2xl font-semibold tracking-normal text-text">{title}</h2>
+    </section>
+  )
+}
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<MainLayout />} path="/">
+          <Route index element={<DashboardPage />} />
+          <Route element={<PlaceholderPage title="Đồ án" />} path="projects" />
+          <Route element={<PlaceholderPage title="Chi tiết đồ án" />} path="projects/:projectId" />
+          <Route element={<PlaceholderPage title="Tạo đồ án mới" />} path="projects/new" />
+          <Route element={<PlaceholderPage title="Công việc" />} path="tasks" />
+          <Route element={<PlaceholderPage title="Môn học" />} path="courses" />
+          <Route element={<PlaceholderPage title="Chi tiết môn học" />} path="courses/:courseId" />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 
