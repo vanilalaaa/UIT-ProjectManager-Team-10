@@ -63,6 +63,7 @@ function App() {
           <Route element={<PlaceholderPage title="Công việc" />} path="tasks" />
           <Route element={<PlaceholderPage title="Môn học" />} path="courses" />
           <Route element={<PlaceholderPage title="Chi tiết môn học" />} path="courses/:courseId" />
+          <Route element={<PlaceholderPage title="Cài đặt hồ sơ" />} path="profile" />        
         </Route>
       </Routes>
     </BrowserRouter>
