@@ -18,260 +18,265 @@ import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
 import com.example.se330.entity.User;
+import com.example.se330.enums.Role;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
 
 @Service
 public class AuthService {
-    private final UserRepository userRepository;
-    private final EmailService emailService;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
+        private final UserRepository userRepository;
+        private final EmailService emailService;
+        private final JwtService jwtService;
+        private final PasswordEncoder passwordEncoder;
+        private final AuthenticationManager authenticationManager;
 
-    public AuthService(
-            UserRepository userRepository,
-            EmailService emailService,
-            JwtService jwtService,
-            PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager) {
-        this.userRepository = userRepository;
-        this.emailService = emailService;
-        this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-    }
-
-    public AuthResponse register(RegisterRequest request) {
-        // 1. Kiểm tra logic nghiệp vụ
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+        public AuthService(
+                        UserRepository userRepository,
+                        EmailService emailService,
+                        JwtService jwtService,
+                        PasswordEncoder passwordEncoder,
+                        AuthenticationManager authenticationManager) {
+                this.userRepository = userRepository;
+                this.emailService = emailService;
+                this.jwtService = jwtService;
+                this.passwordEncoder = passwordEncoder;
+                this.authenticationManager = authenticationManager;
         }
 
-        // 2. Tạo dữ liệu
-        String uid = UUID.randomUUID().toString();
-        String verificationToken = jwtService.generateVerificationToken(request.getEmail());
+        public AuthResponse register(RegisterRequest request) {
+                // 1. Kiểm tra logic nghiệp vụ
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new RuntimeException("Email already registered");
+                }
 
-        System.out.println("Verification token: " + verificationToken);
+                // 2. Tạo dữ liệu
+                String uid = UUID.randomUUID().toString();
+                String verificationToken = jwtService.generateVerificationToken(request.getEmail());
 
-        User user = User.builder()
-                .uid(uid)
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .isActive(false)
-                .verificationToken(verificationToken)
-                .verificationTokenExpiry(LocalDateTime.now().plusHours(24))
-                .build();
+                System.out.println("Verification token: " + verificationToken);
 
-        // 3. Thực hiện hành động
-        userRepository.save(user);
-        emailService.sendVerificationEmail(request.getEmail(), verificationToken);
+                User user = User.builder()
+                                .uid(uid)
+                                .email(request.getEmail())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .name(request.getName())
+                                .isActive(false)
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .verificationToken(verificationToken)
+                                .verificationTokenExpiry(LocalDateTime.now().plusHours(24))
+                                .build();
 
-        // 4. Trả về DTO thuần túy
-        return AuthResponse.builder()
-                .uid(uid)
-                .email(request.getEmail())
-                .name(request.getName())
-                .build();
-    }
+                // 3. Thực hiện hành động
+                userRepository.save(user);
+                emailService.sendVerificationEmail(request.getEmail(), verificationToken);
 
-    public AuthResponse login(LoginRequest request) {
-        // 1. Kiểm tra user tồn tại
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
-
-        // 2. Kiểm tra account đã verify chưa
-        if (!user.getIsActive()) {
-
-            String verificationToken = jwtService.generateVerificationToken(user.getEmail());
-
-            user.setVerificationToken(verificationToken);
-            user.setVerificationTokenExpiry(
-                    LocalDateTime.now().plusHours(24));
-
-            userRepository.save(user);
-
-            emailService.sendVerificationEmail(
-                    user.getEmail(),
-                    verificationToken);
-
-            throw new RuntimeException(
-                    "Account not verified. Verification email sent again.");
+                // 4. Trả về DTO thuần túy
+                return AuthResponse.builder()
+                                .uid(uid)
+                                .email(request.getEmail())
+                                .name(request.getName())
+                                .build();
         }
 
-        // 3. Authenticate password
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()));
+        public AuthResponse login(LoginRequest request) {
+                // 1. Kiểm tra user tồn tại
+                User user = userRepository.findByEmail(request.getEmail())
+                                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
-        // 4. Generate JWT
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                // 2. Kiểm tra account đã verify chưa
+                if (!user.getIsActive()) {
 
-        String token = jwtService.generateToken(userDetails);
+                        String verificationToken = jwtService.generateVerificationToken(user.getEmail());
 
-        // 5. Return response
-        return AuthResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .expiresIn(jwtService.getExpirationTime())
-                .uid(user.getUid())
-                .email(user.getEmail())
-                .name(user.getName())
-                .role(user.getRole().name())
-                .build();
-    }
+                        user.setVerificationToken(verificationToken);
+                        user.setVerificationTokenExpiry(
+                                        LocalDateTime.now().plusHours(24));
 
-    public void verifyEmail(String token) {
-        User user = userRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
+                        userRepository.save(user);
 
-        if (user.getVerificationTokenExpiry()
-                .isBefore(LocalDateTime.now())) {
+                        emailService.sendVerificationEmail(
+                                        user.getEmail(),
+                                        verificationToken);
 
-            throw new RuntimeException("Verification token has expired");
+                        throw new RuntimeException(
+                                        "Account not verified. Verification email sent again.");
+                }
+
+                // 3. Authenticate password
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                request.getEmail(),
+                                                request.getPassword()));
+
+                // 4. Generate JWT
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+                String token = jwtService.generateToken(userDetails);
+
+                // 5. Return response
+                return AuthResponse.builder()
+                                .accessToken(token)
+                                .tokenType("Bearer")
+                                .expiresIn(jwtService.getExpirationTime())
+                                .uid(user.getUid())
+                                .email(user.getEmail())
+                                .name(user.getName())
+                                .role(user.getRole().name())
+                                .build();
         }
 
-        user.setIsActive(true);
-        user.setVerificationToken(null);
-        user.setVerificationTokenExpiry(null);
+        public void verifyEmail(String token) {
+                User user = userRepository.findByVerificationToken(token)
+                                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
 
-        userRepository.save(user);
-    }
+                if (user.getVerificationTokenExpiry()
+                                .isBefore(LocalDateTime.now())) {
 
-    public void resendVerification(String email) {
+                        throw new RuntimeException("Verification token has expired");
+                }
 
-        User user = userRepository.findByEmail(email)
-                .orElse(null);
-        if (user == null) {
-            return;
+                user.setIsActive(true);
+                user.setVerificationToken(null);
+                user.setVerificationTokenExpiry(null);
+
+                userRepository.save(user);
         }
 
-        if (user.getIsActive()) {
-            throw new RuntimeException(
-                    "Account is already verified");
+        public void resendVerification(String email) {
+
+                User user = userRepository.findByEmail(email)
+                                .orElse(null);
+                if (user == null) {
+                        return;
+                }
+
+                if (user.getIsActive()) {
+                        throw new RuntimeException(
+                                        "Account is already verified");
+                }
+
+                String verificationToken = jwtService.generateVerificationToken(email);
+
+                user.setVerificationToken(verificationToken);
+
+                user.setVerificationTokenExpiry(
+                                LocalDateTime.now().plusHours(24));
+
+                userRepository.save(user);
+
+                emailService.sendVerificationEmail(
+                                email,
+                                verificationToken);
         }
 
-        String verificationToken = jwtService.generateVerificationToken(email);
+        public void forgotPassword(String email) {
+                User user = userRepository.findByEmail(email)
+                                .orElse(null);
+                if (user == null) {
+                        return;
+                }
 
-        user.setVerificationToken(verificationToken);
+                String resetToken = jwtService.generateResetPasswordToken(email);
 
-        user.setVerificationTokenExpiry(
-                LocalDateTime.now().plusHours(24));
+                user.setResetPasswordToken(resetToken);
 
-        userRepository.save(user);
+                user.setResetPasswordTokenExpiry(
+                                LocalDateTime.now().plusHours(1));
 
-        emailService.sendVerificationEmail(
-                email,
-                verificationToken);
-    }
+                userRepository.save(user);
 
-    public void forgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElse(null);
-        if (user == null) {
-            return;
+                emailService.sendPasswordResetEmail(
+                                email,
+                                resetToken);
         }
 
-        String resetToken = jwtService.generateResetPasswordToken(email);
+        public void resetPassword(ResetPasswordRequest request) {
 
-        user.setResetPasswordToken(resetToken);
+                User user = userRepository
+                                .findByResetPasswordToken(request.getToken())
+                                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
 
-        user.setResetPasswordTokenExpiry(
-                LocalDateTime.now().plusHours(1));
+                if (user.getResetPasswordTokenExpiry()
+                                .isBefore(LocalDateTime.now())) {
 
-        userRepository.save(user);
+                        throw new RuntimeException(
+                                        "Reset token has expired");
+                }
 
-        emailService.sendPasswordResetEmail(
-                email,
-                resetToken);
-    }
+                user.setPassword(
+                                passwordEncoder.encode(
+                                                request.getNewPassword()));
 
-    public void resetPassword(ResetPasswordRequest request) {
+                user.setResetPasswordToken(null);
+                user.setResetPasswordTokenExpiry(null);
 
-        User user = userRepository
-                .findByResetPasswordToken(request.getToken())
-                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
-
-        if (user.getResetPasswordTokenExpiry()
-                .isBefore(LocalDateTime.now())) {
-
-            throw new RuntimeException(
-                    "Reset token has expired");
+                userRepository.save(user);
         }
 
-        user.setPassword(
-                passwordEncoder.encode(
-                        request.getNewPassword()));
+        public void changePassword(
+                        Authentication authentication,
+                        ChangePasswordRequest request) {
+                String email = authentication.getName();
 
-        user.setResetPasswordToken(null);
-        user.setResetPasswordTokenExpiry(null);
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        userRepository.save(user);
-    }
+                if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+                        throw new RuntimeException("Old password is incorrect");
+                }
 
-    public void changePassword(
-            Authentication authentication,
-            ChangePasswordRequest request) {
-        String email = authentication.getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new RuntimeException("Old password is incorrect");
+                user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                user.setUpdatedAt(LocalDateTime.now());
+                userRepository.save(user);
         }
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
-    }
+        public UserDto updateCurrentUser(
+                        Authentication authentication,
+                        com.example.se330.dto.auth.UpdateUserRequest request) {
+                String email = authentication.getName();
 
-    public UserDto updateCurrentUser(
-            Authentication authentication,
-            com.example.se330.dto.auth.UpdateUserRequest request) {
-        String email = authentication.getName();
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                if (request.getEmail() != null && !request.getEmail().isBlank()) {
+                        if (!request.getEmail().equals(user.getEmail())
+                                        && userRepository.existsByEmail(request.getEmail())) {
+                                throw new RuntimeException("Email is already in use");
+                        }
+                        user.setEmail(request.getEmail());
+                }
 
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            if (!request.getEmail().equals(user.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
-                throw new RuntimeException("Email is already in use");
-            }
-            user.setEmail(request.getEmail());
+                if (request.getName() != null && !request.getName().isBlank()) {
+                        user.setName(request.getName());
+                }
+
+                user.setUpdatedAt(LocalDateTime.now());
+                userRepository.save(user);
+
+                return UserDto.builder()
+                                .id(user.getUserId())
+                                .uid(user.getUid())
+                                .email(user.getEmail())
+                                .name(user.getName())
+                                .role(user.getRole().name())
+                                .build();
         }
 
-        if (request.getName() != null && !request.getName().isBlank()) {
-            user.setName(request.getName());
+        public UserDto getCurrentUser(
+                        Authentication authentication) {
+                String email = authentication.getName();
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                return UserDto.builder()
+                                .id(user.getUserId())
+                                .uid(user.getUid())
+                                .email(user.getEmail())
+                                .name(user.getName())
+                                .role(user.getRole().name())
+                                .isActive(user.getIsActive())
+                                .build();
         }
-
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
-
-        return UserDto.builder()
-                .id(user.getUserId())
-                .uid(user.getUid())
-                .email(user.getEmail())
-                .name(user.getName())
-                .role(user.getRole().name())
-                .build();
-    }
-
-    public UserDto getCurrentUser(
-            Authentication authentication) {
-        String email = authentication.getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return UserDto.builder()
-                .id(user.getUserId())
-                .uid(user.getUid())
-                .email(user.getEmail())
-                .name(user.getName())
-                .role(user.getRole().name())
-                .build();
-    }
 }
