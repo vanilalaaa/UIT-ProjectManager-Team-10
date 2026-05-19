@@ -1,6 +1,7 @@
 package com.example.se330.enums;
 
 public enum Role {
-    USER,
+    STUDENT,
+    TEACHER,
     ADMIN
 }

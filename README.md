@@ -41,6 +41,11 @@
    - PATH thêm: `%MAVEN_HOME%\bin`
 4. Kiểm tra: `mvn -version`
 
+### 1.4 Cài Đặt Node.js (Cho Frontend)
+1. Tải và cài đặt Node.js (khuyên dùng bản LTS): https://nodejs.org/
+2. Kiểm tra cài đặt thành công: Mở Terminal/PowerShell và gõ:
+   - `node -v`
+   - `npm -v`
 ---
 
 ## 2. Cấu Hình Dự Án
@@ -109,6 +114,16 @@ mvn spring-boot:run
 2. Run → Start Debugging (F5)
 3. Chọn "Java"
 
+### 2.4 Cài Đặt & Chạy Frontend (React + Vite)
+Mở một Terminal mới và di chuyển vào thư mục frontend:
+```bash
+cd frontend
+1. Cài đặt các thư viện
+npm install
+2. Khởi động server
+npm run dev
+3. Truy cập ứng dụng tại: http://localhost:5173
+```
 ---
 
 ## 4. Hướng Dẫn IntelliJ IDEA
@@ -239,27 +254,57 @@ taskkill /PID <pid> /F
 ## Cấu Trúc Dự Án
 
 ```
-Backend/
-├── src/main/java/com/example/se330/
-│   ├── se330Application.java           # Main class
-│   ├── config/
-│   │   ├── SecurityConfig.java        # Spring Security
-│   │   ├── JwtAuthenticationFilter.java
-│   │   └── AsyncConfig.java
-│   ├── controller/
-│   │   └── AuthController.java        # Auth endpoints
-│   ├── dto/                           # Request/Response DTOs
-│   ├── entity/
-│   │   └── User.java
-│   ├── enums/
-│   │   └── Role.java
-│   ├── repository/
-│   │   └── UserRepository.java
-│   └── service/
-│       ├── JwtService.java
-│       ├── EmailService.java
-│       └── CustomUserDetailsService.java
-├── src/main/resources/
-│   └── application.properties
-└── pom.xml
+UIT-ProjectManager-Team-10/
+├──Backend/
+│  ├── src/main/java/com/example/se330/
+│  │   ├── se330Application.java           # Main class
+│  │   ├── config/
+│  │   │   ├── SecurityConfig.java        # Spring Security
+│  │   │   ├── JwtAuthenticationFilter.java
+│  │   │   └── AsyncConfig.java
+│  │   ├── controller/
+│  │   │   └── AuthController.java        # Auth endpoints
+│  │   ├── dto/                           # Request/Response DTOs
+│  │   ├── entity/
+│  │   │   └── User.java
+│  │   ├── enums/
+│  │   │   └── Role.java
+│  │   ├── repository/
+│  │   │   └── UserRepository.java
+│  │   └── service/
+│  │       ├── JwtService.java
+│  │       ├── EmailService.java
+│  │       └── CustomUserDetailsService.java
+│  ├── src/main/resources/
+│  │   └── application.properties
+│  └── pom.xml
+│
+├── frontend/                            # ReactJS + Vite + Tailwind v4
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/                      # Hình ảnh, icons
+│   ├── components/
+│   │   ├── ui/               # button, card, input...
+│   │   ├── layout/           # navbar, sidebar, footer
+│   │   └── common/           # reusable business-independent 
+│   |
+│   ├── features/             # chia theo module/business
+│   │   ├── auth/
+│   │   ├── products/
+│   │   ├── organizations/
+│   │   ├── home/
+│   ├── pages/                # route pages
+│   ├── hooks/                # custom hooks
+│   ├──lib/                  # axios, utils, helpers
+│   ├── services/             # api calls
+│   ├── mocks/                # fake data
+│   ├── styles/               # extra css
+│   ├── types/                # global ts types
+│   ├── App.jsx                      # Root component
+│   ├── index.css                    # Tailwind CSS import
+│   └── main.jsx                     # Entry point
+├── package.json
+├── vite.config.js                   # Cấu hình Vite & Proxy API
+│
+└── README.md
 ```

@@ -1,3 +1,7 @@
 .env
 .env.*
 !.env.example
+
+# Ignore node_modules
+/frontend/node_modules
+/frontend/PROJECT_RULES.md
