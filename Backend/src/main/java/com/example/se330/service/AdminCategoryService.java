@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.se330.dto.CategoryDto;
 import com.example.se330.dto.admin.AdminCreateCategoryRequest;
 import com.example.se330.dto.admin.AdminUpdateCategoryRequest;
+import com.example.se330.dto.admin.AdminUpdateCategoryStatusRequest;
 import com.example.se330.entity.Category;
 import com.example.se330.repository.CategoryRepository;
 
@@ -63,6 +64,15 @@ public class AdminCategoryService {
             category.setDescription(request.getDescription());
         }
 
+        Category updated = categoryRepository.save(category);
+        return toCategoryDto(updated);
+    }
+
+    public CategoryDto updateCategoryStatus(Long id, AdminUpdateCategoryStatusRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        category.setIsActive(request.getIsActive());
         Category updated = categoryRepository.save(category);
         return toCategoryDto(updated);
     }

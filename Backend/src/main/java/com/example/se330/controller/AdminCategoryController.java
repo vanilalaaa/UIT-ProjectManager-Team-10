@@ -3,6 +3,7 @@ package com.example.se330.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,6 +16,7 @@ import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.CategoryDto;
 import com.example.se330.dto.admin.AdminCreateCategoryRequest;
 import com.example.se330.dto.admin.AdminUpdateCategoryRequest;
+import com.example.se330.dto.admin.AdminUpdateCategoryStatusRequest;
 import com.example.se330.service.AdminCategoryService;
 
 import jakarta.validation.Valid;
@@ -51,5 +53,13 @@ public class AdminCategoryController {
             @Valid @RequestBody AdminUpdateCategoryRequest request) {
         CategoryDto category = adminCategoryService.updateCategory(id, request);
         return ApiResponse.success(category, "Category updated successfully");
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<CategoryDto>> updateCategoryStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateCategoryStatusRequest request) {
+        CategoryDto category = adminCategoryService.updateCategoryStatus(id, request);
+        return ApiResponse.success(category, "Category status updated successfully");
     }
 }
