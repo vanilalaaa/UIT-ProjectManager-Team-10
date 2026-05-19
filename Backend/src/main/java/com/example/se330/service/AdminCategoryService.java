@@ -77,6 +77,12 @@ public class AdminCategoryService {
         return toCategoryDto(updated);
     }
 
+    public CategoryDto getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+        return toCategoryDto(category);
+    }
+
     private CategoryDto toCategoryDto(Category category) {
         return CategoryDto.builder()
                 .categoryId(category.getCategoryId())

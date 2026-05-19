@@ -62,4 +62,10 @@ public class AdminCategoryController {
         CategoryDto category = adminCategoryService.updateCategoryStatus(id, request);
         return ApiResponse.success(category, "Category status updated successfully");
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CategoryDto>> getCategoryDetail(@PathVariable Long id) {
+        CategoryDto category = adminCategoryService.getCategoryById(id);
+        return ApiResponse.success(category, "Category detail retrieved successfully");
+    }
 }
