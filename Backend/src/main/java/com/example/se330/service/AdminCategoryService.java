@@ -7,6 +7,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.se330.dto.CategoryDto;
+import com.example.se330.dto.admin.AdminCreateCategoryRequest;
+import com.example.se330.dto.admin.AdminUpdateCategoryRequest;
 import com.example.se330.entity.Category;
 import com.example.se330.repository.CategoryRepository;
 
@@ -29,6 +31,40 @@ public class AdminCategoryService {
         }
 
         return categories.map(this::toCategoryDto);
+    }
+
+    public CategoryDto createCategory(AdminCreateCategoryRequest request) {
+        if (categoryRepository.existsByName(request.getName())) {
+            throw new IllegalArgumentException("Category name already exists");
+        }
+
+        Category category = Category.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .isActive(true)
+                .build();
+
+        Category saved = categoryRepository.save(category);
+        return toCategoryDto(saved);
+    }
+
+    public CategoryDto updateCategory(Long id, AdminUpdateCategoryRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            if (categoryRepository.existsByName(request.getName())) {
+                throw new IllegalArgumentException("Category name already exists");
+            }
+            category.setName(request.getName());
+        }
+
+        if (request.getDescription() != null) {
+            category.setDescription(request.getDescription());
+        }
+
+        Category updated = categoryRepository.save(category);
+        return toCategoryDto(updated);
     }
 
     private CategoryDto toCategoryDto(Category category) {
