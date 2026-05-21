@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.example.se330.enums.RegistrationStatus;
 
 @Entity
 @Table(name = "registrations")
@@ -18,24 +20,26 @@ public class Registration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "group_id")
-    private Long groupId;
+    @Column(name = "registration_id")
+    private Long registrationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_member_id")
-    private GroupMember groupMember;
+    @JoinColumn(name = "group_id")
+    private Group group;
 
     @Column(name = "registered_at")
-    private LocalDate registeredAt;
+    private LocalDateTime registeredAt;
 
     @Column(name = "approved_at")
-    private LocalDate approvedAt;
+    private LocalDateTime approvedAt;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private RegistrationStatus status;
 
     @Column(columnDefinition = "TEXT")
     private String note;

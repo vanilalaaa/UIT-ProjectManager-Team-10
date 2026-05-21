@@ -1,5 +1,7 @@
 package com.example.se330.service;
 
+import java.security.SecureRandom;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class CourseService {
 
         Course course = new Course();
         course.setName(req.getName());
+        course.setCode(generateCode());
         course.setLecturer(currentUser.getUser());
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
@@ -39,11 +42,26 @@ public class CourseService {
         return mapToResponse(saved);
     }
 
-    public CourseResponse getCourseById(Long id) {
+    public CourseResponse getCourseResponse(Long id) {
+        return mapToResponse(this.getCourseById(id));
+    }
+
+    public Course getCourseById(Long id) {
         Course course = this.courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        return mapToResponse(course);
+        return course;
+    }
+
+    public boolean existsCourseByCode(String code) {
+        return this.courseRepository.existsByCode(code);
+    }
+
+    public Course getCourseByCode(String code) {
+        Course course = this.courseRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        return course;
     }
 
     public CourseResponse updateCourse(Long id, UpdateCourseRequest req) {
@@ -64,12 +82,33 @@ public class CourseService {
 
     private CourseResponse mapToResponse(Course course) {
         return CourseResponse.builder()
-                .courseId(course.getCourseId())
+                .courseId(course.getId())
                 .name(course.getName())
-                .lecturer(course.getLecturer().getUserId())
+                .code(course.getCode())
+                .lecturer(course.getLecturer().getId())
                 .maxStudents(course.getMaxStudents())
                 .startDate(course.getStartDate())
                 .endDate(course.getEndDate())
                 .build();
+    }
+
+    private String generateCode() {
+        String code;
+        boolean isDuplicate;
+        String CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        SecureRandom random = new SecureRandom();
+
+        do {
+            StringBuilder sb = new StringBuilder(6);
+            for (int i = 0; i < 6; i++) {
+                int randomIndex = random.nextInt(CHARACTERS.length());
+                sb.append(CHARACTERS.charAt(randomIndex));
+            }
+            code = sb.toString();
+
+            isDuplicate = courseRepository.existsByCode(code);
+
+        } while (isDuplicate);
+        return code;
     }
 }

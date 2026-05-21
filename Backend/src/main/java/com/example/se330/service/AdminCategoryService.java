@@ -85,7 +85,7 @@ public class AdminCategoryService {
 
     private CategoryDto toCategoryDto(Category category) {
         return CategoryDto.builder()
-                .categoryId(category.getCategoryId())
+                .categoryId(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
                 .isActive(category.getIsActive())

@@ -18,11 +18,10 @@ public class Grade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "submission_id")
-    private Long submissionId;
+    @Column(name = "grade_id")
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
     @JoinColumn(name = "submission_id")
     private Submission submission;
 

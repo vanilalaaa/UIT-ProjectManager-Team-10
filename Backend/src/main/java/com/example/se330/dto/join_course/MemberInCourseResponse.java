@@ -1,0 +1,18 @@
+package com.example.se330.dto.join_course;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class MemberInCourseResponse {
+    private Long StudentId;
+    private String name;
+    private String email;
+}
