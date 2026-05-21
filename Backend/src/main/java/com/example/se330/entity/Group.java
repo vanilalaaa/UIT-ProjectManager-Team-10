@@ -19,7 +19,7 @@ public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_id")
-    private Long groupId;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -42,4 +42,5 @@ public class Group {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Task> tasks = new ArrayList<>();
+
 }

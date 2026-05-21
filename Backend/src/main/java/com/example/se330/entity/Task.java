@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import com.example.se330.enums.TaskStatus;
+
 @Entity
 @Table(name = "tasks")
 @Data
@@ -19,7 +21,7 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
-    private Long taskId;
+    private Long id;
 
     @Column(nullable = false)
     private String title;
@@ -34,7 +36,7 @@ public class Task {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    private String status;
+    private TaskStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")

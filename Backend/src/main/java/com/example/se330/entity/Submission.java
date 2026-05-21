@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import com.example.se330.enums.SubmissionStatus;
+
 @Entity
 @Table(name = "submissions")
 @Data
@@ -19,13 +21,13 @@ public class Submission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "submission_id")
-    private Long submissionId;
+    private Long id;
 
     @Column(name = "submitted_at")
     @Builder.Default
     private LocalDateTime submittedAt = LocalDateTime.now();
 
-    private String status;
+    private SubmissionStatus status;
 
     @Column(name = "file_path")
     private String filePath;

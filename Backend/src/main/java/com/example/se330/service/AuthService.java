@@ -18,7 +18,6 @@ import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
 import com.example.se330.entity.User;
-import com.example.se330.enums.Role;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
 
@@ -255,7 +254,7 @@ public class AuthService {
                 userRepository.save(user);
 
                 return UserDto.builder()
-                                .id(user.getUserId())
+                                .id(user.getId())
                                 .uid(user.getUid())
                                 .email(user.getEmail())
                                 .name(user.getName())
@@ -271,7 +270,7 @@ public class AuthService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 return UserDto.builder()
-                                .id(user.getUserId())
+                                .id(user.getId())
                                 .uid(user.getUid())
                                 .email(user.getEmail())
                                 .name(user.getName())
