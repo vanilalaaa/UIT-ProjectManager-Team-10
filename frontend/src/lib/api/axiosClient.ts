@@ -7,7 +7,7 @@
  * - Response interceptor: on 401, clears localStorage and redirects to /login
  *   (avoids circular dependency with React Router by using window.location)
  */
-import axios from 'axios'
+import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 
 const BASE_URL = 'http://localhost:8080'
 
@@ -24,14 +24,14 @@ const axiosClient = axios.create({
 // ── Request Interceptor ──────────────────────────────────────────────────────
 // Attach the stored JWT as a Bearer token on every outgoing request.
 axiosClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
   },
-  (error) => Promise.reject(error),
+  (error: unknown) => Promise.reject(error),
 )
 
 // ── Response Interceptor ─────────────────────────────────────────────────────
@@ -39,9 +39,9 @@ axiosClient.interceptors.request.use(
 // We use window.location.href to avoid importing React Router here, which
 // would create a circular dependency with services that import axiosClient.
 axiosClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  (response: AxiosResponse) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       localStorage.clear()
       window.location.href = '/login'
     }

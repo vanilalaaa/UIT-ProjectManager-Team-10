@@ -1,72 +1,158 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+/**
+ * App.tsx — Root routing configuration.
+ *
+ * Structure:
+ *   <AuthProvider>          — global auth state
+ *     <BrowserRouter>
+ *       /login              — public
+ *       /403                — public
+ *       <ProtectedRoute>    — per-role guards
+ *         <MainLayout>
+ *           ... nested pages
+ */
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+
+import { AuthProvider } from './features/auth/AuthContext'
 import MainLayout from './components/layout/MainLayout'
+import ProtectedRoute from './components/common/ProtectedRoute'
 
-const overviewCards = [
-  { label: 'Đồ án đang chạy', value: '3', note: '2 đồ án cần cập nhật tiến độ' },
-  { label: 'Công việc tuần này', value: '10', note: '4 task sắp đến hạn' },
-  { label: 'Môn học', value: '3', note: 'SE330 đang hoạt động' },
-]
+// ── Auth pages ────────────────────────────────────────────────────────────────
+import LoginPage from './features/auth/LoginPage'
+import ForbiddenPage from './features/auth/ForbiddenPage'
 
-function DashboardPage() {
-  return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold uppercase text-text-soft">Tổng quan</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-normal text-text">
-          Quản lý đồ án môn học
-        </h2>
-      </div>
+// ── Shared ─────────────────────────────────────────────────────────────────────
+import HomePage from './features/home/HomePage'
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {overviewCards.map((card) => (
-          <article
-            className="rounded-card border border-border bg-surface p-4 shadow-soft"
-            key={card.label}
-          >
-            <p className="text-sm text-text-soft">{card.label}</p>
-            <p className="mt-3 text-3xl font-semibold text-primary">{card.value}</p>
-            <p className="mt-2 text-sm text-text-soft">{card.note}</p>
-          </article>
-        ))}
-      </div>
+// ── Student pages ─────────────────────────────────────────────────────────────
+import MyProjectPage from './features/student/my-project/MyProjectPage'
+import ProjectOverview from './features/student/my-project/ProjectOverview'
+import ProjectMembers from './features/student/my-project/ProjectMembers'
+import ProjectKanban from './features/student/my-project/ProjectKanban'
+import ProjectSubmit from './features/student/my-project/ProjectSubmit'
+import ProjectGrades from './features/student/my-project/ProjectGrades'
 
-      <section className="rounded-card border border-border bg-surface p-5 shadow-soft">
-        <p className="text-sm font-semibold uppercase text-text-soft">Hoạt động gần đây</p>
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-text">Nhóm Phoenix đã hoàn thiện luồng đăng nhập mock.</p>
-          <p className="text-sm text-text">Nhóm Aster đang review prototype màn hình quét QR.</p>
-          <p className="text-sm text-text">Dashboard tiến độ cần bổ sung bộ lọc theo lớp.</p>
-        </div>
-      </section>
-    </section>
-  )
-}
+import MyCoursePage from './features/student/my-course/MyCoursePage'
+import StudentProjectList from './features/student/my-course/StudentProjectList'
+import StudentProjectDetail from './features/student/my-course/StudentProjectDetail'
+import MyTeamPage from './features/student/my-course/MyTeamPage'
+import CourseMembers from './features/student/my-course/CourseMembers'
 
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section className="rounded-card border border-border bg-surface p-5 shadow-soft">
-      <p className="text-sm font-semibold uppercase text-text-soft">Workspace</p>
-      <h2 className="mt-2 text-2xl font-semibold tracking-normal text-text">{title}</h2>
-    </section>
-  )
-}
+// ── Teacher pages ─────────────────────────────────────────────────────────────
+import TeacherCoursePage from './features/teacher/my-course/TeacherCoursePage'
+import TeacherProjectList from './features/teacher/my-course/TeacherProjectList'
+import TeacherProjectDetail from './features/teacher/my-course/TeacherProjectDetail'
+import TeamProjects from './features/teacher/my-course/TeamProjects'
+import TeamSubmit from './features/teacher/my-course/TeamSubmit'
+import TeamGrades from './features/teacher/my-course/TeamGrades'
+import CourseTeams from './features/teacher/my-course/CourseTeams'
+import TeacherCourseMembers from './features/teacher/my-course/TeacherCourseMembers'
+
+// ── Admin pages ───────────────────────────────────────────────────────────────
+import ManageUsersPage from './features/admin/ManageUsersPage'
+import ManageCategoriesPage from './features/admin/ManageCategoriesPage'
+import ManageCoursesPage from './features/admin/ManageCoursesPage'
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<MainLayout />} path="/">
-          <Route index element={<DashboardPage />} />
-          <Route element={<PlaceholderPage title="Đồ án" />} path="projects" />
-          <Route element={<PlaceholderPage title="Chi tiết đồ án" />} path="projects/:projectId" />
-          <Route element={<PlaceholderPage title="Tạo đồ án mới" />} path="projects/new" />
-          <Route element={<PlaceholderPage title="Công việc" />} path="tasks" />
-          <Route element={<PlaceholderPage title="Môn học" />} path="courses" />
-          <Route element={<PlaceholderPage title="Chi tiết môn học" />} path="courses/:courseId" />
-          <Route element={<PlaceholderPage title="Cài đặt hồ sơ" />} path="profile" />        
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* ── Public ─────────────────────────────────────────────────────── */}
+          <Route element={<LoginPage />} path="/login" />
+          <Route element={<ForbiddenPage />} path="/403" />
+
+          {/* ── All authenticated roles — Home (/) ─────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER', 'STUDENT']} />}>
+            <Route element={<MainLayout />} path="/">
+              <Route element={<HomePage />} index />
+              <Route element={<Navigate replace to="/" />} path="profile" />
+            </Route>
+          </Route>
+
+          {/* ── STUDENT routes ──────────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+            <Route element={<MainLayout />}>
+              {/*
+               * /my-project           → list of enrolled projects
+               * /my-project/:projectId → nested project detail tabs
+               */}
+              <Route path="my-project">
+                <Route element={<MyProjectPage />} index />
+                <Route path=":projectId">
+                  {/* Default tab: overview */}
+                  <Route element={<Navigate replace to="overview" />} index />
+                  <Route element={<ProjectOverview />} path="overview" />
+                  <Route element={<ProjectMembers />} path="members" />
+                  <Route element={<ProjectKanban />} path="kanban" />
+                  <Route element={<ProjectSubmit />} path="submit" />
+                  <Route element={<ProjectGrades />} path="grades" />
+                </Route>
+              </Route>
+
+              {/*
+               * /my-course            → list of enrolled courses
+               * /my-course/:courseId  → nested course tabs
+               */}
+              <Route path="my-course">
+                <Route element={<MyCoursePage />} index />
+                <Route path=":courseId">
+                  <Route element={<Navigate replace to="project-list" />} index />
+                  <Route element={<StudentProjectList />} path="project-list" />
+                  <Route element={<StudentProjectDetail />} path="project-list/:projectId" />
+                  <Route element={<MyTeamPage />} path="my-team" />
+                  <Route element={<CourseMembers />} path="members" />
+                </Route>
+              </Route>
+            </Route>
+          </Route>
+
+          {/* ── TEACHER routes ──────────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['TEACHER']} />}>
+            <Route element={<MainLayout />}>
+              {/*
+               * /my-course                                      → course list
+               * /my-course/:courseId/project-list               → project list
+               * /my-course/:courseId/project-list/:projectId    → project detail
+               *   └── /team-projects                            → team project listing
+               *       /team-projects/submit                     → team submission
+               *       /team-projects/grades                     → grading
+               * /my-course/:courseId/teams                      → all teams
+               * /my-course/:courseId/members                    → course members
+               */}
+              <Route path="my-course">
+                <Route element={<TeacherCoursePage />} index />
+                <Route path=":courseId">
+                  <Route element={<Navigate replace to="project-list" />} index />
+                  <Route path="project-list">
+                    <Route element={<TeacherProjectList />} index />
+                    <Route path=":projectId">
+                      <Route element={<TeacherProjectDetail />} index />
+                      <Route element={<TeamProjects />} path="team-projects" />
+                      <Route element={<TeamSubmit />} path="team-projects/submit" />
+                      <Route element={<TeamGrades />} path="team-projects/grades" />
+                    </Route>
+                  </Route>
+                  <Route element={<CourseTeams />} path="teams" />
+                  <Route element={<TeacherCourseMembers />} path="members" />
+                </Route>
+              </Route>
+            </Route>
+          </Route>
+
+          {/* ── ADMIN routes ────────────────────────────────────────────────── */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route element={<MainLayout />} path="/admin">
+              <Route element={<Navigate replace to="users" />} index />
+              <Route element={<ManageUsersPage />} path="users" />
+              <Route element={<ManageCategoriesPage />} path="categories" />
+              <Route element={<ManageCoursesPage />} path="courses" />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
