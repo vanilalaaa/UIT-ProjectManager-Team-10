@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation} from 'react-router-dom'
-import { getCurrentUser } from '../../services/auth.service'
-import type { UserDto } from '../../services/auth.service'
+/**
+ * Navbar.tsx
+ *
+ * Top navigation bar. Reads currentUser from AuthContext — no local fetch.
+ * This eliminates the duplicate API call that the old implementation made.
+ */
+import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../../features/auth/AuthContext'
 import GlobalSearch from './GlobalSearch'
 
 type NotificationOption = {
@@ -16,35 +21,14 @@ const notificationOptions: NotificationOption[] = [
   { label: 'Cho đến khi tôi bật lại', value: 'forever' },
 ]
 
-function getPageTitle(pathname: string) {
-  if (pathname === '/') {
-    return 'Trang chủ'
-  }
-
-  if (pathname === '/projects') {
-    return 'Quản lý Đồ án'
-  }
-
-  if (pathname === '/projects/new') {
-    return 'Tạo Đồ án mới'
-  }
-
-  if (pathname.startsWith('/projects/')) {
-    return 'Chi tiết Đồ án'
-  }
-
-  if (pathname === '/courses') {
-    return 'Môn học'
-  }
-
-  if (pathname.startsWith('/courses/')) {
-    return 'Chi tiết Môn học'
-  }
-
-  if (pathname === '/profile') {
-    return 'Cài đặt Hồ sơ'
-  }
-
+function getPageTitle(pathname: string): string {
+  if (pathname === '/') return 'Trang chủ'
+  if (pathname.startsWith('/my-project')) return 'Đồ án của tôi'
+  if (pathname.startsWith('/my-course')) return 'Lớp học của tôi'
+  if (pathname.startsWith('/admin/users')) return 'Quản lý người dùng'
+  if (pathname.startsWith('/admin/categories')) return 'Quản lý danh mục'
+  if (pathname.startsWith('/admin/courses')) return 'Quản lý lớp học'
+  if (pathname === '/profile') return 'Cài đặt hồ sơ'
   return 'EduCollaborate'
 }
 
@@ -86,7 +70,7 @@ function NotificationDropdown() {
         aria-haspopup="menu"
         aria-label="Thông báo"
         className="flex size-10 items-center justify-center rounded-lg text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => setIsOpen((c) => !c)}
         type="button"
       >
         <BellIcon />
@@ -125,74 +109,18 @@ function NotificationDropdown() {
   )
 }
 
-function UserProfileLink({
-  currentUser,
-  isLoading,
-}: {
-  currentUser: UserDto | null
-  isLoading: boolean
-}) {
-  const displayName = currentUser?.name ?? 'Người dùng'
-  const studentCode = currentUser?.uid ?? 'Chưa có MSSV'
-  const initials = getInitials(displayName) || 'U'
-
-  return (
-    <Link
-      className="flex items-center gap-3 rounded-lg border-l border-border pl-3 transition-colors hover:bg-surface-soft md:pl-4"
-      to="/profile"
-    >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
-        {isLoading ? '' : initials}
-      </div>
-
-      <div className="hidden min-w-0 flex-col pr-3 sm:flex">
-        {isLoading ? (
-          <span className="text-sm font-medium text-text-soft">Đang tải...</span>
-        ) : (
-          <>
-            <span className="truncate text-sm font-semibold text-text">{displayName}</span>
-            <span className="text-xs text-text-soft">{studentCode}</span>
-          </>
-        )}
-      </div>
-    </Link>
-  )
-}
-
 function Navbar() {
   const location = useLocation()
-  const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // Use AuthContext — single source of truth, no extra API call.
+  const { currentUser, isLoading } = useAuth()
 
-  useEffect(() => {
-    let isMounted = true
-
-    getCurrentUser()
-      .then((response) => {
-        if (isMounted) {
-          setCurrentUser(response.data)
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setCurrentUser(null)
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  const displayName = currentUser?.name ?? 'Người dùng'
+  const studentCode = currentUser?.uid ?? ''
+  const initials = getInitials(displayName) || 'U'
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-4 md:px-6">
       <div className="min-w-0">
-        
         <h1 className="truncate text-lg font-semibold tracking-normal text-primary md:text-xl">
           {getPageTitle(location.pathname)}
         </h1>
@@ -201,7 +129,26 @@ function Navbar() {
       <div className="flex items-center gap-3 md:gap-4">
         <GlobalSearch />
         <NotificationDropdown />
-        <UserProfileLink currentUser={currentUser} isLoading={isLoading} />
+
+        <Link
+          className="flex items-center gap-3 rounded-lg border-l border-border pl-3 transition-colors hover:bg-surface-soft md:pl-4"
+          to="/profile"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+            {isLoading ? '' : initials}
+          </div>
+
+          <div className="hidden min-w-0 flex-col pr-3 sm:flex">
+            {isLoading ? (
+              <span className="text-sm font-medium text-text-soft">Đang tải...</span>
+            ) : (
+              <>
+                <span className="truncate text-sm font-semibold text-text">{displayName}</span>
+                <span className="text-xs text-text-soft">{studentCode}</span>
+              </>
+            )}
+          </div>
+        </Link>
       </div>
     </header>
   )

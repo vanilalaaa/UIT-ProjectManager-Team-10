@@ -1,5 +1,6 @@
 export type ApiStatus = 'success' | 'error'
-export type Role = 'USER' | 'ADMIN'
+// Matches com.example.se330.enums.Role
+export type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 export type DateString = string
 export type DateTimeString = string
 
@@ -11,22 +12,25 @@ export type ApiResponse<T> = {
   timestamp: DateTimeString
 }
 
+// Matches com.example.se330.dto.auth.AuthResponse
 export type AuthResponse = {
   accessToken: string
   tokenType: string
-  expiresIn: number
+  expiresIn: number // Java Long
   uid: string
   email: string
   name: string
   role: Role
 }
 
+// Matches com.example.se330.dto.UserDto
 export type UserDto = {
-  id: number
+  id: number // Java Long
   uid: string
   email: string
   name: string
   role: Role
+  isActive: boolean
 }
 
 export type LoginRequest = {
