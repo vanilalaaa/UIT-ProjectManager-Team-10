@@ -56,7 +56,10 @@ import ManageUsersPage from './features/admin/ManageUsersPage'
 import ManageCategoriesPage from './features/admin/ManageCategoriesPage'
 import ManageCoursesPage from './features/admin/ManageCoursesPage'
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Profile ───────────────────────────────────────────────────────────────────
+import ProfilePage from './features/profile/ProfilePage';
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 function App() {
   return (
@@ -71,7 +74,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER', 'STUDENT']} />}>
             <Route element={<MainLayout />} path="/">
               <Route element={<HomePage />} index />
-              <Route element={<Navigate replace to="/" />} path="profile" />
+              <Route element={<ProfilePage />} path="profile" />
             </Route>
           </Route>
 
