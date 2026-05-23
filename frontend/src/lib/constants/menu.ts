@@ -48,10 +48,10 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     },
     {
       label: 'Quản lý Lớp học',
-      to: '/my-course',
+      to: '/teacher/my-course',
       iconPath:
         'M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5v-17Zm0 0v14A2.5 2.5 0 0 1 7.5 16H20',
-      activePath: '/my-course',
+      activePath: '/teacher/my-course',
     },
   ],
 

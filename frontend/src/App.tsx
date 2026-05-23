@@ -8,7 +8,7 @@
  *       /403                — public
  *       <ProtectedRoute>    — per-role guards
  *         <MainLayout>
- *           ... nested pages
+ *           ... nested pages with NestedTabLayout wrappers
  */
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
@@ -20,25 +20,29 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import LoginPage from './features/auth/LoginPage'
 import ForbiddenPage from './features/auth/ForbiddenPage'
 
-// ── Shared ─────────────────────────────────────────────────────────────────────
+// ── Shared ────────────────────────────────────────────────────────────────────
 import HomePage from './features/home/HomePage'
 
-// ── Student pages ─────────────────────────────────────────────────────────────
+// ── Student — my-project ──────────────────────────────────────────────────────
 import MyProjectPage from './features/student/my-project/MyProjectPage'
+import ProjectLayout from './features/student/my-project/ProjectLayout'
 import ProjectOverview from './features/student/my-project/ProjectOverview'
 import ProjectMembers from './features/student/my-project/ProjectMembers'
 import ProjectKanban from './features/student/my-project/ProjectKanban'
 import ProjectSubmit from './features/student/my-project/ProjectSubmit'
 import ProjectGrades from './features/student/my-project/ProjectGrades'
 
+// ── Student — my-course ───────────────────────────────────────────────────────
 import MyCoursePage from './features/student/my-course/MyCoursePage'
+import StudentCourseLayout from './features/student/my-course/StudentCourseLayout'
 import StudentProjectList from './features/student/my-course/StudentProjectList'
 import StudentProjectDetail from './features/student/my-course/StudentProjectDetail'
 import MyTeamPage from './features/student/my-course/MyTeamPage'
 import CourseMembers from './features/student/my-course/CourseMembers'
 
-// ── Teacher pages ─────────────────────────────────────────────────────────────
+// ── Teacher — my-course ───────────────────────────────────────────────────────
 import TeacherCoursePage from './features/teacher/my-course/TeacherCoursePage'
+import TeacherCourseLayout from './features/teacher/my-course/TeacherCourseLayout'
 import TeacherProjectList from './features/teacher/my-course/TeacherProjectList'
 import TeacherProjectDetail from './features/teacher/my-course/TeacherProjectDetail'
 import TeamProjects from './features/teacher/my-course/TeamProjects'
@@ -47,7 +51,7 @@ import TeamGrades from './features/teacher/my-course/TeamGrades'
 import CourseTeams from './features/teacher/my-course/CourseTeams'
 import TeacherCourseMembers from './features/teacher/my-course/TeacherCourseMembers'
 
-// ── Admin pages ───────────────────────────────────────────────────────────────
+// ── Admin ─────────────────────────────────────────────────────────────────────
 import ManageUsersPage from './features/admin/ManageUsersPage'
 import ManageCategoriesPage from './features/admin/ManageCategoriesPage'
 import ManageCoursesPage from './features/admin/ManageCoursesPage'
@@ -59,11 +63,11 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* ── Public ─────────────────────────────────────────────────────── */}
+          {/* ── Public ──────────────────────────────────────────────────────── */}
           <Route element={<LoginPage />} path="/login" />
           <Route element={<ForbiddenPage />} path="/403" />
 
-          {/* ── All authenticated roles — Home (/) ─────────────────────────── */}
+          {/* ── All authenticated roles — Home (/) ──────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER', 'STUDENT']} />}>
             <Route element={<MainLayout />} path="/">
               <Route element={<HomePage />} index />
@@ -74,14 +78,17 @@ function App() {
           {/* ── STUDENT routes ──────────────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
             <Route element={<MainLayout />}>
+
               {/*
-               * /my-project           → list of enrolled projects
-               * /my-project/:projectId → nested project detail tabs
+               * /my-project            → list
+               * /my-project/:projectId → tab layout (ProjectLayout)
+               *   overview | members | kanban | submit | grades
                */}
               <Route path="my-project">
                 <Route element={<MyProjectPage />} index />
-                <Route path=":projectId">
-                  {/* Default tab: overview */}
+
+                {/* ProjectLayout renders the mini-navbar + <Outlet /> */}
+                <Route element={<ProjectLayout />} path=":projectId">
                   <Route element={<Navigate replace to="overview" />} index />
                   <Route element={<ProjectOverview />} path="overview" />
                   <Route element={<ProjectMembers />} path="members" />
@@ -92,54 +99,69 @@ function App() {
               </Route>
 
               {/*
-               * /my-course            → list of enrolled courses
-               * /my-course/:courseId  → nested course tabs
+               * /my-course             → list
+               * /my-course/:courseId   → tab layout (StudentCourseLayout)
+               *   project-list | my-team | members
+               *   project-list/:projectId → detail (outside tabs, full-page)
                */}
               <Route path="my-course">
                 <Route element={<MyCoursePage />} index />
+
                 <Route path=":courseId">
+                  {/* Default: redirect to first tab */}
                   <Route element={<Navigate replace to="project-list" />} index />
-                  <Route element={<StudentProjectList />} path="project-list" />
+
+                  {/* Tab layout wraps the three tabbed sections */}
+                  <Route element={<StudentCourseLayout />}>
+                    <Route element={<StudentProjectList />} path="project-list" />
+                    <Route element={<MyTeamPage />} path="my-team" />
+                    <Route element={<CourseMembers />} path="members" />
+                  </Route>
+
+                  {/* Project detail lives outside the tab bar (full content area) */}
                   <Route element={<StudentProjectDetail />} path="project-list/:projectId" />
-                  <Route element={<MyTeamPage />} path="my-team" />
-                  <Route element={<CourseMembers />} path="members" />
                 </Route>
               </Route>
+
             </Route>
           </Route>
 
-          {/* ── TEACHER routes ──────────────────────────────────────────────── */}
+          {/* ── TEACHER routes — prefixed /teacher to avoid collision with STUDENT /my-course */}
           <Route element={<ProtectedRoute allowedRoles={['TEACHER']} />}>
-            <Route element={<MainLayout />}>
+            <Route element={<MainLayout />} path="/teacher">
+
               {/*
-               * /my-course                                      → course list
-               * /my-course/:courseId/project-list               → project list
-               * /my-course/:courseId/project-list/:projectId    → project detail
-               *   └── /team-projects                            → team project listing
-               *       /team-projects/submit                     → team submission
-               *       /team-projects/grades                     → grading
-               * /my-course/:courseId/teams                      → all teams
-               * /my-course/:courseId/members                    → course members
+               * /teacher/my-course                                        → list
+               * /teacher/my-course/:courseId                              → tab layout
+               *   project-list | teams | members
+               *   project-list/:projectId → detail + team-projects tabs
                */}
               <Route path="my-course">
                 <Route element={<TeacherCoursePage />} index />
+
                 <Route path=":courseId">
                   <Route element={<Navigate replace to="project-list" />} index />
-                  <Route path="project-list">
-                    <Route element={<TeacherProjectList />} index />
-                    <Route path=":projectId">
-                      <Route element={<TeacherProjectDetail />} index />
-                      <Route element={<TeamProjects />} path="team-projects" />
-                      <Route element={<TeamSubmit />} path="team-projects/submit" />
-                      <Route element={<TeamGrades />} path="team-projects/grades" />
-                    </Route>
+
+                  {/* Tab layout for course-level tabs */}
+                  <Route element={<TeacherCourseLayout />}>
+                    <Route element={<TeacherProjectList />} path="project-list" />
+                    <Route element={<CourseTeams />} path="teams" />
+                    <Route element={<TeacherCourseMembers />} path="members" />
                   </Route>
-                  <Route element={<CourseTeams />} path="teams" />
-                  <Route element={<TeacherCourseMembers />} path="members" />
+
+                  {/* Project detail outside tab bar — full content area */}
+                  <Route path="project-list/:projectId">
+                    <Route element={<TeacherProjectDetail />} index />
+                    <Route element={<TeamProjects />} path="team-projects" />
+                    <Route element={<TeamSubmit />} path="team-projects/submit" />
+                    <Route element={<TeamGrades />} path="team-projects/grades" />
+                  </Route>
                 </Route>
               </Route>
+
             </Route>
           </Route>
+
 
           {/* ── ADMIN routes ────────────────────────────────────────────────── */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
