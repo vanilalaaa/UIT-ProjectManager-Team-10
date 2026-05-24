@@ -45,6 +45,16 @@ public class SecurityConfig {
                                 "/api/auth/resend-verification")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/admin/**")
+                        .hasAuthority("ADMIN")
+
+                         // TASK MODULE APIs
+                        .requestMatchers(
+                                "/api/projects/*/tasks/**",
+                                "/api/tasks/**"
+                        )
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
                         .anyRequest().authenticated())
 
                 // 3. Cấu hình Session Stateless cho JWT
