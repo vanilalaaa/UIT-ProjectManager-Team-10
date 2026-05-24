@@ -23,7 +23,7 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
 
     public AdminUserService(UserRepository userRepository,
-                            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -104,7 +104,7 @@ public class AdminUserService {
 
     private UserDto toUserDto(User user) {
         return UserDto.builder()
-                .id(user.getUserId())
+                .id(user.getId())
                 .uid(user.getUid())
                 .email(user.getEmail())
                 .name(user.getName())

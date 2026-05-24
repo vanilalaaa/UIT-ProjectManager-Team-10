@@ -15,6 +15,7 @@ import lombok.Setter;
 @Builder
 public class CourseResponse {
     private Long courseId;
+    private String code;
     private String name;
     private Long lecturer;
     private Integer maxStudents;

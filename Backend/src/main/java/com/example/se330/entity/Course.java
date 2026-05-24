@@ -21,7 +21,10 @@ public class Course {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "course_id")
-    private Long courseId;
+    private Long id;
+
+    @Column(name = "code")
+    private String code;
 
     @Column(nullable = false)
     private String name;
@@ -38,6 +41,10 @@ public class Course {
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<CourseRequest> courseRequests = new ArrayList<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
