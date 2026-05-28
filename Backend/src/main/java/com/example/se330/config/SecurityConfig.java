@@ -55,6 +55,12 @@ public class SecurityConfig {
                                 "/api/tasks/**"
                         )
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                        
+                        .requestMatchers(
+                                "/api/projects/*/submissions",
+                                "/api/submissions/**"
+                        )
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
                         .anyRequest().authenticated())
 
                 // 3. Cấu hình Session Stateless cho JWT
