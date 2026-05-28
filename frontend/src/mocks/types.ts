@@ -89,14 +89,14 @@ export type Group = {
   description: string
   course: Course
   leader: User
-  members: unknown[]
+  members: User[]
   tasks: Task[]
 }
 
 export type Registration = {
   groupId: number
   project: Project | null
-  groupMember: unknown | null
+  groupMember: User | null
   registeredAt: DateString
   approvedAt: DateString | null
   status: string
