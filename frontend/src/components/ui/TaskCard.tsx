@@ -2,9 +2,10 @@ import type { Task } from '../../mocks/types'
 
 interface TaskCardProps {
   task: Task
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void 
 }
 
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task, onDragStart }: TaskCardProps) {
   const deadlineDate = new Date(task.deadline).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -16,7 +17,11 @@ export default function TaskCard({ task }: TaskCardProps) {
   const priority = 'High' 
 
   return (
-    <div className="bg-surface p-5 rounded-[18px] border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+    <div 
+      draggable={!!onDragStart} 
+      onDragStart={onDragStart} 
+      className="bg-surface p-5 rounded-[18px] border border-border shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
+    >
       
       <div className="inline-block px-3 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-lg mb-3">
         {category}
@@ -27,7 +32,6 @@ export default function TaskCard({ task }: TaskCardProps) {
       </h4>
 
       <div className="flex items-center gap-4 text-[13px] text-text-soft font-medium">
-        
         <div className="flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
@@ -42,7 +46,6 @@ export default function TaskCard({ task }: TaskCardProps) {
           <span>{commentsCount}</span>
         </div>
         
-        {/* Đính kèm */}
         <div className="flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
@@ -54,7 +57,6 @@ export default function TaskCard({ task }: TaskCardProps) {
       <hr className="my-4 border-gray-200" />
 
       <div className="flex items-center justify-between">
-        
         {task.assignedTo?.userProfile?.avatarUrl ? (
           <img 
             src={task.assignedTo.userProfile.avatarUrl} 
@@ -71,7 +73,6 @@ export default function TaskCard({ task }: TaskCardProps) {
         <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
           {priority}
         </span>
-        
       </div>
     </div>
   )

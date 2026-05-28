@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
-import { mockTasks } from '../../../mocks/tasks.mock' 
-import TaskCard from '../../../components/ui/TaskCard' 
+import React, { useState } from 'react'
+import { mockTasks } from '../../../mocks/tasks.mock'
+import TaskCard from '../../../components/ui/TaskCard'
+import type { Task } from '../../../mocks/types'
 
 const COLUMNS = [
   { id: 'TODO', title: 'To Do', color: 'text-gray-600', dotColor: 'bg-gray-400' },
@@ -10,7 +11,28 @@ const COLUMNS = [
 ]
 
 export default function ProjectKanban() {
-  const [tasks, setTasks] = useState(mockTasks) 
+  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: number) => {
+    e.dataTransfer.setData('taskId', taskId.toString())
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, status: string) => {
+    e.preventDefault()
+    
+    const taskId = parseInt(e.dataTransfer.getData('taskId'))
+    if (!taskId) return
+
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.taskId === taskId ? { ...task, status } : task
+      )
+    )
+  }
 
   return (
     <div className="h-full flex gap-6 overflow-x-auto pb-4">
@@ -18,7 +40,13 @@ export default function ProjectKanban() {
         const columnTasks = tasks.filter((task) => task.status === col.id)
 
         return (
-          <div key={col.id} className="w-80 flex-shrink-0 flex flex-col gap-4">
+          <div 
+            key={col.id} 
+            className="w-80 flex-shrink-0 flex flex-col gap-4"
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, col.id)}
+          >
+            {/* Header cột */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-text">
                 <div className={`size-2 rounded-full ${col.dotColor}`} />
@@ -29,14 +57,17 @@ export default function ProjectKanban() {
               </span>
             </div>
 
-            {/* Render TaskCard */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 min-h-[200px] h-full">
               {columnTasks.length > 0 ? (
                 columnTasks.map((task) => (
-                  <TaskCard key={task.taskId} task={task} />
+                  <TaskCard 
+                    key={task.taskId} 
+                    task={task} 
+                    onDragStart={(e) => handleDragStart(e, task.taskId)}
+                  />
                 ))
               ) : (
-                 <div className="p-4 rounded-xl border border-dashed border-border text-center text-sm text-text-soft">
+                <div className="p-4 rounded-xl border border-dashed border-border text-center text-sm text-text-soft">
                   No tasks
                 </div>
               )}
