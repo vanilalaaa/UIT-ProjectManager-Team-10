@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.example.se330.enums.GroupMemberStatus;
 
@@ -31,7 +29,7 @@ public class GroupMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User groupMember;
+    private User user;
 
     @Column(name = "joined_date")
     private LocalDate joinedDate;

@@ -77,7 +77,7 @@ public class CourseRequestService {
     }
 
     public List<MemberInCourseResponse> getMemberInCourse(Long id) {
-        List<MemberInCourseResponse> resp = this.courseRequestRepository.findAllById(id)
+        List<MemberInCourseResponse> resp = this.courseRequestRepository.findAllByCourseId(id)
                 .stream()
                 .map(this::mapToMemberInCourseResponse)
                 .toList();
