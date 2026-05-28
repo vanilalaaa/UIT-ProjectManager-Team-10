@@ -77,10 +77,15 @@ public class AdminCategoryService {
         return toCategoryDto(updated);
     }
 
-    public CategoryDto getCategoryById(Long id) {
+    public CategoryDto getCategoryDto(Long id) {
+        Category category = this.getCategoryById(id);
+        return toCategoryDto(category);
+    }
+
+    public Category getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-        return toCategoryDto(category);
+        return category;
     }
 
     private CategoryDto toCategoryDto(Category category) {

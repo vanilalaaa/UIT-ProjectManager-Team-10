@@ -14,7 +14,7 @@ import com.example.se330.enums.JoinStatus;
 public interface CourseRequestRepository extends JpaRepository<CourseRequest, Long> {
     List<CourseRequest> findAllByCourseAndStatus(Course course, JoinStatus status);
 
-    List<CourseRequest> findAllById(Long id);
+    List<CourseRequest> findAllByCourseId(Long courseId);
 
     boolean existsByStudent_IdAndCourse_Id(Long student, Long course);
 
