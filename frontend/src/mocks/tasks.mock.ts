@@ -19,7 +19,7 @@ const userNguyenMinhAn: User = {
     summary: 'Frontend developer phụ trách React và trải nghiệm người dùng.',
     firstName: 'An',
     lastName: 'Nguyễn Minh',
-    avatarUrl: '/avatars/nguyen-minh-an.png',
+    avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
     phoneNumber: '0902000001',
     birthday: '2004-05-12',
   },
@@ -44,7 +44,7 @@ const userLeHoangVy: User = {
     summary: 'Backend developer phụ trách Spring Boot và cơ sở dữ liệu.',
     firstName: 'Vy',
     lastName: 'Lê Hoàng',
-    avatarUrl: '/avatars/le-hoang-vy.png',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
     phoneNumber: '0902000002',
     birthday: '2004-10-02',
   },
@@ -69,7 +69,7 @@ const userTranGiaBao: User = {
     summary: 'QA và tài liệu, theo dõi test case và báo cáo tiến độ.',
     firstName: 'Bảo',
     lastName: 'Trần Gia',
-    avatarUrl: '/avatars/tran-gia-bao.png',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
     phoneNumber: '0902000003',
     birthday: '2004-03-18',
   },
@@ -94,13 +94,113 @@ const userPhamQuynhNhu: User = {
     summary: 'Phân tích nghiệp vụ và thiết kế luồng người dùng.',
     firstName: 'Như',
     lastName: 'Phạm Quỳnh',
-    avatarUrl: '/avatars/pham-quynh-nhu.png',
+    avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
     phoneNumber: '0902000004',
     birthday: '2004-12-27',
   },
 }
 
-const softwareEngineeringCourse: Course = {
+export const userNguyenThuyDuong: User = {
+  userId: 5,
+  uid: 'SV22520005',
+  email: '22520005@gm.uit.edu.vn',
+  password: null,
+  name: 'Nguyễn Thùy Dương',
+  role: 'STUDENT',
+  createdAt: '2026-02-12T10:00:00',
+  updatedAt: '2026-05-13T22:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 5,
+    summary: 'AI Specialization và xử lý ngôn ngữ tự nhiên.',
+    firstName: 'Dương',
+    lastName: 'Nguyễn Thùy',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
+    phoneNumber: '0902000005',
+    birthday: '2004-08-14',
+  },
+}
+
+export const userHoangPhuQuy: User = {
+  userId: 6,
+  uid: 'SV22520006',
+  email: '22520006@gm.uit.edu.vn',
+  password: null,
+  name: 'Hoàng Phú Quý',
+  role: 'STUDENT',
+  createdAt: '2026-02-12T10:15:00',
+  updatedAt: '2026-05-13T22:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 6,
+    summary: 'Data Engineering, tối ưu hóa câu lệnh SQL và Big Data.',
+    firstName: 'Quý',
+    lastName: 'Hoàng Phú',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    phoneNumber: '0902000006',
+    birthday: '2004-01-22',
+  },
+}
+
+export const userBuiNhatTruong: User = {
+  userId: 7,
+  uid: 'SV22520007',
+  email: '22520007@gm.uit.edu.vn',
+  password: null,
+  name: 'Bùi Nhật Trường',
+  role: 'STUDENT',
+  createdAt: '2026-02-12T10:30:00',
+  updatedAt: '2026-05-13T22:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 7,
+    summary: 'BSc Computer Science • Year 2. Đam mê Cloud Computing.',
+    firstName: 'Trường',
+    lastName: 'Bùi Nhật',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    phoneNumber: '0902000007',
+    birthday: '2004-09-05',
+  },
+}
+
+export const userLeViSa: User = {
+  userId: 8,
+  uid: 'SV22520008',
+  email: '22520008@gm.uit.edu.vn',
+  password: null,
+  name: 'Lê Vi Sa',
+  role: 'STUDENT',
+  createdAt: '2026-02-12T10:45:00',
+  updatedAt: '2026-05-13T22:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 8,
+    summary: 'UI/UX Design Minor. Chuyên thiết kế wireframe và prototype.',
+    firstName: 'Sa',
+    lastName: 'Lê Vi',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Vi+Sa&size=100&background=random',
+    phoneNumber: '0902000008',
+    birthday: '2004-11-30',
+  },
+}
+
+export const softwareEngineeringCourse: Course = {
   courseId: 1,
   name: 'SE330 - Công nghệ phần mềm',
   lecturer: null,
@@ -111,7 +211,7 @@ const softwareEngineeringCourse: Course = {
   projects: [],
 }
 
-const projectManagementCourse: Course = {
+export const projectManagementCourse: Course = {
   courseId: 2,
   name: 'PM301 - Quản lý dự án phần mềm',
   lecturer: null,
@@ -122,55 +222,66 @@ const projectManagementCourse: Course = {
   projects: [],
 }
 
-const groupPhoenix: Group = {
+export const groupPhoenix: Group = {
   groupId: 1,
   name: 'Nhóm 01 - Phoenix',
   description: 'Nhóm thực hiện đồ án Website quản lý đồ án môn SE330.',
   course: softwareEngineeringCourse,
   leader: userNguyenMinhAn,
-  members: [],
+  members: [userNguyenMinhAn, userLeHoangVy], 
   tasks: [],
 }
 
-const groupAster: Group = {
+export const groupAster: Group = {
   groupId: 2,
   name: 'Nhóm 02 - Aster',
   description: 'Nhóm thực hiện ứng dụng điểm danh lớp học bằng QR.',
   course: softwareEngineeringCourse,
-  leader: userLeHoangVy,
-  members: [],
+  leader: userNguyenThuyDuong,
+  members: [userNguyenThuyDuong], 
   tasks: [],
 }
 
-const groupNimbus: Group = {
+export const groupNimbus: Group = {
   groupId: 3,
   name: 'Nhóm 03 - Nimbus',
   description: 'Nhóm thực hiện hệ thống đăng ký đề tài môn học.',
   course: projectManagementCourse,
   leader: userTranGiaBao,
-  members: [],
+  members: [userTranGiaBao, userBuiNhatTruong], 
   tasks: [],
 }
 
-const groupOrion: Group = {
+export const groupOrion: Group = {
   groupId: 4,
   name: 'Nhóm 04 - Orion',
   description: 'Nhóm chuẩn bị nền tảng nhắc lịch nộp bài nhóm.',
   course: projectManagementCourse,
   leader: userPhamQuynhNhu,
-  members: [],
+  members: [userPhamQuynhNhu], 
   tasks: [],
 }
 
-const groupLumos: Group = {
+export const groupLumos: Group = {
   groupId: 5,
   name: 'Nhóm 05 - Lumos',
   description: 'Nhóm thực hiện dashboard đánh giá tiến độ đồ án.',
   course: softwareEngineeringCourse,
   leader: userNguyenMinhAn,
-  members: [],
+  members: [userNguyenMinhAn], 
   tasks: [],
 }
+
+export const mockClassMembers: User[] = [
+  userNguyenMinhAn,
+  userLeHoangVy,
+  userTranGiaBao,
+  userPhamQuynhNhu,
+  userNguyenThuyDuong,
+  userHoangPhuQuy,
+  userBuiNhatTruong,
+  userLeViSa
+]
 
 export const mockTasks: Task[] = [
   {
@@ -201,7 +312,7 @@ export const mockTasks: Task[] = [
     taskId: 3,
     title: 'Viết test case quản lý task',
     description: 'Chuẩn bị test case cho tạo task, đổi trạng thái và lọc task theo nhóm.',
-    assignedTo: userTranGiaBao,
+    assignedTo: userLeHoangVy,
     createdBy: userNguyenMinhAn,
     status: 'TODO',
     group: groupPhoenix,
@@ -213,25 +324,13 @@ export const mockTasks: Task[] = [
     taskId: 4,
     title: 'Tạo prototype màn hình quét QR',
     description: 'Dựng giao diện camera, trạng thái quét thành công và lỗi mã hết hạn.',
-    assignedTo: userPhamQuynhNhu,
-    createdBy: userLeHoangVy,
+    assignedTo: userNguyenThuyDuong,
+    createdBy: userHoangPhuQuy,
     status: 'REVIEW',
     group: groupAster,
     deadline: '2026-05-19T17:30:00',
     createdAt: '2026-05-04T08:30:00',
     updatedAt: '2026-05-16T16:45:00',
-  },
-  {
-    taskId: 5,
-    title: 'Tối ưu lưu lịch sử điểm danh',
-    description: 'Chuẩn hóa dữ liệu phiên điểm danh và xử lý trường hợp sinh viên quét nhiều lần.',
-    assignedTo: userLeHoangVy,
-    createdBy: userLeHoangVy,
-    status: 'IN_PROGRESS',
-    group: groupAster,
-    deadline: '2026-05-22T23:00:00',
-    createdAt: '2026-05-07T11:20:00',
-    updatedAt: '2026-05-17T08:05:00',
   },
   {
     taskId: 6,
@@ -249,7 +348,7 @@ export const mockTasks: Task[] = [
     taskId: 7,
     title: 'Khóa danh sách nhóm đăng ký đề tài',
     description: 'Đối chiếu dữ liệu đăng ký và xuất file danh sách nhóm đã được duyệt.',
-    assignedTo: userNguyenMinhAn,
+    assignedTo: userBuiNhatTruong,
     createdBy: userTranGiaBao,
     status: 'DONE',
     group: groupNimbus,
@@ -269,28 +368,21 @@ export const mockTasks: Task[] = [
     createdAt: '2026-05-16T15:30:00',
     updatedAt: '2026-05-16T15:30:00',
   },
-  {
-    taskId: 9,
-    title: 'Sửa bộ lọc dashboard tiến độ',
-    description: 'Bổ sung lọc theo lớp, nhóm và trạng thái đồ án cho màn hình dashboard.',
-    assignedTo: userNguyenMinhAn,
-    createdBy: userLeHoangVy,
-    status: 'BLOCKED',
-    group: groupLumos,
-    deadline: '2026-05-10T23:59:00',
-    createdAt: '2026-04-28T10:15:00',
-    updatedAt: '2026-05-11T08:40:00',
-  },
-  {
-    taskId: 10,
-    title: 'Bổ sung biểu đồ tỷ lệ hoàn thành',
-    description: 'Hiển thị tỷ lệ task hoàn thành theo từng nhóm và cảnh báo nhóm có tiến độ thấp.',
-    assignedTo: userTranGiaBao,
-    createdBy: userNguyenMinhAn,
-    status: 'IN_PROGRESS',
-    group: groupLumos,
-    deadline: '2026-05-21T21:00:00',
-    createdAt: '2026-05-02T16:00:00',
-    updatedAt: '2026-05-17T10:30:00',
-  },
 ]
+
+export const mockTeamRequests: User[] = [
+  { 
+    ...userHoangPhuQuy, 
+    userProfile: { 
+      ...userHoangPhuQuy.userProfile!, 
+      summary: 'Data Engineering • Mong muốn tham gia nhóm để học hỏi thêm về thực tế.' 
+    }
+  },
+  { 
+    ...userLeViSa, 
+    userProfile: { 
+      ...userLeViSa.userProfile!, 
+      summary: 'UI/UX Design Minor • Rất hào hứng với dự án của nhóm.' 
+    }
+  }
+];
