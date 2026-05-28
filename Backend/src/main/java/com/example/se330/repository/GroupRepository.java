@@ -16,3 +16,10 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     // Tìm tất cả Group theo Course ID
     List<Group> findByCourseId(Long courseId);
 }
+import com.example.se330.entity.Group;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface GroupRepository extends JpaRepository<Group, Long> {
+}
