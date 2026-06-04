@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.se330.enums.ProjectStatus;
+
 @Entity
 @Table(name = "projects")
 @Data
@@ -21,7 +23,7 @@ public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_id")
-    private Long projectId;
+    private Long id;
 
     @Column(nullable = false)
     private String title;
@@ -29,7 +31,7 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String status;
+    private ProjectStatus status;
 
     @Column(name = "start_date")
     private LocalDate startDate;

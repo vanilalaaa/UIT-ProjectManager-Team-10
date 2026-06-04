@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+
+import com.example.se330.enums.GroupMemberStatus;
 
 @Entity
 @Table(name = "group_members")
@@ -20,8 +20,8 @@ public class GroupMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "student_id")
-    private Long studentId;
+    @Column(name = "group_member_id")
+    private Long groupMemberId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
@@ -34,13 +34,9 @@ public class GroupMember {
     @Column(name = "joined_date")
     private LocalDate joinedDate;
 
-    private String status;
+    private GroupMemberStatus status;
 
     @Column(name = "is_leader")
     @Builder.Default
     private Boolean isLeader = false;
-
-    @OneToMany(mappedBy = "groupMember", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Registration> registrations = new ArrayList<>();
 }

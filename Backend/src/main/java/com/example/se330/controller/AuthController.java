@@ -2,10 +2,12 @@ package com.example.se330.controller;
 
 import com.example.se330.dto.*;
 import com.example.se330.dto.auth.AuthResponse;
+import com.example.se330.dto.auth.ChangePasswordRequest;
 import com.example.se330.dto.auth.ForgotPasswordRequest;
 import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
+import com.example.se330.dto.auth.UpdateUserRequest;
 import com.example.se330.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -71,6 +73,28 @@ public class AuthController {
         authService.resetPassword(request);
 
         return ApiResponse.success("Password reset successful");
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        authService.changePassword(authentication, request);
+
+        return ApiResponse.success("Password changed successfully");
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserDto>> updateCurrentUser(
+            @Valid @RequestBody UpdateUserRequest request,
+            Authentication authentication) {
+
+        UserDto userDto = authService.updateCurrentUser(authentication, request);
+
+        return ApiResponse.success(
+                userDto,
+                "User profile updated successfully");
     }
 
     @GetMapping("/me")
