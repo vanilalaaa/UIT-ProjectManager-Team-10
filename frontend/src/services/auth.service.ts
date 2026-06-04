@@ -1,83 +1,56 @@
-/**
- * auth.service.ts
- *
- * Single source of truth for auth API calls.
- * - While the backend is not yet integrated, this service uses mock data.
- * - To switch to real API: uncomment the Axios block at the bottom and delete the mock block.
- *
- * Flow: UI → Hook → auth.service.ts → Mock / axiosClient
- */
-import {
-  MOCK_CREDENTIALS,
-  MOCK_LOGIN_RESPONSES,
-  MOCK_ME_RESPONSES,
-} from '../mocks/auth.mock'
-import type { ApiResponse, AuthResponse, LoginRequest, UserDto } from '../mocks/types'
+import axiosClient from '../lib/api/axiosClient'
+import type { ApiResponse } from '../types/api/common'
+import type {
+  AuthResponse,
+  ForgotPasswordRequest,
+  LoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  UpdateMeRequest,
+  UpdatePasswordRequest,
+  UserDto,
+} from '../types/api/auth'
 
-export type { ApiResponse, AuthResponse, LoginRequest, UserDto }
-
-// ── Mock utilities ───────────────────────────────────────────────────────────
-
-const MOCK_NETWORK_LATENCY = 800
-
-/**
- * Simulates network latency and returns a deep-cloned copy of the response.
- * Uses structuredClone() per PROJECT_RULES §3 — never JSON.parse(JSON.stringify()).
- */
-const resolveMock = <T>(response: ApiResponse<T>): Promise<ApiResponse<T>> =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(structuredClone(response))
-    }, MOCK_NETWORK_LATENCY)
-  })
-
-const rejectMock = <T>(response: ApiResponse<T>): Promise<ApiResponse<T>> =>
-  new Promise((_, reject) => {
-    setTimeout(() => {
-      reject(structuredClone(response))
-    }, MOCK_NETWORK_LATENCY)
-  })
-
-// ── Mock Auth Service ────────────────────────────────────────────────────────
-
-export const login = (credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> => {
-  const account = MOCK_CREDENTIALS[credentials.email]
-
-  // Validate email + password against mock accounts
-  if (!account || account.password !== credentials.password) {
-    const errorResponse: ApiResponse<AuthResponse> = {
-      status: 'error',
-      message: 'Email hoặc mật khẩu không đúng.',
-      data: null as unknown as AuthResponse,
-      errorCode: '401',
-      timestamp: new Date().toISOString(),
-    }
-    return rejectMock(errorResponse)
-  }
-
-  return resolveMock(MOCK_LOGIN_RESPONSES[credentials.email])
+export type {
+  ApiResponse,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  ForgotPasswordRequest,
+  UpdateMeRequest,
+  UpdatePasswordRequest,
+  UserDto,
 }
 
-export const getCurrentUser = (email: string): Promise<ApiResponse<UserDto>> => {
-  const meResponse = MOCK_ME_RESPONSES[email]
-  if (!meResponse) {
-    const errorResponse: ApiResponse<UserDto> = {
-      status: 'error',
-      message: 'Không tìm thấy người dùng.',
-      data: null as unknown as UserDto,
-      errorCode: '404',
-      timestamp: new Date().toISOString(),
-    }
-    return rejectMock(errorResponse)
-  }
-  return resolveMock(meResponse)
+export const login = (credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> =>
+  axiosClient.post<ApiResponse<AuthResponse>>('/auth/login', credentials).then((r) => r.data)
+
+export const register = (payload: RegisterRequest): Promise<ApiResponse<UserDto>> =>
+  axiosClient.post<ApiResponse<UserDto>>('/auth/register', payload).then((r) => r.data)
+
+export const verifyEmail = (token: string): Promise<ApiResponse<void>> =>
+  axiosClient
+    .get<ApiResponse<void>>('/auth/verify-email', { params: { token } })
+    .then((r) => r.data)
+
+export const forgotPassword = (payload: ForgotPasswordRequest): Promise<ApiResponse<void>> =>
+  axiosClient.post<ApiResponse<void>>('/auth/forgot-password', payload).then((r) => r.data)
+
+export const resetPassword = (payload: ResetPasswordRequest): Promise<ApiResponse<void>> =>
+  axiosClient.post<ApiResponse<void>>('/auth/reset-password', payload).then((r) => r.data)
+
+export const logout = (): Promise<ApiResponse<void>> =>
+  axiosClient.post<ApiResponse<void>>('/auth/logout').then((r) => r.data)
+
+// BE đọc user từ JWT; tham số _email giữ để tương thích chữ ký cũ.
+export const getCurrentUser = (_email?: string): Promise<ApiResponse<UserDto>> => {
+  void _email
+  return axiosClient.get<ApiResponse<UserDto>>('/users/me').then((r) => r.data)
 }
 
-// ── Real API (uncomment when Spring Boot backend is ready) ───────────────────
-// import axiosClient from '../lib/api/axiosClient'
-//
-// export const login = (credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> =>
-//   axiosClient.post('/api/auth/login', credentials).then((res) => res.data)
-//
-// export const getCurrentUser = (_email?: string): Promise<ApiResponse<UserDto>> =>
-//   axiosClient.get('/api/auth/me').then((res) => res.data)
+export const updateMe = (payload: UpdateMeRequest): Promise<ApiResponse<UserDto>> =>
+  axiosClient.put<ApiResponse<UserDto>>('/users/me', payload).then((r) => r.data)
+
+export const updatePassword = (payload: UpdatePasswordRequest): Promise<ApiResponse<void>> =>
+  axiosClient.put<ApiResponse<void>>('/users/me/password', payload).then((r) => r.data)
