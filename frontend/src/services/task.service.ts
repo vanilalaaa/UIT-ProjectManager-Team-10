@@ -1,5 +1,5 @@
-import { mockTasks } from '../mocks/tasks.mock'
-import type { ApiResponse, Task } from '../mocks/types'
+import { mockTasks, mockTeamRequests } from '../mocks/tasks.mock'
+import type { ApiResponse, Task, User } from '../mocks/types'
 
 const MOCK_NETWORK_LATENCY = 800
 const MOCK_API_TIMESTAMP = '2026-05-17T10:00:00'
@@ -35,6 +35,10 @@ export const getTasksByGroupId = (groupId: number | string): Promise<ApiResponse
   const tasks = mockTasks.filter((item) => item.group.groupId === Number(groupId))
 
   return resolveMock(tasks)
+}
+
+export const getTeamRequests = (): Promise<ApiResponse<User[]>> => {
+  return resolveMock(mockTeamRequests)
 }
 
 // Real API version (uncomment when the Spring Boot backend is ready):

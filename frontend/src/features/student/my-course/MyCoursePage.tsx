@@ -1,4 +1,96 @@
-import PlaceholderPage from '../../../components/common/PlaceholderPage'
+import { useEffect, useState } from 'react'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import CourseCard, { type CourseCardData } from '../../../components/ui/CourseCard'
+import type { User, Project } from '../../../mocks/types'
+
+import { mockProjects } from '../../../mocks/projects.mock'
+
+const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
+  const uniqueCoursesMap = new Map<number, CourseCardData>()
+
+  projects.forEach((project) => {
+    const course = project.course
+    if (course && !uniqueCoursesMap.has(course.courseId)) {
+      const nameParts = course.name.split(' - ')
+      const courseCode = nameParts[0] || 'COURSE'
+      const courseName = nameParts[1] || course.name
+
+      const allCourseUsers: User[] = []
+      const courseGroups = course.groups || []
+      
+      courseGroups.forEach((group) => {
+        if (group.members) {
+          group.members.forEach((m) => {
+            const member = m as User
+            if (member && !allCourseUsers.some(u => u.userId === member.userId)) {
+              allCourseUsers.push(member)
+            }
+          })
+        }
+      })
+
+      const totalActualMembers = allCourseUsers.length
+      const actualAvatars = allCourseUsers
+        .map(user => user.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`)
+        .slice(0, 3)
+
+      uniqueCoursesMap.set(course.courseId, {
+        id: course.courseId,
+        code: courseCode,
+        name: courseName,
+        lecturer: course.lecturer?.name || 'Chưa phân công',
+        semester: 'Fall Semester 2026',
+        projectsCount: projects.filter((p) => p.course.courseId === course.courseId).length,
+        membersCount: totalActualMembers > 0 ? totalActualMembers : (course.maxStudents || 120),
+        avatars: actualAvatars,
+        extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
+      })
+    }
+  })
+  
+  return Array.from(uniqueCoursesMap.values())
+}
+
 export default function MyCoursePage() {
-  return <PlaceholderPage title="Lớp học của tôi" />
+  const [courses, setCourses] = useState<CourseCardData[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    let isMounted = true
+    setLoading(true)
+
+    setTimeout(() => {
+      if (isMounted) {
+        setCourses(transformProjectsToCourses(mockProjects))
+        setLoading(false)
+      }
+    }, 500)
+    
+    return () => { isMounted = false }
+  }, [])
+
+  if (loading) return <LoadingSpinner message="Đang tải danh sách khóa học..." />
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-text">My Courses</h2>
+        <button
+          className="bg-brand-gradient flex items-center gap-2 rounded-button px-5 py-2.5 text-sm font-semibold text-surface shadow-soft hover:opacity-90 transition-opacity"
+          type="button"
+        >
+          <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Join new course
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {courses.map((course) => (
+          <CourseCard key={course.id} course={course} />
+        ))}
+      </div>
+    </div>
+  )
 }
