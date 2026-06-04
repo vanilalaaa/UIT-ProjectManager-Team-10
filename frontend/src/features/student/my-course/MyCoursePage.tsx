@@ -1,68 +1,72 @@
 import { useEffect, useState } from 'react'
-import { getProjects } from '../../../services/project.service'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CourseCard, { type CourseCardData } from '../../../components/ui/CourseCard'
-import type { User } from '../../../mocks/types'
+import type { User, Project } from '../../../mocks/types'
+
+import { mockProjects } from '../../../mocks/projects.mock'
+
+const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
+  const uniqueCoursesMap = new Map<number, CourseCardData>()
+
+  projects.forEach((project) => {
+    const course = project.course
+    if (course && !uniqueCoursesMap.has(course.courseId)) {
+      const nameParts = course.name.split(' - ')
+      const courseCode = nameParts[0] || 'COURSE'
+      const courseName = nameParts[1] || course.name
+
+      const allCourseUsers: User[] = []
+      const courseGroups = course.groups || []
+      
+      courseGroups.forEach((group) => {
+        if (group.members) {
+          group.members.forEach((m) => {
+            const member = m as User
+            if (member && !allCourseUsers.some(u => u.userId === member.userId)) {
+              allCourseUsers.push(member)
+            }
+          })
+        }
+      })
+
+      const totalActualMembers = allCourseUsers.length
+      const actualAvatars = allCourseUsers
+        .map(user => user.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`)
+        .slice(0, 3)
+
+      uniqueCoursesMap.set(course.courseId, {
+        id: course.courseId,
+        code: courseCode,
+        name: courseName,
+        lecturer: course.lecturer?.name || 'Chưa phân công',
+        semester: 'Fall Semester 2026',
+        projectsCount: projects.filter((p) => p.course.courseId === course.courseId).length,
+        membersCount: totalActualMembers > 0 ? totalActualMembers : (course.maxStudents || 120),
+        avatars: actualAvatars,
+        extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
+      })
+    }
+  })
+  
+  return Array.from(uniqueCoursesMap.values())
+}
 
 export default function MyCoursePage() {
   const [courses, setCourses] = useState<CourseCardData[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    const fetchCoursesAndMembers = async () => {
-      setLoading(true)
-      const response = await getProjects()
-      
-      if (response && response.data) {
-        const uniqueCoursesMap = new Map<number, CourseCardData>()
-        const allProjects = response.data
+    let isMounted = true
+    setLoading(true)
 
-        allProjects.forEach((project) => {
-          const course = project.course
-          if (course && !uniqueCoursesMap.has(course.courseId)) {
-            const nameParts = course.name.split(' - ')
-            const courseCode = nameParts[0] || 'COURSE'
-            const courseName = nameParts[1] || course.name
-
-            const allCourseUsers: User[] = []
-            const courseGroups = course.groups || []
-            
-            courseGroups.forEach((group) => {
-              if (group.members) {
-                group.members.forEach((m) => {
-                  const member = m as User
-                  if (!allCourseUsers.some(u => u.userId === member.userId)) {
-                    allCourseUsers.push(member)
-                  }
-                })
-              }
-            })
-
-            const totalActualMembers = allCourseUsers.length
-
-            const actualAvatars = allCourseUsers
-              .map(user => user.userProfile?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop')
-              .slice(0, 3)
-
-            uniqueCoursesMap.set(course.courseId, {
-              id: course.courseId,
-              code: courseCode,
-              name: courseName,
-              lecturer: course.lecturer?.name || 'Chưa phân công',
-              semester: 'Fall Semester 2024',
-              projectsCount: allProjects.filter((p) => p.course.courseId === course.courseId).length,
-              membersCount: totalActualMembers > 0 ? totalActualMembers : (course.maxStudents || 120),
-              avatars: actualAvatars,
-              extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
-            })
-          }
-        })
-        setCourses(Array.from(uniqueCoursesMap.values()))
+    setTimeout(() => {
+      if (isMounted) {
+        setCourses(transformProjectsToCourses(mockProjects))
+        setLoading(false)
       }
-      setLoading(false)
-    }
-
-    fetchCoursesAndMembers()
+    }, 500)
+    
+    return () => { isMounted = false }
   }, [])
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách khóa học..." />

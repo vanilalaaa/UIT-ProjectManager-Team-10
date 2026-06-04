@@ -1,31 +1,66 @@
 import { useEffect, useState } from 'react'
-import { getTasksByGroupId } from '../../../services/task.service'
+import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/MemberRow'
 import UserProfilePopover from '../../../components/ui/UserProfilePopover'
 import InviteListModal from '../../../components/ui/InviteListModal'
+import CreateTeamModal from '../../../components/ui/CreateTeamModal' 
 import type { User, Group } from '../../../mocks/types'
-import { mockTeamRequests } from '../../../mocks/tasks.mock'
+
+import { mockMyGroupMap, mockTeamRequestsMap, userSinhVienTran } from '../../../mocks/tasks.mock'
+
+const fetchTeamData = async (courseId: string | undefined) => {
+  return new Promise<{ group: Group | null, requests: User[] }>(resolve => {
+    setTimeout(() => {
+      const id = Number(courseId)
+      resolve({
+        group: mockMyGroupMap[id] || null,
+        requests: mockTeamRequestsMap[id] || []
+      })
+    }, 500)
+  })
+}
 
 export default function MyTeamPage() {
+  const { courseId } = useParams<{ courseId: string }>()
   const [myGroup, setMyGroup] = useState<Group | null>(null)
+  const [teamRequests, setTeamRequests] = useState<User[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false) 
 
   useEffect(() => {
-    const fetchMyGroupData = async () => {
-      setLoading(true)
-      const response = await getTasksByGroupId(1)
-      if (response && response.data && response.data.length > 0) {
-        setMyGroup(response.data[0].group)
-      } else {
-        setMyGroup(null)
+    let isMounted = true
+    setLoading(true)
+
+    fetchTeamData(courseId).then((data) => {
+      if (isMounted) {
+        setMyGroup(data.group)
+        setTeamRequests(data.requests)
+        setLoading(false)
       }
-      setLoading(false)
+    })
+
+    return () => { isMounted = false }
+  }, [courseId])
+
+  const handleCreateTeamSubmit = (name: string, description: string) => {
+    const newGroup: Group = {
+      groupId: Math.floor(Math.random() * 1000) + 10,
+      name,
+      description,
+      course: null as any,
+      leader: userSinhVienTran, 
+      members: [userSinhVienTran], 
+      tasks: []
     }
-    fetchMyGroupData()
-  }, [])
+    
+    const id = Number(courseId)
+    mockMyGroupMap[id] = newGroup
+
+    setMyGroup(newGroup)
+  }
 
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
 
@@ -54,7 +89,11 @@ export default function MyTeamPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <button type="button" className="bg-brand-gradient text-surface font-semibold px-6 py-2.5 rounded-button shadow-soft hover:opacity-90 transition-opacity flex items-center gap-2 text-sm">
+              <button 
+                onClick={() => setIsCreateModalOpen(true)} 
+                type="button" 
+                className="bg-brand-gradient text-surface font-semibold px-6 py-2.5 rounded-button shadow-soft hover:opacity-90 transition-opacity flex items-center gap-2 text-sm"
+              >
                 Create new team
               </button>
               <button onClick={() => setIsInviteModalOpen(true)} className="bg-surface text-primary border border-primary font-semibold px-6 py-2.5 rounded-button hover:bg-primary-soft transition-all text-sm">
@@ -117,38 +156,51 @@ export default function MyTeamPage() {
             <div className="flex items-center gap-2 border-b border-border pb-4">
               <h2 className="text-xl font-bold text-text">Team Requests</h2>
             </div>
-            <div className="space-y-4">
-              {mockTeamRequests.map((request) => (
-                <div key={request.userId} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <img src={request.userProfile?.avatarUrl} className="size-12 rounded-full object-cover border border-border shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
-                      <p className="text-xs text-text-soft mt-0.5 break-words leading-relaxed">{request.userProfile?.summary}</p>
+            
+            {teamRequests.length > 0 ? (
+              <div className="space-y-4">
+                {teamRequests.map((request) => (
+                  <div key={request.userId} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <img src={request.userProfile?.avatarUrl} className="size-12 rounded-full object-cover border border-border shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
+                        <p className="text-xs text-text-soft mt-0.5 break-words leading-relaxed">{request.userProfile?.summary}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">
+                      <div className="relative mr-auto">
+                        <button onClick={() => setActivePopoverId(activePopoverId === request.userId ? null : request.userId)} className="text-xs font-semibold text-primary px-3 py-1.5 rounded hover:bg-primary-soft">
+                          Xem hồ sơ
+                        </button>
+                        {activePopoverId === request.userId && (
+                          <div className="absolute left-0 top-full mt-2 z-50 w-72">
+                            <UserProfilePopover user={request} onClose={() => setActivePopoverId(null)} />
+                          </div>
+                        )}
+                      </div>
+                      <button className="text-xs font-semibold text-text-soft px-3 py-1.5 rounded hover:bg-surface-soft">Decline</button>
+                      <button className="text-xs font-semibold bg-primary text-surface px-4 py-1.5 rounded">Accept</button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">
-                    <div className="relative mr-auto">
-                      <button onClick={() => setActivePopoverId(activePopoverId === request.userId ? null : request.userId)} className="text-xs font-semibold text-primary px-3 py-1.5 rounded hover:bg-primary-soft">
-                        Xem hồ sơ
-                      </button>
-                      {activePopoverId === request.userId && (
-                        <div className="absolute left-0 top-full mt-2 z-50 w-72">
-                          <UserProfilePopover user={request} onClose={() => setActivePopoverId(null)} />
-                        </div>
-                      )}
-                    </div>
-                    <button className="text-xs font-semibold text-text-soft px-3 py-1.5 rounded hover:bg-surface-soft">Decline</button>
-                    <button className="text-xs font-semibold bg-primary text-surface px-4 py-1.5 rounded">Accept</button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-text-soft">
+                Không có lời yêu cầu tham gia nào.
+              </div>
+            )}
           </div>
         </div>
       )}
 
       <InviteListModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+      
+      <CreateTeamModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+        onSubmit={handleCreateTeamSubmit}
+      />
     </div>
   )
 }

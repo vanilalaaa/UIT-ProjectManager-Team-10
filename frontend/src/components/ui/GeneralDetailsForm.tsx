@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface GeneralDetailsFormProps {
   user: {
     firstName: string

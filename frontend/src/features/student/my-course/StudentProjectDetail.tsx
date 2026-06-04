@@ -1,13 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { getProjectById } from '../../../services/project.service'
-import { getTasksByGroupId } from '../../../services/task.service'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import FileAttachment from '../../../components/ui/FileAttachment'
 import MemberRow from '../../../components/ui/MemberRow'
 import UserProfilePopover from '../../../components/ui/UserProfilePopover'
 import type { Project, Group, User } from '../../../mocks/types'
+
+import { mockProjects } from '../../../mocks/projects.mock'
+import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
 
 export default function StudentProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -19,26 +20,25 @@ export default function StudentProjectDetail() {
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
   useEffect(() => {
-    const fetchProjectDetails = async () => {
-      setLoading(true)
-      const projectResponse = await getProjectById(Number(projectId))
-      
-      if (projectResponse && projectResponse.data) {
-        const projectData = projectResponse.data
-        setProject(projectData)
+    let isMounted = true
+    setLoading(true)
+    
+    setTimeout(() => {
+      if (isMounted) {
+        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
+        setProject(foundProject || null)
 
-        const registration = projectData.registrations?.[0]
+        const registration = foundProject?.registrations?.[0]
         if (registration) {
-          const groupResponse = await getTasksByGroupId(registration.groupId)
-          if (groupResponse && groupResponse.data && groupResponse.data.length > 0) {
-            setCurrentGroup(groupResponse.data[0].group)
-          }
+          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
+          const group = allGroups.find(g => g.groupId === registration.groupId)
+          setCurrentGroup(group || null)
         }
+        setLoading(false)
       }
-      setLoading(false)
-    }
+    }, 500)
 
-    fetchProjectDetails()
+    return () => { isMounted = false }
   }, [projectId])
 
   if (loading) return <LoadingSpinner message="Đang tải chi tiết đồ án..." />
@@ -49,6 +49,10 @@ export default function StudentProjectDetail() {
 
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
+
+  const projectFiles = project.submissions?.[0]?.filePath 
+    ? [project.submissions[0].filePath.split('/').pop() || 'document.pdf']
+    : ['Project_Spec.pdf', 'Analysis_V2.csv']
 
   return (
     <div className="space-y-6">
@@ -65,7 +69,7 @@ export default function StudentProjectDetail() {
           <div>
             <h1 className="text-2xl font-bold text-text">{project.title}</h1>
             <p className="mt-1 text-sm text-text-soft">
-              {project.course.name} • {project.category.name}
+              {project.course.name} • {project.category?.name}
             </p>
           </div>
           <StatusBadge status={project.status} />
@@ -79,8 +83,9 @@ export default function StudentProjectDetail() {
         <div className="mt-6">
           <h3 className="text-sm font-bold text-text uppercase tracking-wider">Project Files</h3>
           <div className="mt-3 flex flex-wrap gap-3">
-            <FileAttachment fileName="Project_Spec.pdf" />
-            <FileAttachment fileName="Analysis_V2.csv" />
+            {projectFiles.map((file, idx) => (
+              <FileAttachment key={idx} fileName={file} />
+            ))}
           </div>
         </div>
 
@@ -126,7 +131,7 @@ export default function StudentProjectDetail() {
             
             <div className="bg-surface-soft/50 rounded-lg p-3 text-sm text-text-soft flex items-center justify-between border border-border">
               <span>Trưởng nhóm: <strong className="text-text">{currentGroup.leader?.name || 'Chưa rõ'}</strong></span>
-              <span className="bg-green-100 text-green-700 font-semibold px-2.5 py-0.5 rounded-full text-xs uppercase">
+              <span className="bg-secondary-soft text-secondary font-semibold px-2.5 py-0.5 rounded-full text-xs uppercase">
                 {registration?.status}
               </span>
             </div>
@@ -148,10 +153,12 @@ export default function StudentProjectDetail() {
                     onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
                   >
                     {activePopoverId === member.userId && (
-                      <UserProfilePopover 
-                        user={member}
-                        onClose={() => setActivePopoverId(null)}
-                      />
+                      <div className="absolute right-0 top-full mt-2 z-50 w-72">
+                        <UserProfilePopover 
+                          user={member}
+                          onClose={() => setActivePopoverId(null)}
+                        />
+                      </div>
                     )}
                   </MemberRow>
                 )

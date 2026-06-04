@@ -1,24 +1,33 @@
 import { useEffect, useState } from 'react'
-import { getProjects } from '../../../services/project.service'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectWorkspaceCard from '../../../components/ui/ProjectWorkspaceCard'
 import type { Project } from '../../../mocks/types'
+import { mockProjects } from '../../../mocks/projects.mock'
+import { useAuth } from '../../../features/auth/AuthContext' 
 
 export default function MyProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  
+  const { currentUser } = useAuth()
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      setLoading(true)
-      const response = await getProjects()
-      if (response?.data) {
-        setProjects(response.data)
-      }
+    if (!currentUser) return;
+
+    const myOwnProjects = mockProjects.filter((project) => 
+      project.registrations?.some((reg) => {
+        const member = reg.groupMember;
+        return member?.uid === currentUser.uid || member?.email === currentUser.email;
+      })
+    );
+
+    const timer = setTimeout(() => {
+      setProjects(myOwnProjects)
       setLoading(false)
-    }
-    fetchProjects()
-  }, [])
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [currentUser]) 
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
 
@@ -58,7 +67,9 @@ export default function MyProjectsPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 text-text-soft">Chưa có dự án nào được tìm thấy.</div>
+        <div className="text-center py-20 text-text-soft">
+          <p>Tài khoản <span className="font-bold text-primary">{currentUser?.name}</span> chưa tham gia đồ án nào.</p>
+        </div>
       )}
     </div>
   )
