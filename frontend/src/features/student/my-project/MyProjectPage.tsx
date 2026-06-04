@@ -3,7 +3,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectWorkspaceCard from '../../../components/ui/ProjectWorkspaceCard'
 import type { Project } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
-import { useAuth } from '../../../features/auth/AuthContext' 
+import { useAuth } from '../../../features/auth/useAuth'
 
 export default function MyProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
