@@ -1,14 +1,14 @@
 import type { Course, Group, Task, User } from './types'
 
-const userNguyenMinhAn: User = {
+export const userSinhVienTran: User = {
   userId: 1,
   uid: 'SV22520001',
-  email: '22520001@gm.uit.edu.vn',
+  email: 'student@gmail.com', 
   password: null,
-  name: 'Nguyễn Minh An',
+  name: 'Sinh viên Trần',
   role: 'STUDENT',
   createdAt: '2026-02-10T08:00:00',
-  updatedAt: '2026-05-16T21:30:00',
+  updatedAt: null,
   isActive: true,
   verificationToken: null,
   verificationTokenExpiry: null,
@@ -16,16 +16,16 @@ const userNguyenMinhAn: User = {
   resetPasswordTokenExpiry: null,
   userProfile: {
     userId: 1,
-    summary: 'Frontend developer phụ trách React và trải nghiệm người dùng.',
-    firstName: 'An',
-    lastName: 'Nguyễn Minh',
-    avatarUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
-    phoneNumber: '0902000001',
-    birthday: '2004-05-12',
+    summary: 'Sinh viên thực hiện đồ án.',
+    firstName: 'Trần',
+    lastName: 'Sinh viên',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Sinh+vien+Tran&background=2DD4BF&color=fff&size=256',
+    phoneNumber: '0901234567',
+    birthday: '2004-01-01',
   },
 }
 
-const userLeHoangVy: User = {
+export const userLeHoangVy: User = {
   userId: 2,
   uid: 'SV22520002',
   email: '22520002@gm.uit.edu.vn',
@@ -43,14 +43,14 @@ const userLeHoangVy: User = {
     userId: 2,
     summary: 'Backend developer phụ trách Spring Boot và cơ sở dữ liệu.',
     firstName: 'Vy',
-    lastName: 'Lê Hoàng',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    lastName: 'Lê Hoàng', 
+    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Hoang+Vy&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000002',
     birthday: '2004-10-02',
   },
 }
 
-const userTranGiaBao: User = {
+export const userTranGiaBao: User = {
   userId: 3,
   uid: 'SV22520003',
   email: '22520003@gm.uit.edu.vn',
@@ -69,13 +69,13 @@ const userTranGiaBao: User = {
     summary: 'QA và tài liệu, theo dõi test case và báo cáo tiến độ.',
     firstName: 'Bảo',
     lastName: 'Trần Gia',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Tran+Gia+Bao&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000003',
     birthday: '2004-03-18',
   },
 }
 
-const userPhamQuynhNhu: User = {
+export const userPhamQuynhNhu: User = {
   userId: 4,
   uid: 'SV22520004',
   email: '22520004@gm.uit.edu.vn',
@@ -94,7 +94,7 @@ const userPhamQuynhNhu: User = {
     summary: 'Phân tích nghiệp vụ và thiết kế luồng người dùng.',
     firstName: 'Như',
     lastName: 'Phạm Quỳnh',
-    avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Pham+Quynh+Nhu&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000004',
     birthday: '2004-12-27',
   },
@@ -119,7 +119,7 @@ export const userNguyenThuyDuong: User = {
     summary: 'AI Specialization và xử lý ngôn ngữ tự nhiên.',
     firstName: 'Dương',
     lastName: 'Nguyễn Thùy',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Nguyen+Thuy+Duong&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000005',
     birthday: '2004-08-14',
   },
@@ -144,7 +144,7 @@ export const userHoangPhuQuy: User = {
     summary: 'Data Engineering, tối ưu hóa câu lệnh SQL và Big Data.',
     firstName: 'Quý',
     lastName: 'Hoàng Phú',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Hoang+Phu+Quy&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000006',
     birthday: '2004-01-22',
   },
@@ -169,7 +169,7 @@ export const userBuiNhatTruong: User = {
     summary: 'BSc Computer Science • Year 2. Đam mê Cloud Computing.',
     firstName: 'Trường',
     lastName: 'Bùi Nhật',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Bui+Nhat+Truong&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000007',
     birthday: '2004-09-05',
   },
@@ -194,9 +194,34 @@ export const userLeViSa: User = {
     summary: 'UI/UX Design Minor. Chuyên thiết kế wireframe và prototype.',
     firstName: 'Sa',
     lastName: 'Lê Vi',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Vi+Sa&size=100&background=random',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Vi+Sa&background=2DD4BF&color=fff&size=256',
     phoneNumber: '0902000008',
     birthday: '2004-11-30',
+  },
+}
+
+export const userNguyenMinhAn: User = {
+  userId: 1,
+  uid: 'SV22520009',
+  email: '22520001@gm.uit.edu.vn',
+  password: null,
+  name: 'Nguyễn Minh An',
+  role: 'STUDENT',
+  createdAt: '2026-02-10T08:00:00',
+  updatedAt: '2026-05-16T21:30:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 1,
+    summary: 'Frontend developer phụ trách React và trải nghiệm người dùng.',
+    firstName: 'An',
+    lastName: 'Nguyễn Minh',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Nguyen+Minh+An&background=2DD4BF&color=fff&size=256',
+    phoneNumber: '0902000001',
+    birthday: '2004-05-12',
   },
 }
 
@@ -227,8 +252,8 @@ export const groupPhoenix: Group = {
   name: 'Nhóm 01 - Phoenix',
   description: 'Nhóm thực hiện đồ án Website quản lý đồ án môn SE330.',
   course: softwareEngineeringCourse,
-  leader: userNguyenMinhAn,
-  members: [userNguyenMinhAn, userLeHoangVy], 
+  leader: userSinhVienTran,
+  members: [userSinhVienTran, userNguyenMinhAn, userLeHoangVy], 
   tasks: [],
 }
 
@@ -262,25 +287,16 @@ export const groupOrion: Group = {
   tasks: [],
 }
 
-export const groupLumos: Group = {
-  groupId: 5,
-  name: 'Nhóm 05 - Lumos',
-  description: 'Nhóm thực hiện dashboard đánh giá tiến độ đồ án.',
-  course: softwareEngineeringCourse,
-  leader: userNguyenMinhAn,
-  members: [userNguyenMinhAn], 
-  tasks: [],
-}
-
 export const mockClassMembers: User[] = [
-  userNguyenMinhAn,
+  userSinhVienTran,
   userLeHoangVy,
   userTranGiaBao,
   userPhamQuynhNhu,
   userNguyenThuyDuong,
   userHoangPhuQuy,
   userBuiNhatTruong,
-  userLeViSa
+  userLeViSa,
+  userNguyenMinhAn
 ]
 
 export const mockTasks: Task[] = [
@@ -288,9 +304,9 @@ export const mockTasks: Task[] = [
     taskId: 1,
     title: 'Hoàn thiện luồng đăng nhập mock',
     description: 'Kết nối màn hình đăng nhập với service mock và hiển thị thông tin người dùng hiện tại.',
-    assignedTo: userNguyenMinhAn,
-    createdBy: userNguyenMinhAn,
-    status: 'DONE',
+    assignedTo: userSinhVienTran, 
+    createdBy: userSinhVienTran,
+    status: 'DONE', 
     group: groupPhoenix,
     deadline: '2026-05-12T23:59:00',
     createdAt: '2026-05-01T09:00:00',
@@ -298,10 +314,22 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: 2,
+    title: 'Hoàn thiện luồng đăng nhập mock',
+    description: 'Kết nối màn hình đăng nhập với service mock và hiển thị thông tin người dùng hiện tại.',
+    assignedTo: userNguyenMinhAn,
+    createdBy: userSinhVienTran,
+    status: 'DONE',
+    group: groupPhoenix,
+    deadline: '2026-05-12T23:59:00',
+    createdAt: '2026-05-01T09:00:00',
+    updatedAt: '2026-05-12T21:10:00',
+  },
+  {
+    taskId: 3,
     title: 'Thiết kế API danh sách đồ án',
     description: 'Đối chiếu Project.java để thống nhất field trả về cho frontend.',
     assignedTo: userLeHoangVy,
-    createdBy: userNguyenMinhAn,
+    createdBy: userSinhVienTran,
     status: 'IN_PROGRESS',
     group: groupPhoenix,
     deadline: '2026-05-20T18:00:00',
@@ -309,11 +337,11 @@ export const mockTasks: Task[] = [
     updatedAt: '2026-05-17T09:45:00',
   },
   {
-    taskId: 3,
+    taskId: 4,
     title: 'Viết test case quản lý task',
     description: 'Chuẩn bị test case cho tạo task, đổi trạng thái và lọc task theo nhóm.',
     assignedTo: userLeHoangVy,
-    createdBy: userNguyenMinhAn,
+    createdBy: userSinhVienTran,
     status: 'TODO',
     group: groupPhoenix,
     deadline: '2026-05-24T20:00:00',
@@ -321,11 +349,11 @@ export const mockTasks: Task[] = [
     updatedAt: '2026-05-05T14:00:00',
   },
   {
-    taskId: 4,
+    taskId: 5,
     title: 'Tạo prototype màn hình quét QR',
     description: 'Dựng giao diện camera, trạng thái quét thành công và lỗi mã hết hạn.',
     assignedTo: userNguyenThuyDuong,
-    createdBy: userHoangPhuQuy,
+    createdBy: userNguyenThuyDuong,
     status: 'REVIEW',
     group: groupAster,
     deadline: '2026-05-19T17:30:00',

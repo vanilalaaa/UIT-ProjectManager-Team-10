@@ -1,4 +1,5 @@
 import type { Category, Course, Project, User } from './types'
+import * as MockData from './tasks.mock'
 
 const lecturerTranMinhKhoa: User = {
   userId: 101,
@@ -57,7 +58,7 @@ const softwareEngineeringCourse: Course = {
   maxStudents: 120,
   startDate: '2026-02-10',
   endDate: '2026-06-30',
-  groups: [],
+  groups: [MockData.groupPhoenix, MockData.groupAster, MockData.groupNimbus, MockData.groupOrion],
   projects: [],
 }
 
@@ -86,13 +87,6 @@ const mobileCategory: Category = {
   isActive: true,
 }
 
-const analyticsCategory: Category = {
-  categoryId: 3,
-  name: 'Phân tích dữ liệu',
-  description: 'Đồ án khai thác dữ liệu tiến độ, điểm số và báo cáo.',
-  isActive: true,
-}
-
 export const mockProjects: Project[] = [
   {
     projectId: 1,
@@ -108,7 +102,25 @@ export const mockProjects: Project[] = [
       {
         groupId: 1,
         project: null,
-        groupMember: null,
+        groupMember: MockData.userSinhVienTran,
+        registeredAt: '2026-03-02',
+        approvedAt: '2026-03-04',
+        status: 'APPROVED',
+        note: 'Nhóm đã chốt phạm vi MVP với giảng viên.',
+      },
+      {
+        groupId: 1,
+        project: null,
+        groupMember: MockData.userNguyenMinhAn, 
+        registeredAt: '2026-03-02',
+        approvedAt: '2026-03-04',
+        status: 'APPROVED',
+        note: 'Nhóm đã chốt phạm vi MVP với giảng viên.',
+      },
+      {
+        groupId: 1,
+        project: null,
+        groupMember: MockData.userLeHoangVy,    
         registeredAt: '2026-03-02',
         approvedAt: '2026-03-04',
         status: 'APPROVED',
@@ -141,7 +153,7 @@ export const mockProjects: Project[] = [
       {
         groupId: 2,
         project: null,
-        groupMember: null,
+        groupMember: MockData.userNguyenThuyDuong,
         registeredAt: '2026-04-02',
         approvedAt: '2026-04-03',
         status: 'APPROVED',
@@ -174,7 +186,16 @@ export const mockProjects: Project[] = [
       {
         groupId: 3,
         project: null,
-        groupMember: null,
+        groupMember: MockData.userTranGiaBao,
+        registeredAt: '2026-01-16',
+        approvedAt: '2026-01-18',
+        status: 'APPROVED',
+        note: 'Đã hoàn tất nghiệm thu cuối kỳ.',
+      },
+      {
+        groupId: 3,
+        project: null,
+        groupMember: MockData.userBuiNhatTruong,
         registeredAt: '2026-01-16',
         approvedAt: '2026-01-18',
         status: 'APPROVED',
@@ -207,7 +228,7 @@ export const mockProjects: Project[] = [
       {
         groupId: 4,
         project: null,
-        groupMember: null,
+        groupMember: MockData.userPhamQuynhNhu,
         registeredAt: '2026-05-16',
         approvedAt: null,
         status: 'PENDING',
@@ -216,37 +237,14 @@ export const mockProjects: Project[] = [
     ],
     submissions: [],
   },
-  {
-    projectId: 5,
-    title: 'Dashboard đánh giá tiến độ đồ án',
-    description:
-      'Tổng hợp task, tỷ lệ hoàn thành, số lần nộp bài và cảnh báo rủi ro để giảng viên theo dõi từng nhóm.',
-    status: 'OVERDUE',
-    startDate: '2026-02-01',
-    endDate: '2026-05-10',
-    course: softwareEngineeringCourse,
-    category: analyticsCategory,
-    registrations: [
-      {
-        groupId: 5,
-        project: null,
-        groupMember: null,
-        registeredAt: '2026-02-03',
-        approvedAt: '2026-02-05',
-        status: 'APPROVED',
-        note: 'Cần bổ sung biểu đồ tiến độ và bộ lọc theo lớp.',
-      },
-    ],
-    submissions: [
-      {
-        submissionId: 4,
-        submittedAt: '2026-05-09T21:00:00',
-        status: 'NEEDS_REVISION',
-        filePath: '/submissions/se330-nhom-05/progress-dashboard.zip',
-        project: null,
-        group: null,
-        grade: null,
-      },
-    ],
-  },
 ]
+
+softwareEngineeringCourse.projects = [
+  mockProjects[0], 
+  mockProjects[1]  
+];
+
+projectManagementCourse.projects = [
+  mockProjects[2],
+  mockProjects[3]
+];
