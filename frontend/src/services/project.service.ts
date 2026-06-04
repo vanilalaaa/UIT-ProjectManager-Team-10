@@ -1,43 +1,59 @@
-import { mockProjects } from '../mocks/projects.mock'
-import type { ApiResponse, Project } from '../mocks/types'
+import axiosClient from '../lib/api/axiosClient'
+import type { ApiResponse, Page, PageQuery } from '../types/api/common'
+import type {
+  Project,
+  ProjectCreateRequest,
+  ProjectUpdateRequest,
+} from '../types/api/project'
 
-const MOCK_NETWORK_LATENCY = 800
-const MOCK_API_TIMESTAMP = '2026-05-17T10:00:00'
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
-
-const createApiResponse = <T>(data: T): ApiResponse<T> => ({
-  status: 'success',
-  message: 'Call API success.',
-  data,
-  errorCode: null,
-  timestamp: MOCK_API_TIMESTAMP,
-})
-
-const resolveMock = <T>(data: T): Promise<ApiResponse<T>> =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(createApiResponse(clone(data)))
-    }, MOCK_NETWORK_LATENCY)
-  })
-
-export const getProjects = (): Promise<ApiResponse<Project[]>> => {
-  return resolveMock(mockProjects)
+function cleanParams(query: PageQuery): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {}
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === '' || value === null) continue
+    params[key] = value as string | number | boolean
+  }
+  return params
 }
 
-export const getProjectById = (projectId: number | string): Promise<ApiResponse<Project | null>> => {
-  const project = mockProjects.find((item) => item.projectId === Number(projectId)) ?? null
+export const listCourseProjects = (
+  courseId: number | string,
+  query: PageQuery = {},
+): Promise<ApiResponse<Page<Project>>> =>
+  axiosClient
+    .get<ApiResponse<Page<Project>>>(`/courses/${courseId}/projects`, {
+      params: cleanParams(query),
+    })
+    .then((r) => r.data)
 
-  return resolveMock(project)
-}
+export const createCourseProject = (
+  courseId: number | string,
+  payload: ProjectCreateRequest,
+): Promise<ApiResponse<Project>> =>
+  axiosClient
+    .post<ApiResponse<Project>>(`/courses/${courseId}/projects`, payload)
+    .then((r) => r.data)
 
-// Real API version (uncomment when the Spring Boot backend is ready):
-// import axios from 'axios'
-//
-// export const getProjects = (): Promise<ApiResponse<Project[]>> => {
-//   return axios.get('/api/projects').then((response) => response.data)
-// }
-//
-// export const getProjectById = (projectId: number | string): Promise<ApiResponse<Project>> => {
-//   return axios.get(`/api/projects/${projectId}`).then((response) => response.data)
-// }
+export const updateCourseProject = (
+  courseId: number | string,
+  projectId: number | string,
+  payload: ProjectUpdateRequest,
+): Promise<ApiResponse<Project>> =>
+  axiosClient
+    .put<ApiResponse<Project>>(`/courses/${courseId}/projects/${projectId}`, payload)
+    .then((r) => r.data)
+
+export const deleteCourseProject = (
+  courseId: number | string,
+  projectId: number | string,
+): Promise<ApiResponse<void>> =>
+  axiosClient
+    .delete<ApiResponse<void>>(`/courses/${courseId}/projects/${projectId}`)
+    .then((r) => r.data)
+
+export const getProjectById = (
+  projectId: number | string,
+): Promise<ApiResponse<Project>> =>
+  axiosClient.get<ApiResponse<Project>>(`/projects/${projectId}`).then((r) => r.data)
+
+export const listMyProjects = (): Promise<ApiResponse<Project[]>> =>
+  axiosClient.get<ApiResponse<Project[]>>('/students/me/projects').then((r) => r.data)
