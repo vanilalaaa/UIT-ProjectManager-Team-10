@@ -7,6 +7,11 @@ interface Props {
 }
 
 export default function ProjectWorkspaceCard({ project }: Props) {
+  const members = project.registrations?.map(r => r.groupMember).filter(Boolean) || []
+  const uniqueMembers = Array.from(new Set(members.map(m => m?.userId)))
+    .map(id => members.find(m => m?.userId === id))
+  const previewMembers = uniqueMembers.slice(0, 2)
+
   return (
     <div className="bg-surface p-6 rounded-2xl border border-border shadow-soft flex flex-col">
       <div className="flex justify-between items-start">
@@ -30,9 +35,31 @@ export default function ProjectWorkspaceCard({ project }: Props) {
 
       <div className="mt-auto pt-6 flex items-center justify-between border-t border-border">
         <div className="flex -space-x-2">
-          <div className="size-8 rounded-full bg-slate-300 border-2 border-surface" />
-          <div className="size-8 rounded-full bg-slate-400 border-2 border-surface" />
+          {previewMembers.length > 0 ? (
+            <>
+              {previewMembers.map((member, idx) => (
+                <img 
+                  key={idx}
+                  src={member?.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${member?.name}&background=random`} 
+                  alt={member?.name || 'Member'}
+                  className="size-8 rounded-full border-2 border-surface object-cover relative z-10"
+                  title={member?.name}
+                />
+              ))}
+              
+              {uniqueMembers.length > 2 && (
+                <div className="size-8 rounded-full bg-surface-soft border-2 border-surface flex items-center justify-center text-[10px] font-bold text-text-soft relative z-0">
+                  +{uniqueMembers.length - 2}
+                </div>
+              )}
+            </>
+          ) : (
+             <div className="size-8 rounded-full bg-slate-200 border-2 border-surface flex items-center justify-center text-[10px] text-slate-500 relative z-10">
+               ?
+             </div>
+          )}
         </div>
+
         <Link 
           to={`/my-project/${project.projectId}`} 
           className="text-primary font-bold text-sm hover:underline"

@@ -23,7 +23,7 @@ export default function UserProfilePopover({ user, onClose, showInviteButton = f
 
       <div className="flex flex-col items-center text-center">
         <img 
-          src={user.userProfile?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'} 
+          src={user.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
           alt={user.name}
           className="size-16 rounded-full object-cover border-2 border-border shadow-sm mb-2"
         />

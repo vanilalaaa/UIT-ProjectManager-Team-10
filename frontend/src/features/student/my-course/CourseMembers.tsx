@@ -1,25 +1,41 @@
 import { useEffect, useState } from 'react'
-import { mockClassMembers } from '../../../mocks/tasks.mock'
+import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/MemberRow'
 import UserProfilePopover from '../../../components/ui/UserProfilePopover'
 import type { User } from '../../../mocks/types'
 
+import { mockCourseMembersMap } from '../../../mocks/tasks.mock'
+
+const fetchCourseMembers = async (courseId: string | undefined): Promise<User[]> => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const id = Number(courseId)
+      resolve(mockCourseMembersMap[id] || [])
+    }, 500)
+  })
+}
+
 export default function CourseMembers() {
+  const { courseId } = useParams<{ courseId: string }>()
   const [members, setMembers] = useState<User[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 500)) 
-      setMembers(mockClassMembers)
-      setLoading(false)
-    }
-    fetchMembers()
-  }, [])
+    let isMounted = true
+    setLoading(true)
+    
+    fetchCourseMembers(courseId).then(data => {
+      if (isMounted) {
+        setMembers(data)
+        setLoading(false)
+      }
+    })
+    
+    return () => { isMounted = false }
+  }, [courseId])
 
   const filteredMembers = members.filter(member => 
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -63,11 +79,13 @@ export default function CourseMembers() {
               onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
             >
               {activePopoverId === member.userId && (
-                <UserProfilePopover 
-                  user={member}
-                  onClose={() => setActivePopoverId(null)}
-                  showInviteButton={true}
-                />
+                <div className="absolute right-0 top-full mt-2 z-50 w-72">
+                  <UserProfilePopover 
+                    user={member}
+                    onClose={() => setActivePopoverId(null)}
+                    showInviteButton={true}
+                  />
+                </div>
               )}
             </MemberRow>
           ))}

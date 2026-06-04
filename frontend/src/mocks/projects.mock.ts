@@ -58,7 +58,7 @@ const softwareEngineeringCourse: Course = {
   maxStudents: 120,
   startDate: '2026-02-10',
   endDate: '2026-06-30',
-  groups: [MockData.groupPhoenix, MockData.groupAster, MockData.groupNimbus, MockData.groupOrion],
+  groups: [MockData.groupPhoenix, MockData.groupAster],
   projects: [],
 }
 
@@ -69,7 +69,7 @@ const projectManagementCourse: Course = {
   maxStudents: 90,
   startDate: '2026-03-01',
   endDate: '2026-07-15',
-  groups: [],
+  groups: [MockData.groupNimbus, MockData.groupOrion],
   projects: [],
 }
 
@@ -238,13 +238,3 @@ export const mockProjects: Project[] = [
     submissions: [],
   },
 ]
-
-softwareEngineeringCourse.projects = [
-  mockProjects[0], 
-  mockProjects[1]  
-];
-
-projectManagementCourse.projects = [
-  mockProjects[2],
-  mockProjects[3]
-];

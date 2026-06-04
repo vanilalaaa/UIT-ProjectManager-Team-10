@@ -25,7 +25,7 @@ export default function UserProfileModal({ user, onClose, showInviteButton = fal
 
         <div className="flex flex-col items-center text-center mt-2">
           <img 
-            src={user.userProfile?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'} 
+            src={user.userProfile?.avatarUrl || 'https://ui-avatars.com/api/?name=${member?.name}&background=random'} 
             alt={user.name}
             className="size-24 rounded-full object-cover border-4 border-surface shadow-soft ring-1 ring-border mb-4"
           />

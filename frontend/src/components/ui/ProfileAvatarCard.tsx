@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface ProfileAvatarCardProps {
   user: {
     firstName: string

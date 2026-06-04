@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { getProjects } from '../../../services/project.service'
 import type { Project } from '../../../mocks/types'
+import { mockProjects } from '../../../mocks/projects.mock'
 import FileAttachment from '../../../components/ui/FileAttachment'
 import StatusBadge from '../../../components/ui/StatusBadge'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
@@ -14,16 +14,27 @@ export default function ProjectOverview() {
   useEffect(() => {
     const fetchProjectDetail = async () => {
       setLoading(true)
-      const response = await getProjects()
-      const found = response?.data?.find((p: Project) => p.projectId.toString() === projectId)
-      setProject(found || null)
-      setLoading(false)
+      
+      const found = mockProjects.find((p: Project) => p.projectId.toString() === projectId)
+      
+      const timer = setTimeout(() => {
+        setProject(found || null)
+        setLoading(false)
+      }, 500)
+
+      return () => clearTimeout(timer)
     }
+    
     fetchProjectDetail()
   }, [projectId])
 
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
+
+  const members = project.registrations?.map(r => r.groupMember).filter(Boolean) || []
+  const uniqueMembers = Array.from(new Set(members.map(m => m?.userId)))
+    .map(id => members.find(m => m?.userId === id))
+  const previewMembers = uniqueMembers.slice(0, 3)
 
   return (
     <div className="grid grid-cols-12 gap-6">
@@ -44,7 +55,7 @@ export default function ProjectOverview() {
           <div className="mt-8 p-6 bg-surface-soft/50 rounded-xl border border-border">
             <h4 className="text-sm font-bold text-text mb-4">Project Files</h4>
             <div className="flex flex-wrap gap-3">
-              {project.submissions?.length > 0 ? (
+              {project.submissions && project.submissions.length > 0 ? (
                 project.submissions.map((sub, idx) => (
                   <FileAttachment key={idx} fileName={sub.filePath.split('/').pop() || 'file'} />
                 ))
@@ -62,9 +73,29 @@ export default function ProjectOverview() {
             <div>
               <p className="text-xs text-text-soft font-bold uppercase tracking-wider">Team Members</p>
               <div className="flex -space-x-2 mt-2">
-                <div className="size-8 rounded-full bg-primary-soft text-primary flex items-center justify-center text-xs font-bold border-2 border-surface">AN</div>
-                <div className="size-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold border-2 border-surface">VY</div>
-                <div className="size-8 rounded-full bg-surface-soft border-2 border-surface flex items-center justify-center text-xs font-bold text-text-soft">+2</div>
+                {previewMembers.length > 0 ? (
+                  <>
+                    {previewMembers.map((member, idx) => (
+                      <img 
+                        key={idx}
+                        src={member?.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${member?.name}&background=random`} 
+                        alt={member?.name || 'Member'}
+                        className="size-8 rounded-full border-2 border-surface object-cover"
+                        title={member?.name}
+                      />
+                    ))}
+                    
+                    {uniqueMembers.length > 3 && (
+                      <div className="size-8 rounded-full bg-surface-soft border-2 border-surface flex items-center justify-center text-[10px] font-bold text-text-soft">
+                        +{uniqueMembers.length - 3}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="size-8 rounded-full bg-slate-200 border-2 border-surface flex items-center justify-center text-[10px] text-slate-500">
+                    ?
+                  </div>
+                )}
               </div>
             </div>
           </div>

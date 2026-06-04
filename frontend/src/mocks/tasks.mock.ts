@@ -201,7 +201,7 @@ export const userLeViSa: User = {
 }
 
 export const userNguyenMinhAn: User = {
-  userId: 1,
+  userId: 9,
   uid: 'SV22520009',
   email: '22520001@gm.uit.edu.vn',
   password: null,
@@ -414,3 +414,18 @@ export const mockTeamRequests: User[] = [
     }
   }
 ];
+
+export const mockCourseMembersMap: Record<number, User[]> = {
+  1: mockClassMembers, 
+  2: [userSinhVienTran, userTranGiaBao, userBuiNhatTruong, userPhamQuynhNhu] 
+}
+
+export const mockMyGroupMap: Record<number, Group | null> = {
+  1: groupPhoenix, 
+  2: null 
+}
+
+export const mockTeamRequestsMap: Record<number, User[]> = {
+  1: mockTeamRequests, 
+  2: [] 
+}

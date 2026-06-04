@@ -1,5 +1,3 @@
-import React from 'react'
-
 export type Version = {
   id: number
   title: string
