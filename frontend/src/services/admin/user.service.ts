@@ -8,7 +8,7 @@ import type {
   AdminUserUpdateRequest,
 } from '../../types/api/user'
 
-const BASE = '/admin/users'
+const BASE = '/api/admin/users'
 
 function cleanParams(query: AdminUserQuery): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}
@@ -41,4 +41,9 @@ export const patchUser = (
   id: number | string,
   payload: AdminUserPatchRequest,
 ): Promise<ApiResponse<AdminUserListItem>> =>
-  axiosClient.patch<ApiResponse<AdminUserListItem>>(`${BASE}/${id}`, payload).then((r) => r.data)
+  axiosClient
+    .patch<ApiResponse<AdminUserListItem>>(`${BASE}/${id}/status`, payload)
+    .then((r) => r.data)
+
+export const getUserById = (id: number | string): Promise<ApiResponse<AdminUserListItem>> =>
+  axiosClient.get<ApiResponse<AdminUserListItem>>(`${BASE}/${id}`).then((r) => r.data)

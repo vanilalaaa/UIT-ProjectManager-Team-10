@@ -6,12 +6,19 @@ import type {
   SubmissionUpdateRequest,
 } from '../types/api/submission'
 
+export const listProjectSubmissions = (
+  projectId: number | string,
+): Promise<ApiResponse<Submission[]>> =>
+  axiosClient
+    .get<ApiResponse<Submission[]>>(`/api/projects/${projectId}/submissions`)
+    .then((r) => r.data)
+
 export const createSubmission = (
   projectId: number | string,
   payload: SubmissionCreateRequest,
 ): Promise<ApiResponse<Submission>> =>
   axiosClient
-    .post<ApiResponse<Submission>>(`/projects/${projectId}/submissions`, payload)
+    .post<ApiResponse<Submission>>(`/api/projects/${projectId}/submissions`, payload)
     .then((r) => r.data)
 
 export const updateSubmission = (
@@ -19,10 +26,10 @@ export const updateSubmission = (
   payload: SubmissionUpdateRequest,
 ): Promise<ApiResponse<Submission>> =>
   axiosClient
-    .put<ApiResponse<Submission>>(`/submissions/${submissionId}`, payload)
+    .put<ApiResponse<Submission>>(`/api/submissions/${submissionId}`, payload)
     .then((r) => r.data)
 
 export const deleteSubmission = (
   submissionId: number | string,
 ): Promise<ApiResponse<void>> =>
-  axiosClient.delete<ApiResponse<void>>(`/submissions/${submissionId}`).then((r) => r.data)
+  axiosClient.delete<ApiResponse<void>>(`/api/submissions/${submissionId}`).then((r) => r.data)

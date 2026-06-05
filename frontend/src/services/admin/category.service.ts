@@ -3,11 +3,12 @@ import type { ApiResponse, Page } from '../../types/api/common'
 import type {
   AdminCategoryCreateRequest,
   AdminCategoryQuery,
+  AdminCategoryStatusPatch,
   AdminCategoryUpdateRequest,
   Category,
 } from '../../types/api/category'
 
-const BASE = '/admin/categories'
+const BASE = '/api/admin/categories'
 
 function cleanParams(query: AdminCategoryQuery): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}
@@ -36,8 +37,11 @@ export const updateCategory = (
 ): Promise<ApiResponse<Category>> =>
   axiosClient.put<ApiResponse<Category>>(`${BASE}/${id}`, payload).then((r) => r.data)
 
-export const patchCategory = (
+export const patchCategoryStatus = (
   id: number | string,
-  payload: AdminCategoryUpdateRequest,
+  payload: AdminCategoryStatusPatch,
 ): Promise<ApiResponse<Category>> =>
-  axiosClient.patch<ApiResponse<Category>>(`${BASE}/${id}`, payload).then((r) => r.data)
+  axiosClient.patch<ApiResponse<Category>>(`${BASE}/${id}/status`, payload).then((r) => r.data)
+
+export const getCategoryById = (id: number | string): Promise<ApiResponse<Category>> =>
+  axiosClient.get<ApiResponse<Category>>(`${BASE}/${id}`).then((r) => r.data)
