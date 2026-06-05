@@ -20,13 +20,12 @@ export type AdminUserCreateRequest = {
   name: string
   password: string
   role: Role
-  isActive?: boolean
 }
 
 export type AdminUserUpdateRequest = {
   name?: string
+  email?: string
   role?: Role
-  isActive?: boolean
 }
 
-export type AdminUserPatchRequest = Partial<AdminUserUpdateRequest>
+export type AdminUserPatchRequest = { isActive: boolean }

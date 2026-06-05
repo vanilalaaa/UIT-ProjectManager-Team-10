@@ -1,42 +1,36 @@
-import type { Course, User } from '../../mocks/types'
+import type { Course } from '../../mocks/types'
 
 export type { Course }
 
-export type AdminCourseListItem = {
+export type CourseResponse = {
   courseId: number
+  code: string
   name: string
-  lecturer: User | null
-  lecturerId?: number | null
+  lecturer: number | null
   maxStudents: number
   startDate: string
   endDate: string
 }
+
+export type AdminCourseListItem = CourseResponse
 
 export type AdminCourseQuery = {
   page?: number
   size?: number
   search?: string
-  lecturerId?: number | ''
 }
 
 export type AdminCourseCreateRequest = {
   name: string
-  lecturerId: number
   maxStudents: number
   startDate: string
   endDate: string
 }
 
-export type AdminCourseUpdateRequest = Partial<AdminCourseCreateRequest>
+export type AdminCourseUpdateRequest = AdminCourseCreateRequest
 
 export type JoinCourseRequest = {
-  courseId: number
-  note?: string
+  code: string
 }
 
 export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-export type JoinRequestPatch = {
-  status: 'APPROVED' | 'REJECTED'
-  note?: string
-}

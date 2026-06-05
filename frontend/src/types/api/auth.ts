@@ -29,6 +29,6 @@ export type UpdateMeRequest = {
 }
 
 export type UpdatePasswordRequest = {
-  currentPassword: string
+  oldPassword: string
   newPassword: string
 }

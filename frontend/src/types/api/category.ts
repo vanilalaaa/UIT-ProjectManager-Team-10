@@ -12,7 +12,8 @@ export type AdminCategoryQuery = {
 export type AdminCategoryCreateRequest = {
   name: string
   description: string
-  isActive?: boolean
 }
 
 export type AdminCategoryUpdateRequest = Partial<AdminCategoryCreateRequest>
+
+export type AdminCategoryStatusPatch = { isActive: boolean }
