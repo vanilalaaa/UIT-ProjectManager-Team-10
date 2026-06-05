@@ -1,26 +1,14 @@
-import { useState, useEffect } from 'react'
 import ProfileAvatarCard from '../../components/ui/ProfileAvatarCard'
 import PasswordSettings from '../../components/ui/PasswordSettings'
 import GeneralDetailsForm from '../../components/ui/GeneralDetailsForm'
-import { MOCK_ME_RESPONSES } from '../../mocks/auth.mock'
-import type { UserDto } from '../../mocks/types'
+import { AdminLoading, AdminError } from '../admin/components/AdminStates'
+import { useAuth } from '../auth/useAuth'
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserDto | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { currentUser, isLoading } = useAuth()
 
-  useEffect(() => {
-    const email = localStorage.getItem('userEmail') || 'student@gmail.com'
-    const response = MOCK_ME_RESPONSES[email]
-    
-    if (response) {
-      setUser(response.data) // Nhận đúng UserDto từ mock
-    }
-    setLoading(false)
-  }, [])
-
-  if (loading) return <div>Đang tải thông tin...</div>
-  if (!user) return <div>Không tìm thấy người dùng.</div>
+  if (isLoading) return <AdminLoading message="Đang tải thông tin…" />
+  if (!currentUser) return <AdminError message="Không tìm thấy người dùng." />
 
   return (
     <div className="max-w-7xl mx-auto pb-10">
@@ -31,11 +19,11 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-4 space-y-6">
-          <ProfileAvatarCard user={user} />
-          <PasswordSettings userEmail={user.email} />
+          <ProfileAvatarCard user={currentUser} />
+          <PasswordSettings />
         </div>
         <div className="lg:col-span-8">
-          <GeneralDetailsForm user={user} />
+          <GeneralDetailsForm user={currentUser} />
         </div>
       </div>
     </div>

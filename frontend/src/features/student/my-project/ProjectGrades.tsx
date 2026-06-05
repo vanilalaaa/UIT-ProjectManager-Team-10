@@ -6,10 +6,23 @@ import LecturerFeedbackCard from '../../../components/ui/LecturerFeedbackCard'
 import type { Project } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
 
-const fetchGradeData = async (projectId: string | undefined) => {
+// Shape của feedback do BE chưa định nghĩa rõ — dùng tạm. Khi BE chốt schema,
+// chuyển sang type chính thức trong types/api/feedback.ts.
+type GradeFeedback = {
+  lecturer: { name: string; avatar: string; department: string } | null
+  content: string
+} | null
+
+type GradeData = {
+  project: Project | null
+  criteria: ScoreCriteria[]
+  feedback: GradeFeedback
+}
+
+const fetchGradeData = async (projectId: string | undefined): Promise<GradeData> => {
   const project = mockProjects.find(p => p.projectId.toString() === projectId)
-  
-  return new Promise<{ project: Project | null, criteria: ScoreCriteria[], feedback: any }>(resolve => {
+
+  return new Promise<GradeData>(resolve => {
     setTimeout(() => {
       resolve({
         project: project || null,
@@ -23,7 +36,7 @@ const fetchGradeData = async (projectId: string | undefined) => {
 export default function ProjectGrades() {
   const { projectId } = useParams()
   const navigate = useNavigate()
-  const [data, setData] = useState<{ project: Project | null, criteria: ScoreCriteria[], feedback: any } | null>(null)
+  const [data, setData] = useState<GradeData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

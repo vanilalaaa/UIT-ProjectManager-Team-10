@@ -18,5 +18,10 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Tắt: rule v7 chặn pattern fetch-on-mount đang dùng khắp codebase;
+      // sẽ bật lại khi chuyển sang useAsync/React Query (PROJECT_RULES §11).
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

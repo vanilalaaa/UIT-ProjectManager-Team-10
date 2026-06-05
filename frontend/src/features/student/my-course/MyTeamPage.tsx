@@ -50,7 +50,8 @@ export default function MyTeamPage() {
       groupId: Math.floor(Math.random() * 1000) + 10,
       name,
       description,
-      course: null as any,
+      // course gắn từ id route, BE sẽ trả lại course đầy đủ sau khi tạo nhóm
+      course: null as unknown as Group['course'],
       leader: userSinhVienTran, 
       members: [userSinhVienTran], 
       tasks: []

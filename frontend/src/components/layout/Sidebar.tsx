@@ -7,7 +7,7 @@
  */
 import { NavLink, useNavigate } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
-import { useAuth } from '../../features/auth/AuthContext'
+import { useAuth } from '../../features/auth/useAuth'
 import { NAV_ITEMS } from '../../lib/constants/menu'
 
 // ── Shared link class helpers ─────────────────────────────────────────────────

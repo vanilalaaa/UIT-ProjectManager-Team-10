@@ -2,6 +2,7 @@ package com.example.se330.config;
 
 import com.example.se330.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,25 +18,33 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Thay thế cho EnableGlobalMethodSecurity đã bị deprecated
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
 
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:4173}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Sử dụng Lambda DSL cho CSRF
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(c -> c.configurationSource(corsConfigurationSource()))
 
-                // 2. Cấu hình quyền truy cập (Dùng requestMatchers trực tiếp, không cần
-                // AntPathRequestMatcher)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
@@ -49,30 +58,37 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**")
                         .hasAuthority("ADMIN")
 
-                         // TASK MODULE APIs
                         .requestMatchers(
                                 "/api/projects/*/tasks/**",
-                                "/api/tasks/**"
-                        )
+                                "/api/tasks/**")
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
-                        
+
                         .requestMatchers(
                                 "/api/projects/*/submissions",
-                                "/api/submissions/**"
-                        )
+                                "/api/submissions/**")
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
                         .anyRequest().authenticated())
 
-                // 3. Cấu hình Session Stateless cho JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 4. Thiết lập Provider
                 .authenticationProvider(authenticationProvider())
-
-                // 5. Thêm Filter JWT trước UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean

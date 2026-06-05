@@ -249,8 +249,14 @@ taskkill /PID <pid> /F
 2. ✓ Enable annotation processing
 3. File → Invalidate Caches → Restart
 
----
+## Account test: 
+```bash
+student@gmail.com
+teacher@gmail.com
+admin@gmail.com
 
+password:123123
+```
 ## Cấu Trúc Dự Án
 
 ```

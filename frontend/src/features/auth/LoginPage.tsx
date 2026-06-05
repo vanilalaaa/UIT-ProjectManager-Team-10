@@ -1,39 +1,62 @@
-/**
- * LoginPage.tsx  — temporary placeholder.
- * Replace with the real login form (react-hook-form + zod) when ready.
- *
- * The form calls authService.login(), then useAuth().login(authResponse).
- */
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
+
 import { login as authLogin } from '../../services/auth.service'
-import { useAuth } from './AuthContext'
+import type { ApiError } from '../../lib/api/axiosClient'
+import { useAuth } from './useAuth'
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'Vui lòng nhập email').email('Email không hợp lệ'),
+  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsSubmitting(true)
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
+  const onSubmit = async (values: LoginFormValues) => {
     try {
-      const res = await authLogin({ email, password })
+      const res = await authLogin(values)
       await login(res.data)
+      toast.success('Đăng nhập thành công.')
       navigate('/', { replace: true })
-    } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: unknown }).message)
-          : 'Đăng nhập thất bại.'
-      setError(message)
-    } finally {
-      setIsSubmitting(false)
+    } catch (err) {
+      const apiErr = err as ApiError
+
+      if (apiErr?.fieldErrors) {
+        for (const [field, msg] of Object.entries(apiErr.fieldErrors)) {
+          if (field === 'email' || field === 'password') {
+            setError(field, { type: 'server', message: msg })
+          }
+        }
+        return
+      }
+
+      if (apiErr?.status === 0) return
+      if (apiErr?.status === 401) {
+        toast.error('Email hoặc mật khẩu không đúng.')
+        return
+      }
+      if (apiErr?.status === 429) {
+        toast.error('Bạn thử đăng nhập quá nhiều lần. Vui lòng chờ vài phút.')
+        return
+      }
+      toast.error(apiErr?.message || 'Đăng nhập thất bại.')
     }
   }
 
@@ -43,20 +66,25 @@ function LoginPage() {
         <h1 className="text-2xl font-semibold text-text">Đăng nhập</h1>
         <p className="mt-1 text-sm text-text-soft">EduCollaborate — Quản lý đồ án</p>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
             <label className="block text-sm font-medium text-text" htmlFor="login-email">
               Email
             </label>
             <input
-              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-soft focus:outline-none focus:ring-2 focus:ring-primary"
+              {...register('email')}
+              aria-invalid={!!errors.email}
+              autoComplete="email"
+              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-soft focus:outline-none focus:ring-2 focus:ring-primary aria-[invalid=true]:border-red-500"
               id="login-email"
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@gmail.com"
-              required
+              placeholder="you@example.com"
               type="email"
-              value={email}
             />
+            {errors.email ? (
+              <p className="mt-1 text-xs text-red-500" role="alert">
+                {errors.email.message}
+              </p>
+            ) : null}
           </div>
 
           <div>
@@ -64,36 +92,39 @@ function LoginPage() {
               Mật khẩu
             </label>
             <input
-              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-soft focus:outline-none focus:ring-2 focus:ring-primary"
+              {...register('password')}
+              aria-invalid={!!errors.password}
+              autoComplete="current-password"
+              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-soft focus:outline-none focus:ring-2 focus:ring-primary aria-[invalid=true]:border-red-500"
               id="login-password"
-              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              required
               type="password"
-              value={password}
             />
+            {errors.password ? (
+              <p className="mt-1 text-xs text-red-500" role="alert">
+                {errors.password.message}
+              </p>
+            ) : null}
           </div>
 
-          {error ? (
-            <p className="text-sm text-red-500" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          {/* Disabled while submitting — PROJECT_RULES §5 */}
           <button
-            className="w-full rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-surface shadow-soft disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-surface shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
+            {isSubmitting ? (
+              <>
+                <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" className="opacity-75" />
+                </svg>
+                Đang đăng nhập…
+              </>
+            ) : (
+              'Đăng nhập'
+            )}
           </button>
         </form>
-
-        {/* Dev hint — remove before production */}
-        <p className="mt-4 text-xs text-text-soft">
-          Mock: admin@gmail.com / admin123 · teacher@gmail.com / teacher123 · student@gmail.com / student123
-        </p>
       </div>
     </div>
   )

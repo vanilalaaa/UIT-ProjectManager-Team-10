@@ -1,0 +1,36 @@
+import type { Course } from '../../mocks/types'
+
+export type { Course }
+
+export type CourseResponse = {
+  courseId: number
+  code: string
+  name: string
+  lecturer: number | null
+  maxStudents: number
+  startDate: string
+  endDate: string
+}
+
+export type AdminCourseListItem = CourseResponse
+
+export type AdminCourseQuery = {
+  page?: number
+  size?: number
+  search?: string
+}
+
+export type AdminCourseCreateRequest = {
+  name: string
+  maxStudents: number
+  startDate: string
+  endDate: string
+}
+
+export type AdminCourseUpdateRequest = AdminCourseCreateRequest
+
+export type JoinCourseRequest = {
+  code: string
+}
+
+export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
