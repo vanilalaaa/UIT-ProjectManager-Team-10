@@ -40,10 +40,7 @@ export default function ManageCoursesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-text">Quản lý lớp học</h1>
-          <p className="text-sm text-text-soft">
-            BE hiện yêu cầu role TEACHER để CRUD lớp học. Trang này dành để xem & quản trị; thao tác
-            tạo/sửa có thể bị từ chối nếu bạn đang đăng nhập bằng tài khoản ADMIN.
-          </p>
+          <p className="text-sm text-text-soft">Danh sách lớp học và giảng viên phụ trách.</p>
         </div>
       </div>
 

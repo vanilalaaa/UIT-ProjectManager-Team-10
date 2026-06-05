@@ -75,10 +75,6 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
 
   return (
     <Modal open={open} title={isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'} onClose={onClose} size="lg">
-      <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
-        Lớp học sẽ được gán cho giảng viên đang đăng nhập. BE hiện chưa cho admin chọn giảng viên khác.
-      </p>
-
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <label className="block text-sm font-medium text-text">Tên lớp học</label>

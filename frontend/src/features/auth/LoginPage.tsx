@@ -37,7 +37,6 @@ function LoginPage() {
       navigate('/', { replace: true })
     } catch (err) {
       const apiErr = err as ApiError
-      const message = apiErr?.message ?? 'Đăng nhập thất bại.'
 
       if (apiErr?.fieldErrors) {
         for (const [field, msg] of Object.entries(apiErr.fieldErrors)) {
@@ -45,12 +44,19 @@ function LoginPage() {
             setError(field, { type: 'server', message: msg })
           }
         }
-      } else if (apiErr?.status === 429) {
-        toast.error('Bạn thử đăng nhập quá nhiều lần. Vui lòng chờ vài phút.')
-      } else if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
-        // 0/401/403 đã có toast từ axiosClient.
-        toast.error(message)
+        return
       }
+
+      if (apiErr?.status === 0) return
+      if (apiErr?.status === 401) {
+        toast.error('Email hoặc mật khẩu không đúng.')
+        return
+      }
+      if (apiErr?.status === 429) {
+        toast.error('Bạn thử đăng nhập quá nhiều lần. Vui lòng chờ vài phút.')
+        return
+      }
+      toast.error(apiErr?.message || 'Đăng nhập thất bại.')
     }
   }
 
@@ -119,13 +125,6 @@ function LoginPage() {
             )}
           </button>
         </form>
-
-        {import.meta.env.DEV ? (
-          <p className="mt-4 text-xs text-text-soft">
-            Dev seed: admin@gmail.com · teacher@gmail.com · student@gmail.com · password
-            <code className="ml-1 rounded bg-surface-soft px-1 py-0.5">123123</code>
-          </p>
-        ) : null}
       </div>
     </div>
   )
