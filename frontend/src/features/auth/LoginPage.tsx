@@ -119,6 +119,13 @@ function LoginPage() {
             )}
           </button>
         </form>
+
+        {import.meta.env.DEV ? (
+          <p className="mt-4 text-xs text-text-soft">
+            Dev seed: admin@gmail.com · teacher@gmail.com · student@gmail.com · password
+            <code className="ml-1 rounded bg-surface-soft px-1 py-0.5">123123</code>
+          </p>
+        ) : null}
       </div>
     </div>
   )

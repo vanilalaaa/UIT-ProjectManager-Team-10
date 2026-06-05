@@ -17,6 +17,22 @@ export interface ApiError {
   fieldErrors?: Record<string, string>
 }
 
+// Các public auth endpoint — 401 ở đây có nghĩa "sai credentials", KHÔNG phải
+// "phiên hết hạn"; không được redirect/clear localStorage.
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+  '/api/auth/resend-verification',
+]
+
+const isPublicAuthRequest = (url?: string): boolean => {
+  if (!url) return false
+  return PUBLIC_AUTH_PATHS.some((p) => url.includes(p))
+}
+
 const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
@@ -57,8 +73,10 @@ axiosClient.interceptors.response.use(
     if (!axios.isAxiosError(error)) return Promise.reject(error)
 
     const apiError = normalizeError(error)
+    const requestUrl = error.config?.url
+    const isPublicAuth = isPublicAuthRequest(requestUrl)
 
-    if (apiError.status === 401) {
+    if (apiError.status === 401 && !isPublicAuth) {
       localStorage.clear()
       toast.error('Phiên đã hết hạn. Vui lòng đăng nhập lại.')
       if (window.location.pathname !== '/login') {
