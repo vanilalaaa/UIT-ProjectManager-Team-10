@@ -73,8 +73,8 @@ export default function UserFormModal({
       if (isEdit && initial) {
         await onUpdate(initial.id, {
           name: values.name,
+          email: values.email,
           role: values.role,
-          isActive: values.isActive,
         })
       } else {
         if (!values.password) {
@@ -86,7 +86,6 @@ export default function UserFormModal({
           name: values.name,
           password: values.password,
           role: values.role,
-          isActive: values.isActive,
         })
       }
       onClose()
@@ -105,8 +104,7 @@ export default function UserFormModal({
           <label className="block text-sm font-medium text-text">Email</label>
           <input
             {...register('email')}
-            className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm disabled:bg-surface-soft"
-            disabled={isEdit}
+            className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
             type="email"
           />
           {errors.email ? <p className="mt-1 text-xs text-red-500">{errors.email.message}</p> : null}

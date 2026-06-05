@@ -12,7 +12,6 @@ import type { Page } from '../../../types/api/common'
 import type {
   AdminUserCreateRequest,
   AdminUserListItem,
-  AdminUserPatchRequest,
   AdminUserQuery,
   AdminUserUpdateRequest,
 } from '../../../types/api/user'
@@ -75,14 +74,14 @@ export function useAdminUsers() {
     [refetch],
   )
 
-  const patch = useCallback(
-    async (id: number | string, payload: AdminUserPatchRequest) => {
-      await patchUser(id, payload)
-      toast.success('Đã cập nhật.')
+  const toggleStatus = useCallback(
+    async (id: number | string, isActive: boolean) => {
+      await patchUser(id, { isActive })
+      toast.success('Đã cập nhật trạng thái.')
       await refetch()
     },
     [refetch],
   )
 
-  return { data, isLoading, error, query, setQuery, refetch, create, update, patch }
+  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus }
 }

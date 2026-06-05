@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import {
   createCategory,
   listCategories,
-  patchCategory,
+  patchCategoryStatus,
   updateCategory,
 } from '../../../services/admin/category.service'
 import type { ApiError } from '../../../lib/api/axiosClient'
@@ -73,14 +73,14 @@ export function useAdminCategories() {
     [refetch],
   )
 
-  const patch = useCallback(
-    async (id: number, payload: AdminCategoryUpdateRequest) => {
-      await patchCategory(id, payload)
-      toast.success('Đã cập nhật.')
+  const toggleStatus = useCallback(
+    async (id: number, isActive: boolean) => {
+      await patchCategoryStatus(id, { isActive })
+      toast.success('Đã cập nhật trạng thái.')
       await refetch()
     },
     [refetch],
   )
 
-  return { data, isLoading, error, query, setQuery, refetch, create, update, patch }
+  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus }
 }

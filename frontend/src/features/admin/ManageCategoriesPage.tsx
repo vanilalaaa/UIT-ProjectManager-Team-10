@@ -10,14 +10,14 @@ import type { ApiError } from '../../lib/api/axiosClient'
 import type { Category } from '../../types/api/category'
 
 export default function ManageCategoriesPage() {
-  const { data, isLoading, error, query, setQuery, refetch, create, update, patch } =
+  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus } =
     useAdminCategories()
   const [editing, setEditing] = useState<Category | null>(null)
   const [openForm, setOpenForm] = useState(false)
 
   const handleToggleActive = async (item: Category) => {
     try {
-      await patch(item.categoryId, { isActive: !item.isActive })
+      await toggleStatus(item.categoryId, !item.isActive)
     } catch (err) {
       const apiErr = err as ApiError
       if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {

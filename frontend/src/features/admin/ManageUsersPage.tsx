@@ -12,14 +12,14 @@ import type { AdminUserListItem, Role } from '../../types/api/user'
 const ROLES: ReadonlyArray<Role | ''> = ['', 'ADMIN', 'TEACHER', 'STUDENT']
 
 export default function ManageUsersPage() {
-  const { data, isLoading, error, query, setQuery, refetch, create, update, patch } =
+  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus } =
     useAdminUsers()
   const [editing, setEditing] = useState<AdminUserListItem | null>(null)
   const [openForm, setOpenForm] = useState(false)
 
   const handleToggleActive = async (user: AdminUserListItem) => {
     try {
-      await patch(user.id, { isActive: !user.isActive })
+      await toggleStatus(user.id, !user.isActive)
     } catch (err) {
       const apiErr = err as ApiError
       if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {

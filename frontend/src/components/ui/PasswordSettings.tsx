@@ -8,13 +8,10 @@ import type { ApiError } from '../../lib/api/axiosClient'
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, 'Bắt buộc'),
+    oldPassword: z.string().min(1, 'Bắt buộc'),
     newPassword: z
       .string()
-      .min(8, 'Tối thiểu 8 ký tự')
-      .regex(/[a-z]/, 'Cần ít nhất 1 chữ thường')
-      .regex(/[A-Z]/, 'Cần ít nhất 1 chữ hoa')
-      .regex(/\d/, 'Cần ít nhất 1 chữ số'),
+      .min(6, 'Tối thiểu 6 ký tự'),
     confirmPassword: z.string(),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
@@ -32,13 +29,13 @@ export default function PasswordSettings() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
+    defaultValues: { oldPassword: '', newPassword: '', confirmPassword: '' },
   })
 
   const onSubmit = async (values: FormValues) => {
     try {
       await updatePassword({
-        currentPassword: values.currentPassword,
+        oldPassword: values.oldPassword,
         newPassword: values.newPassword,
       })
       toast.success('Đã đổi mật khẩu.')
@@ -58,14 +55,14 @@ export default function PasswordSettings() {
       <form className="space-y-3" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <input
-            {...register('currentPassword')}
+            {...register('oldPassword')}
             placeholder="Mật khẩu hiện tại"
             type="password"
             autoComplete="current-password"
             className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.currentPassword ? (
-            <p className="mt-1 text-xs text-red-500">{errors.currentPassword.message}</p>
+          {errors.oldPassword ? (
+            <p className="mt-1 text-xs text-red-500">{errors.oldPassword.message}</p>
           ) : null}
         </div>
 

@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 
 import Modal from '../../../components/ui/Modal'
-import { useTeacherOptions } from '../hooks/useTeacherOptions'
 import type { ApiError } from '../../../lib/api/axiosClient'
 import type {
   AdminCourseCreateRequest,
@@ -16,7 +15,6 @@ import type {
 const schema = z
   .object({
     name: z.string().min(2, 'Tối thiểu 2 ký tự'),
-    lecturerId: z.number().int().positive('Chọn giảng viên'),
     maxStudents: z.number().int().min(1, 'Tối thiểu 1').max(500, 'Tối đa 500'),
     startDate: z.string().min(1, 'Chọn ngày bắt đầu'),
     endDate: z.string().min(1, 'Chọn ngày kết thúc'),
@@ -38,8 +36,6 @@ type Props = {
 
 export default function CourseFormModal({ open, initial, onClose, onCreate, onUpdate }: Props) {
   const isEdit = !!initial
-  const { options: teachers, isLoading: loadingTeachers, error: teacherError } =
-    useTeacherOptions(open)
 
   const {
     register,
@@ -48,20 +44,13 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: '',
-      lecturerId: 0,
-      maxStudents: 40,
-      startDate: '',
-      endDate: '',
-    },
+    defaultValues: { name: '', maxStudents: 40, startDate: '', endDate: '' },
   })
 
   useEffect(() => {
     if (!open) return
     reset({
       name: initial?.name ?? '',
-      lecturerId: initial?.lecturer?.userId ?? initial?.lecturerId ?? 0,
       maxStudents: initial?.maxStudents ?? 40,
       startDate: initial?.startDate ?? '',
       endDate: initial?.endDate ?? '',
@@ -86,6 +75,10 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
 
   return (
     <Modal open={open} title={isEdit ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'} onClose={onClose} size="lg">
+      <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+        Lớp học sẽ được gán cho giảng viên đang đăng nhập. BE hiện chưa cho admin chọn giảng viên khác.
+      </p>
+
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <label className="block text-sm font-medium text-text">Tên lớp học</label>
@@ -95,26 +88,6 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
             type="text"
           />
           {errors.name ? <p className="mt-1 text-xs text-red-500">{errors.name.message}</p> : null}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text">Giảng viên phụ trách</label>
-          <select
-            {...register('lecturerId', { valueAsNumber: true })}
-            className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-            disabled={loadingTeachers}
-          >
-            <option value={0}>{loadingTeachers ? 'Đang tải…' : '— Chọn giảng viên —'}</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.email})
-              </option>
-            ))}
-          </select>
-          {teacherError ? <p className="mt-1 text-xs text-red-500">{teacherError}</p> : null}
-          {errors.lecturerId ? (
-            <p className="mt-1 text-xs text-red-500">{errors.lecturerId.message}</p>
-          ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
