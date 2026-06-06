@@ -14,7 +14,7 @@ export default function ProfilePage() {
     const response = MOCK_ME_RESPONSES[email]
     
     if (response) {
-      setUser(response.data) // Nhận đúng UserDto từ mock
+      setUser(response.data) 
     }
     setLoading(false)
   }, [])

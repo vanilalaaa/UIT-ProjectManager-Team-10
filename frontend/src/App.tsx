@@ -45,7 +45,7 @@ import TeacherCoursePage from './features/teacher/my-course/TeacherCoursePage'
 import TeacherCourseLayout from './features/teacher/my-course/TeacherCourseLayout'
 import TeacherProjectList from './features/teacher/my-course/TeacherProjectList'
 import TeacherProjectDetail from './features/teacher/my-course/TeacherProjectDetail'
-import TeamProjects from './features/teacher/my-course/TeamProjects'
+import TeacherProjectLayout from './features/teacher/my-course/TeacherProjectLayout'
 import TeamSubmit from './features/teacher/my-course/TeamSubmit'
 import TeamGrades from './features/teacher/my-course/TeamGrades'
 import CourseTeams from './features/teacher/my-course/CourseTeams'
@@ -153,11 +153,11 @@ function App() {
                   </Route>
 
                   {/* Project detail outside tab bar — full content area */}
-                  <Route path="project-list/:projectId">
-                    <Route element={<TeacherProjectDetail />} index />
-                    <Route element={<TeamProjects />} path="team-projects" />
-                    <Route element={<TeamSubmit />} path="team-projects/submit" />
-                    <Route element={<TeamGrades />} path="team-projects/grades" />
+                  <Route path="project-list/:projectId" element={<TeacherProjectLayout />}>
+                    <Route index element={<Navigate replace to="projectdetail" />} />
+                    <Route element={<TeacherProjectDetail />} path="projectdetail" />
+                    <Route element={<TeamSubmit />} path="submit" />
+                    <Route element={<TeamGrades />} path="grades" />
                   </Route>
                 </Route>
               </Route>
