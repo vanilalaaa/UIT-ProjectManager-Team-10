@@ -1,4 +1,38 @@
-import PlaceholderPage from '../../components/common/PlaceholderPage'
+import { useState, useEffect } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { getStudentQuickStats, getTeacherQuickStats, getStudentChartStats, getTeacherChartStats } from '../../mocks/home.mock';
+import QuickStats from '../../components/ui/QuickStats';
+import StatusChart from '../../components/ui/StatusChart';
+import ActivityCalendar from '../../components/ui/ActivityCalendar';
+import ActivityFeed from '../../components/ui/ActivityFeed';
+
 export default function HomePage() {
-  return <PlaceholderPage title="Trang chủ — Dashboard" />
+  const { currentUser, isLoading } = useAuth();
+  const [stats, setStats] = useState<any>(null);
+  const [chartStats, setChartStats] = useState({ todo: 0, inProgress: 0, readyForTest: 0, total: 0 });
+  const [selectedMonth, setSelectedMonth] = useState(6);
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    setStats(currentUser.role === 'TEACHER' ? getTeacherQuickStats() : getStudentQuickStats(currentUser.id));
+    const statsFunc = currentUser.role === 'TEACHER' ? getTeacherChartStats : getStudentChartStats;
+    setChartStats(statsFunc(selectedMonth, selectedDate));
+    setSelectedStatus(null);
+  }, [selectedMonth, selectedDate, currentUser]);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div className="space-y-6 p-6 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold">Welcome back, {currentUser?.name?.split(' ').pop()}</h1>
+      {stats && <QuickStats role={currentUser?.role || 'STUDENT'} stats={stats} />}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <StatusChart role={currentUser?.role} chartStats={chartStats} selectedStatus={selectedStatus} onToggle={setSelectedStatus} />
+        <ActivityCalendar role={currentUser?.role} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+      </div>
+      <ActivityFeed role={currentUser?.role} selectedMonth={selectedMonth} selectedDate={selectedDate} />
+    </div>
+  );
 }
