@@ -18,6 +18,7 @@ import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
+import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.security.CustomUserDetails;
@@ -105,10 +106,8 @@ public class GroupController {
             @PathVariable Long courseId,
             @PathVariable Long groupId) {
 
-        // Lấy thông tin Leader đang đăng nhập
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        // Gọi service lấy danh sách các yêu cầu PENDING
         List<GroupMemberResponse> requests = groupService.getJoinRequests(userDetails.getId(), courseId, groupId);
 
         return ApiResponse.success(requests);
@@ -123,7 +122,6 @@ public class GroupController {
             @PathVariable Long memberId, // Đây là ID của bản ghi GroupMember cần duyệt
             @RequestParam boolean approve) {
 
-        // Lấy thông tin người đang thực hiện thao tác duyệt (phải là Leader)
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         groupService.reviewJoinRequest(userDetails.getId(), courseId, groupId, memberId, approve);
@@ -141,5 +139,32 @@ public class GroupController {
 
         List<GroupMemberResponse> members = groupService.getGroupMembers(courseId, groupId, status);
         return ApiResponse.success(members);
+    }
+
+    // Chuyển quyền Trưởng nhóm (Leader) cho thành viên khác
+    @PostMapping("/{groupId}/transfer-leader")
+    public ResponseEntity<ApiResponse<GroupResponse>> transferLeaderRole(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId,
+            @RequestBody TransferLeaderRequest request) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        GroupResponse updatedGroup = groupService.transferLeaderRole(userDetails.getId(), courseId, groupId,
+                request.getNewLeaderId());
+        return ApiResponse.success(updatedGroup, "Đã chuyển quyền Trưởng nhóm thành công!");
+    }
+
+    // [POST] Xóa thành viên khỏi nhóm (Chỉ Leader có quyền)
+    @PostMapping("/{groupId}/members/{memberId}/remove")
+    public ResponseEntity<ApiResponse<String>> removeGroupMember(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId,
+            @PathVariable Long memberId) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        String message = groupService.removeGroupMember(userDetails.getId(), courseId, groupId, memberId);
+        return ApiResponse.success(message);
     }
 }
