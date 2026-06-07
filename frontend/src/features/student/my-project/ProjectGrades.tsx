@@ -1,15 +1,37 @@
 import { useState } from 'react';
 
-const CRITERIA = ['UI/UX Design', 'Backend Architecture', 'Documentation & Testing'];
+// Shape của feedback do BE chưa định nghĩa rõ — dùng tạm. Khi BE chốt schema,
+// chuyển sang type chính thức trong types/api/feedback.ts.
+type GradeFeedback = {
+  lecturer: { name: string; avatar: string; department: string } | null
+  content: string
+} | null
 
-export default function TeamGrades() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isGraded, setIsGraded] = useState(false); 
-  
-  const [scores, setScores] = useState({ 'UI/UX Design': 0, 'Backend Architecture': 0, 'Documentation & Testing': 0 });
-  const [notes, setNotes] = useState({ 'UI/UX Design': '', 'Backend Architecture': '', 'Documentation & Testing': '' });
+type GradeData = {
+  project: Project | null
+  criteria: ScoreCriteria[]
+  feedback: GradeFeedback
+}
 
-  const average = Object.values(scores).reduce((a, b) => a + b, 0) / CRITERIA.length;
+const fetchGradeData = async (projectId: string | undefined): Promise<GradeData> => {
+  const project = mockProjects.find(p => p.projectId.toString() === projectId)
+
+  return new Promise<GradeData>(resolve => {
+    setTimeout(() => {
+      resolve({
+        project: project || null,
+        criteria: [],
+        feedback: null
+      })
+    }, 500)
+  })
+}
+
+export default function ProjectGrades() {
+  const { projectId } = useParams()
+  const navigate = useNavigate()
+  const [data, setData] = useState<GradeData | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const handleSave = () => {
     setIsGraded(true);

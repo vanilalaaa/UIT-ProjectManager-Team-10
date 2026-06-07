@@ -1,17 +1,27 @@
 import type { Task } from '../../mocks/types'
 
+// TaskCard accepts an extended task shape — BE chưa trả `category`/`priority`/
+// `commentsCount`/`attachmentsCount`, nhưng UI demo cần. Khi BE cập nhật
+// schema, chuyển các field này vào `Task` type chính.
+type TaskCardData = Task & {
+  category?: string
+  priority?: 'High' | 'Medium' | 'Low'
+  commentsCount?: number
+  attachmentsCount?: number
+}
+
 interface TaskCardProps {
-  task: Task
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void 
+  task: TaskCardData
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
 }
 
 export default function TaskCard({ task, onDragStart }: TaskCardProps) {
-  const deadlineDate = task.deadline 
+  const deadlineDate = task.deadline
     ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'No date'
 
-  const taskCategory = (task as any).category || task.group?.name?.split(' - ')[1] || 'Task'
-  const taskPriority = (task as any).priority || 'Medium'
+  const taskCategory = task.category || task.group?.name?.split(' - ')[1] || 'Task'
+  const taskPriority = task.priority || 'Medium'
   
   const priorityStyles: Record<string, string> = {
     High: 'bg-primary-soft text-primary',
@@ -45,14 +55,14 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
           <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <span>{(task as any).commentsCount || 0}</span>
+          <span>{task.commentsCount || 0}</span>
         </div>
         
         <div className="flex items-center gap-1.5">
           <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
           </svg>
-          <span>{(task as any).attachmentsCount || 0}</span>
+          <span>{task.attachmentsCount || 0}</span>
         </div>
       </div>
 

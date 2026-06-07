@@ -11,6 +11,7 @@
  *           ... nested pages with NestedTabLayout wrappers
  */
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Toaster } from 'sonner'
 
 import { AuthProvider } from './features/auth/AuthContext'
 import MainLayout from './components/layout/MainLayout'
@@ -64,6 +65,7 @@ import ProfilePage from './features/profile/ProfilePage';
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" richColors closeButton />
       <BrowserRouter>
         <Routes>
           {/* ── Public ──────────────────────────────────────────────────────── */}
