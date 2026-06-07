@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
-import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
@@ -224,69 +223,6 @@ public class GroupService {
                         member.getGroupMemberId(),
                         member.getUser().getName()))
                 .collect(Collectors.toList());
-    }
-
-    // 9. Chuyển quyền Trưởng nhóm (Leader) cho thành viên khác
-    public GroupResponse transferLeaderRole(Long currentLeaderId, Long courseId, Long groupId, Long newLeaderId) {
-        // 1. Kiểm tra Group có tồn tại không
-        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
-
-        // 2. Kiểm tra xem người gọi API có phải là Leader hiện tại không
-        if (!group.getLeader().getId().equals(currentLeaderId)) {
-            throw new RuntimeException(
-                    "Bạn không có quyền chuyển quyền Trưởng nhóm. Chỉ có Trưởng nhóm hiện tại mới có quyền này!");
-        }
-
-        // 3. Kiểm tra xem newLeaderId có hợp lệ không (không được là chính mình)
-        if (currentLeaderId.equals(newLeaderId)) {
-            throw new RuntimeException("Không thể chuyển quyền Trưởng nhóm cho chính mình!");
-        }
-
-        // 4. Tìm thành viên mới sẽ trở thành Trưởng nhóm
-        GroupMember newLeaderMember = groupMemberRepository.findByGroupIdAndUserId(groupId, newLeaderId)
-                .orElseThrow(() -> new RuntimeException("Thành viên mới không tồn tại trong nhóm này!"));
-
-        // 5. Kiểm tra xem thành viên mới có status ACTIVE không
-        if (newLeaderMember.getStatus() != GroupMemberStatus.ACTIVE) {
-            throw new RuntimeException("Chỉ có thành viên chính thức (ACTIVE) mới được chuyển thành Trưởng nhóm!");
-        }
-
-        // 6. Lấy User object của newLeader
-        User newLeader = newLeaderMember.getUser();
-
-        // 7. Thực hiện chuyển quyền: Cập nhật leader của Group
-        group.setLeader(newLeader);
-        Group updatedGroup = groupRepository.save(group);
-
-        return mapToResponse(updatedGroup);
-    }
-
-    // 10. Xóa thành viên khỏi nhóm (Chỉ Leader có quyền)
-    public String removeGroupMember(Long leaderId, Long courseId, Long groupId, Long memberId) {
-        // 1. Kiểm tra Group có tồn tại không
-        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
-
-        // 2. Kiểm tra xem người gọi API có phải là Leader của nhóm không
-        if (!group.getLeader().getId().equals(leaderId)) {
-            throw new RuntimeException("Bạn không có quyền xóa thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
-        }
-
-        // 3. Kiểm tra xem memberId có phải là chính Leader không (không được xóa chính
-        // mình)
-        if (leaderId.equals(memberId)) {
-            throw new RuntimeException("Trưởng nhóm không thể xóa chính mình khỏi nhóm!");
-        }
-
-        // 4. Tìm thành viên cần xóa
-        GroupMember memberToRemove = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
-                .orElseThrow(() -> new RuntimeException("Thành viên không tồn tại trong nhóm này!"));
-
-        // 5. Xóa thành viên
-        groupMemberRepository.delete(memberToRemove);
-
-        return "Đã xóa thành viên khỏi nhóm thành công!";
     }
 
     private GroupResponse mapToResponse(Group group) {
