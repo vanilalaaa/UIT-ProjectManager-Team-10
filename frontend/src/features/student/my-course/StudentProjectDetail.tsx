@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import StatusBadge from '../../../components/ui/StatusBadge'
-import FileAttachment from '../../../components/ui/FileAttachment'
+import ProjectDetailCard from '../../../components/ui/ProjectDetailCard' 
 import MemberRow from '../../../components/ui/MemberRow'
 import UserProfilePopover from '../../../components/ui/UserProfilePopover'
 import type { Project, Group, User } from '../../../mocks/types'
@@ -46,13 +45,8 @@ export default function StudentProjectDetail() {
 
   const registration = project.registrations?.[0]
   const isRegistered = !!registration
-
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
-
-  const projectFiles = project.submissions?.[0]?.filePath 
-    ? [project.submissions[0].filePath.split('/').pop() || 'document.pdf']
-    : ['Project_Spec.pdf', 'Analysis_V2.csv']
 
   return (
     <div className="space-y-6">
@@ -64,47 +58,10 @@ export default function StudentProjectDetail() {
         <span className="text-text font-medium truncate">{project.title}</span>
       </div>
 
-      <div className="rounded-card border border-border bg-surface p-6 shadow-soft">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-text">{project.title}</h1>
-            <p className="mt-1 text-sm text-text-soft">
-              {project.course.name} • {project.category?.name}
-            </p>
-          </div>
-          <StatusBadge status={project.status} />
-        </div>
-
-        <div className="mt-6">
-          <h3 className="text-sm font-bold text-text uppercase tracking-wider">Description</h3>
-          <p className="mt-2 text-base text-text-soft leading-relaxed">{project.description}</p>
-        </div>
-
-        <div className="mt-6">
-          <h3 className="text-sm font-bold text-text uppercase tracking-wider">Project Files</h3>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {projectFiles.map((file, idx) => (
-              <FileAttachment key={idx} fileName={file} />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-sm font-bold text-text-soft block">Deadline</span>
-            <span className="text-base font-semibold text-text mt-0.5 block">{project.endDate}</span>
-          </div>
-
-          {!isRegistered && (
-            <button
-              type="button"
-              className="bg-primary hover:bg-primary/95 text-surface font-semibold px-6 py-2.5 rounded shadow-soft transition-colors"
-            >
-              Đăng ký đề tài cho nhóm
-            </button>
-          )}
-        </div>
-      </div>
+      <ProjectDetailCard 
+        project={project} 
+        showEditButton={false} 
+      />
 
       {isRegistered && currentGroup && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

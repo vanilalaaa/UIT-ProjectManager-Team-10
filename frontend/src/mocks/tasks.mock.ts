@@ -429,3 +429,20 @@ export const mockTeamRequestsMap: Record<number, User[]> = {
   1: mockTeamRequests, 
   2: [] 
 }
+
+export interface CourseRequirement {
+  description: string;
+  deadline: string;
+}
+
+export const mockCourseRequirements: Record<number, CourseRequirement> = {
+  1: { 
+    description: 'Các nhóm cần nộp đủ 3 file: Báo cáo (PDF), Slide thuyết trình (PPTX) và Source code (.zip). Nộp trễ trừ 50% số điểm.',
+    deadline: '2026-06-30'
+  },
+};
+
+export const mockCourseGroupsMap: Record<number, Group[]> = {
+  1: [groupPhoenix, groupAster], 
+  2: [groupNimbus, groupOrion]
+}
