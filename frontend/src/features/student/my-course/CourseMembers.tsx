@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import MemberRow from '../../../components/ui/MemberRow'
-import UserProfilePopover from '../../../components/ui/UserProfilePopover'
+import MemberRow from '../../../components/ui/student/MemberRow'
+import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import type { User } from '../../../mocks/types'
 
 import { mockCourseMembersMap } from '../../../mocks/tasks.mock'

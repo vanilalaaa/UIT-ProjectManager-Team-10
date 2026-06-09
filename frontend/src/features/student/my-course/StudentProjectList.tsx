@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import ProjectCard from '../../../components/ui/ProjectCard'
+import ProjectCard from '../../../components/ui/student/ProjectCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import type { Project } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
@@ -50,26 +50,16 @@ export default function StudentProjectList() {
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
 
-  const courseName = projects.length > 0 ? projects[0].course.name : 'Danh sách đồ án'
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text">
-          {courseName}
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => (
-          <ProjectCard 
-            key={project.projectId} 
-            project={project} 
-            courseId={courseId || '1'} 
-            groupName={project.groupName}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project) => (
+        <ProjectCard 
+          key={project.projectId} 
+          project={project} 
+          courseId={courseId || '1'} 
+          groupName={project.groupName}
+        />
+      ))}
     </div>
   )
 }

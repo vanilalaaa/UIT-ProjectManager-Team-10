@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import ProjectCard from '../../../components/ui/ProjectCard'
-import CourseRequirementCard from '../../../components/ui/CourseRequirementCard'
-import ConfirmModal from '../../../components/ui/ConfirmModal'
+import ProjectCard from '../../../components/ui/student/ProjectCard'
+import CourseRequirementCard from '../../../components/ui/teacher/CourseRequirementCard'
+import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import { mockProjects } from '../../../mocks/projects.mock'
 import { mockCourseRequirements } from '../../../mocks/tasks.mock'
 

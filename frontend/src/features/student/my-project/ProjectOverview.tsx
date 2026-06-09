@@ -2,8 +2,8 @@ import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Project } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
-import FileAttachment from '../../../components/ui/FileAttachment'
-import StatusBadge from '../../../components/ui/StatusBadge'
+import FileAttachment from '../../../components/ui/student/FileAttachment'
+import StatusBadge from '../../../components/ui/student/StatusBadge'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 
 export default function ProjectOverview() {

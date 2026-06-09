@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { Course, Category } from '../../mocks/types'
-import type { CourseRequirement } from '../../mocks/tasks.mock'
+import type { Course, Category } from '../../../mocks/types'
+import type { CourseRequirement } from '../../../mocks/tasks.mock'
 
 interface CourseRequirementCardProps {
   course: Course;
