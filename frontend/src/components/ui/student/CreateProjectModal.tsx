@@ -45,7 +45,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSubmit }: Create
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-text-soft hover:bg-surface-soft rounded-button">
               Hủy
             </button>
-            <button type="submit" className="px-5 py-2 text-sm font-bold bg-primary text-surface rounded-button shadow-soft hover:bg-primary/90">
+            <button type="submit" className="bg-brand-gradient text-white px-5 py-2 text-sm font-bold rounded-xl shadow-md hover:opacity-90 hover:shadow-lg active:scale-95 transition-all">
               Gửi duyệt
             </button>
           </div>

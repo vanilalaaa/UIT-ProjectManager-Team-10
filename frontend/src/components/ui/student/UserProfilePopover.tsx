@@ -5,9 +5,15 @@ interface UserProfilePopoverProps {
   user: User
   onClose: () => void
   showInviteButton?: boolean
+  onInvite?: () => void 
 }
 
-export default function UserProfilePopover({ user, onClose, showInviteButton = false }: UserProfilePopoverProps) {
+export default function UserProfilePopover({ 
+  user, 
+  onClose, 
+  showInviteButton = false,
+  onInvite 
+}: UserProfilePopoverProps) {
   return (
     <div className="absolute right-0 top-full mt-2 w-72 bg-surface rounded-2xl shadow-2xl border border-border p-5 z-30 text-left animate-fade-in">
       <button 
@@ -51,8 +57,11 @@ export default function UserProfilePopover({ user, onClose, showInviteButton = f
             className="mt-4 w-full bg-primary hover:bg-primary/95 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
             onClick={(e) => {
               e.stopPropagation()
-              alert(`Đã gửi lời mời vào nhóm đến ${user.name}!`)
-              onClose()
+              if (onInvite) {
+                onInvite() 
+              } else {
+                onClose()
+              }
             }}
           >
             <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

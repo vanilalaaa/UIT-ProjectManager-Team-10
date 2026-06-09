@@ -4,9 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 
-import { updateMe } from '../../services/auth.service'
-import type { ApiError } from '../../lib/api/axiosClient'
-import type { UpdateMeRequest, UserDto } from '../../types/api/auth'
+import { updateMe } from '../../../services/auth.service'
+import type { ApiError } from '../../../lib/api/axiosClient'
+import type { UpdateMeRequest, UserDto } from '../../../types/api/auth'
 
 const schema = z.object({
   firstName: z.string().min(1, 'Bắt buộc'),

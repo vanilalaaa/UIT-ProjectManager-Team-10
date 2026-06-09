@@ -1,118 +1,196 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Project } from '../../../mocks/types'
+import type { Project, Group, User } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
-import FileAttachment from '../../../components/ui/student/FileAttachment'
-import StatusBadge from '../../../components/ui/student/StatusBadge'
+import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+
+import ProjectDetailCard from '../../../components/ui/student/ProjectDetailCard'
+import MemberRow from '../../../components/ui/student/MemberRow'
+import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import Avatar from '../../../components/ui/Avatar'
+
+const MOCK_ACTIVITIES = [
+  {
+    id: 1,
+    user: { name: 'Sinh viên Trần', avatarUrl: null },
+    action: 'đã nộp tệp đính kèm',
+    target: 'srs-v1.pdf',
+    time: '2 giờ trước'
+  },
+  {
+    id: 2,
+    user: { name: 'Nguyễn Minh An', avatarUrl: null },
+    action: 'đã chuyển trạng thái đồ án task',
+    target: 'IN_PROGRESS',
+    time: '1 ngày trước'
+  },
+  {
+    id: 3,
+    user: { name: 'Lê Hoàng Vy', avatarUrl: null },
+    action: 'đã chuyển trạng thái Task ',
+    target: 'Website quản lý đồ án môn SE330',
+    time: '3 ngày trước'
+  },
+  {
+    id: 4,
+    user: { name: 'Sinh viên Trần', avatarUrl: null },
+    action: 'đã tạo task cho Lê Hoàng Vy ',
+    target: 'Thiết kế API danh sách đồ án',
+    time: '2 giờ trước'
+  },
+];
 
 export default function ProjectOverview() {
-  const { projectId } = useParams()
+  const { projectId } = useParams<{ projectId: string }>()
+  
   const [project, setProject] = useState<Project | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
   useEffect(() => {
-    const fetchProjectDetail = async () => {
-      setLoading(true)
-      
-      const found = mockProjects.find((p: Project) => p.projectId.toString() === projectId)
-      
-      const timer = setTimeout(() => {
-        setProject(found || null)
-        setLoading(false)
-      }, 500)
-
-      return () => clearTimeout(timer)
-    }
+    let isMounted = true
+    setLoading(true)
     
-    fetchProjectDetail()
+    setTimeout(() => {
+      if (isMounted) {
+        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
+        setProject(foundProject || null)
+
+        const registration = foundProject?.registrations?.[0]
+        if (registration) {
+          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
+          const group = allGroups.find(g => g.groupId === registration.groupId)
+          setCurrentGroup(group || null)
+        }
+        setLoading(false)
+      }
+    }, 500)
+
+    return () => { isMounted = false }
   }, [projectId])
 
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
 
-  const members = project.registrations?.map(r => r.groupMember).filter(Boolean) || []
-  const uniqueMembers = Array.from(new Set(members.map(m => m?.userId)))
-    .map(id => members.find(m => m?.userId === id))
-  const previewMembers = uniqueMembers.slice(0, 3)
+  const registration = project.registrations?.[0]
+  const isRegistered = !!registration
+  const currentMembersCount = currentGroup?.members?.length || 0
+  const maxMembersCount = 5
+
+  const displayedActivities = MOCK_ACTIVITIES.slice(0, 4)
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-8 space-y-6">
-        <div className="bg-surface p-8 rounded-2xl border border-border shadow-soft">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-text">{project.title}</h1>
-              <p className="text-sm text-text-soft mt-1">{project.course?.name}</p>
-            </div>
-            <StatusBadge status={project.status} />
-          </div>
+    <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2">
+          <ProjectDetailCard 
+            project={project} 
+            showEditButton={false} 
+          />
+        </div>
 
-          <p className="text-text mt-6 leading-relaxed">
-            {project.description}
-          </p>
-
-          <div className="mt-8 p-6 bg-surface-soft/50 rounded-xl border border-border">
-            <h4 className="text-sm font-bold text-text mb-4">Project Files</h4>
-            <div className="flex flex-wrap gap-3">
-              {project.submissions && project.submissions.length > 0 ? (
-                project.submissions.map((sub, idx) => (
-                  <FileAttachment key={idx} fileName={sub.filePath.split('/').pop() || 'file'} />
-                ))
-              ) : (
-                <p className="text-sm text-text-soft italic">Chưa có tệp đính kèm.</p>
-              )}
+        <div className="lg:col-span-1">
+          <div className="bg-surface p-6 rounded-[28px] border border-border shadow-xl transition-all">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-text">Recent Activity</h3>
             </div>
-          </div>
-
-          <div className="flex gap-12 mt-8 pt-8 border-t border-border">
-            <div>
-              <p className="text-xs text-text-soft font-bold uppercase tracking-wider">Deadline</p>
-              <p className="text-sm font-semibold text-text mt-2 flex items-center gap-2">📅 {project.endDate}</p>
-            </div>
-            <div>
-              <p className="text-xs text-text-soft font-bold uppercase tracking-wider">Team Members</p>
-              <div className="flex -space-x-2 mt-2">
-                {previewMembers.length > 0 ? (
-                  <>
-                    {previewMembers.map((member, idx) => (
-                      <img 
-                        key={idx}
-                        src={member?.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${member?.name}&background=random`} 
-                        alt={member?.name || 'Member'}
-                        className="size-8 rounded-full border-2 border-surface object-cover"
-                        title={member?.name}
-                      />
-                    ))}
-                    
-                    {uniqueMembers.length > 3 && (
-                      <div className="size-8 rounded-full bg-surface-soft border-2 border-surface flex items-center justify-center text-[10px] font-bold text-text-soft">
-                        +{uniqueMembers.length - 3}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="size-8 rounded-full bg-slate-200 border-2 border-surface flex items-center justify-center text-[10px] text-slate-500">
-                    ?
+            
+            <div className="space-y-5">
+              {displayedActivities.map((activity) => (
+                <div key={activity.id} className="flex gap-3">
+                  <Avatar 
+                    name={activity.user.name}
+                    avatarUrl={activity.user.avatarUrl}
+                    sizeClass="size-9"
+                    className="border border-border shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1 text-sm leading-relaxed">
+                    <p className="text-text">
+                      <span className="font-bold">{activity.user.name}</span>{' '}
+                      <span className="text-text-soft">{activity.action}</span>{' '}
+                      <span className="font-semibold text-text">{activity.target}</span>
+                    </p>
+                    <p className="text-[11px] font-medium text-text-soft mt-1">
+                      {activity.time}
+                    </p>
                   </div>
-                )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isRegistered && currentGroup && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          
+          <div className="lg:col-span-1 rounded-[28px] border border-border bg-surface p-6 shadow-xl flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                <svg className="size-5 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                </svg>
+                Thông tin nhóm
+              </h2>
+              <div className="text-sm font-bold text-text-soft">
+                <span className="text-text">{currentMembersCount}</span>
+                <span className="mx-1 text-border">/</span>
+                {maxMembersCount} <span className="font-medium">Members</span>
+              </div>
+            </div>
+
+            <div className="h-px w-full bg-border/60"></div>
+            
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="size-20 rounded-full bg-primary-soft shadow-md flex items-center justify-center relative">
+                <span className="text-2xl font-black text-primary tracking-wider">
+                  {currentGroup.name.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+              
+              <div className="space-y-1.5 px-2">
+                <h3 className="text-xl font-bold text-text">{currentGroup.name}</h3>
+                <p className="text-sm text-text-soft leading-relaxed line-clamp-3">
+                  {currentGroup.description}
+                </p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="col-span-4">
-        <div className="bg-surface p-6 rounded-2xl border border-border shadow-soft">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-text">Recent Activity</h3>
-            <button className="text-sm text-primary font-bold hover:underline">View All →</button>
+          <div className="lg:col-span-2 rounded-[28px] border border-border bg-surface p-6 shadow-xl space-y-4">
+            <div className="border-b border-border pb-4">
+              <h2 className="text-lg font-bold text-text">Thành viên nhóm ({currentMembersCount})</h2>
+            </div>
+
+            <div className="flex flex-col">
+              {((currentGroup.members as User[]) || []).map((member: User) => {
+                const isLeader = member.userId === currentGroup.leader?.userId
+                return (
+                  <MemberRow 
+                    key={member.userId}
+                    member={member}
+                    roleLabel={isLeader ? 'Leader' : 'Member'}
+                    onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
+                  >
+                    {activePopoverId === member.userId && (
+                      <div className="absolute right-0 top-full mt-3 z-50 w-72">
+                        <UserProfilePopover 
+                          user={member}
+                          onClose={() => setActivePopoverId(null)}
+                        />
+                      </div>
+                    )}
+                  </MemberRow>
+                )
+              })}
+            </div>
           </div>
-          <div className="text-center py-10 text-sm text-text-soft border-2 border-dashed border-border rounded-xl">
-            Chưa có hoạt động gần đây.
-          </div>
+          
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -3,8 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 
-import { updatePassword } from '../../services/auth.service'
-import type { ApiError } from '../../lib/api/axiosClient'
+import { updatePassword } from '../../../services/auth.service'
+import type { ApiError } from '../../../lib/api/axiosClient'
 
 const schema = z
   .object({
