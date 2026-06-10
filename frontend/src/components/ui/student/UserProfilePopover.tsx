@@ -1,3 +1,4 @@
+// src/components/ui/student/UserProfilePopover.tsx
 import Avatar from '../../ui/Avatar'
 import type { User } from '../../../mocks/types'
 
@@ -6,13 +7,17 @@ interface UserProfilePopoverProps {
   onClose: () => void
   showInviteButton?: boolean
   onInvite?: () => void 
+  isTeacherView?: boolean 
+  onDelete?: () => void   
 }
 
 export default function UserProfilePopover({ 
   user, 
   onClose, 
   showInviteButton = false,
-  onInvite 
+  onInvite,
+  isTeacherView = false,
+  onDelete
 }: UserProfilePopoverProps) {
   return (
     <div className="absolute right-0 top-full mt-2 w-72 bg-surface rounded-2xl shadow-2xl border border-border p-5 z-30 text-left animate-fade-in">
@@ -51,24 +56,41 @@ export default function UserProfilePopover({
           </p>
         </div>
 
-        {showInviteButton && (
+        {isTeacherView ? (
           <button 
             type="button"
-            className="mt-4 w-full bg-primary hover:bg-primary/95 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
+            className="mt-4 w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-rose-100 transition-all flex items-center justify-center gap-1.5"
             onClick={(e) => {
               e.stopPropagation()
-              if (onInvite) {
-                onInvite() 
-              } else {
-                onClose()
-              }
+              if (onDelete) onDelete()
+              onClose()
             }}
           >
-            <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Invite to Team
+            Remove from Team
           </button>
+        ) : (
+          showInviteButton && (
+            <button 
+              type="button"
+              className="mt-4 w-full bg-primary hover:bg-primary/95 text-white text-xs font-bold py-2.5 rounded-xl shadow-md shadow-primary/10 transition-all flex items-center justify-center gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onInvite) {
+                  onInvite() 
+                } else {
+                  onClose()
+                }
+              }}
+            >
+              <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Invite to Team
+            </button>
+          )
         )}
       </div>
     </div>

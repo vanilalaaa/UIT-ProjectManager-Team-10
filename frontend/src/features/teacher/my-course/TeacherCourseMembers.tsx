@@ -1,9 +1,10 @@
-import { useEffect, useState, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
-import { mockCourseMembersMap } from '../../../mocks/tasks.mock'
+import NotificationModal from '../../../components/ui/student/NotificationModal'
+import { mockCourseMembersMap, mockCourseGroupsMap } from '../../../mocks/tasks.mock'
 import type { User } from '../../../mocks/types'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,7 @@ export default function TeacherCourseMember() {
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
+  const [notification, setNotification] = useState({ isOpen: false, title: '', message: '' })
 
   useEffect(() => {
     let isMounted = true
@@ -58,6 +60,30 @@ export default function TeacherCourseMember() {
     return () => { isMounted = false }
   }, [courseId])
 
+  const handleRemoveMemberFromTeam = (userId: number) => {
+    const currentCourseId = Number(courseId)
+    const courseGroups = mockCourseGroupsMap[currentCourseId] || []
+    
+    const isLeader = courseGroups.some(team => team.leader.userId === userId)
+
+    if (isLeader) {
+      setNotification({
+        isOpen: true,
+        title: 'Không thể thực hiện',
+        message: 'Không thể xóa Leader ra khỏi nhóm!'
+      })
+      return
+    }
+
+    setMembers(prevMembers => prevMembers.filter(m => m.userId !== userId))
+
+    setNotification({
+      isOpen: true,
+      title: 'Thành công',
+      message: 'Đã xóa sinh viên khỏi lớp học thành công!'
+    })
+  }
+
   const filteredMembers = members.filter(member => 
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     member.uid.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,6 +94,13 @@ export default function TeacherCourseMember() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-fade-in pb-20">
+      <NotificationModal 
+        isOpen={notification.isOpen}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+      />
+
       <div className="flex items-center gap-2 mb-2">
         <Link to="/teacher/my-course" className="text-sm font-medium text-text-soft hover:text-primary transition-colors">
           Quản lý lớp học
@@ -77,7 +110,6 @@ export default function TeacherCourseMember() {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Đã gom số lượng vào chung với Title bằng {members.length} */}
         <h2 className="text-[24px] font-bold text-text">Thành viên lớp học ({members.length})</h2>
 
         <div className="relative max-w-sm w-full">
@@ -113,7 +145,9 @@ export default function TeacherCourseMember() {
                       <UserProfilePopover 
                         user={member}
                         onClose={() => setActivePopoverId(null)}
-                        showInviteButton={false} 
+                        showInviteButton={false}
+                        isTeacherView={true}
+                        onDelete={() => handleRemoveMemberFromTeam(member.userId)}
                       />
                     </SmartPopoverWrapper>
                   )}

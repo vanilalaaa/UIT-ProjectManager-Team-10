@@ -154,7 +154,7 @@ export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData
             </button>
             <button 
               type="submit"
-              className="px-6 py-2.5 bg-[#2DB0FF] hover:bg-[#209CE8] text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+              className="px-6 py-2.5 bg-brand-gradient hover:bg-[#209CE8] text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
             >
               {initialData ? 'Lưu thay đổi' : 'Tạo lớp học'}
             </button>
