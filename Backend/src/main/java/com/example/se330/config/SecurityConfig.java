@@ -67,6 +67,16 @@ public class SecurityConfig {
                                 "/api/projects/*/submissions",
                                 "/api/submissions/**")
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        // Sinh viên chỉ được xem điểm & nhận xét của nhóm mình
+                        .requestMatchers("/api/projects/*/grades/me")
+                        .hasRole("STUDENT")
+
+                        // Giảng viên: xem bài nộp, chấm điểm, cập nhật điểm
+                        .requestMatchers(
+                                "/api/projects/*/grades",
+                                "/api/grades/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
                         .anyRequest().authenticated())
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

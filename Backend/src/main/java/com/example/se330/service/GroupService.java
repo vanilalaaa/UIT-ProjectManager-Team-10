@@ -153,18 +153,13 @@ public class GroupService {
     }
 
     public List<GroupMemberResponse> getJoinRequests(Long leaderId, Long courseId, Long groupId) {
-        // 1. Kiểm tra Group có tồn tại không
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Bảo mật: Chỉ có Leader mới được quyền xem danh sách yêu cầu gia nhập nhóm
-        // này
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền xem danh sách yêu cầu. Chỉ có Trưởng nhóm mới xem được!");
         }
 
-        // 3. Tìm tất cả bản ghi trong bảng GROUP_MEMBER có groupId này và status là
-        // PENDING
         List<GroupMember> pendingMembers = groupMemberRepository.findByGroupIdAndStatus(groupId,
                 GroupMemberStatus.PENDING);
 
@@ -176,30 +171,23 @@ public class GroupService {
     }
 
     public void reviewJoinRequest(Long leaderId, Long courseId, Long groupId, Long memberId, boolean approve) {
-        // 1. Kiểm tra Group có tồn tại hay không
+
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Kiểm tra xem người đang gọi API có phải là Leader của nhóm này không
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền duyệt thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
         }
-
-        // 3. Tìm yêu cầu xin vào nhóm (GroupMember) dựa trên memberId
         GroupMember memberRequest = groupMemberRepository.findByUserId(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu gia nhập này!"));
-
-        // 4. Kiểm tra xem yêu cầu này có thuộc đúng Group đang xử lý không
         if (!memberRequest.getGroup().getId().equals(groupId)) {
             throw new RuntimeException("Yêu cầu này không thuộc về nhóm của bạn!");
         }
 
-        // 5. Kiểm tra xem trạng thái hiện tại có phải là PENDING không
         if (memberRequest.getStatus() != GroupMemberStatus.PENDING) {
             throw new RuntimeException("Yêu cầu này đã được xử lý từ trước!");
         }
 
-        // 6. Thực hiện Duyệt hoặc Từ chối
         if (approve) {
             memberRequest.setStatus(GroupMemberStatus.ACTIVE);
             memberRequest.setJoinedDate(LocalDate.now());
@@ -215,7 +203,6 @@ public class GroupService {
         if (status != null) {
             members = groupMemberRepository.findByGroupIdAndStatus(groupId, status);
         } else {
-            // Nếu không truyền status, lấy tất cả thành viên bất kể trạng thái
             members = groupMemberRepository.findByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
         }
 
@@ -225,65 +212,50 @@ public class GroupService {
                         member.getUser().getName()))
                 .collect(Collectors.toList());
     }
-
-    // 9. Chuyển quyền Trưởng nhóm (Leader) cho thành viên khác
     public GroupResponse transferLeaderRole(Long currentLeaderId, Long courseId, Long groupId, Long newLeaderId) {
-        // 1. Kiểm tra Group có tồn tại không
+
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Kiểm tra xem người gọi API có phải là Leader hiện tại không
         if (!group.getLeader().getId().equals(currentLeaderId)) {
             throw new RuntimeException(
                     "Bạn không có quyền chuyển quyền Trưởng nhóm. Chỉ có Trưởng nhóm hiện tại mới có quyền này!");
         }
 
-        // 3. Kiểm tra xem newLeaderId có hợp lệ không (không được là chính mình)
         if (currentLeaderId.equals(newLeaderId)) {
             throw new RuntimeException("Không thể chuyển quyền Trưởng nhóm cho chính mình!");
         }
 
-        // 4. Tìm thành viên mới sẽ trở thành Trưởng nhóm
         GroupMember newLeaderMember = groupMemberRepository.findByGroupIdAndUserId(groupId, newLeaderId)
                 .orElseThrow(() -> new RuntimeException("Thành viên mới không tồn tại trong nhóm này!"));
 
-        // 5. Kiểm tra xem thành viên mới có status ACTIVE không
         if (newLeaderMember.getStatus() != GroupMemberStatus.ACTIVE) {
             throw new RuntimeException("Chỉ có thành viên chính thức (ACTIVE) mới được chuyển thành Trưởng nhóm!");
         }
 
-        // 6. Lấy User object của newLeader
         User newLeader = newLeaderMember.getUser();
 
-        // 7. Thực hiện chuyển quyền: Cập nhật leader của Group
         group.setLeader(newLeader);
         Group updatedGroup = groupRepository.save(group);
 
         return mapToResponse(updatedGroup);
     }
 
-    // 10. Xóa thành viên khỏi nhóm (Chỉ Leader có quyền)
     public String removeGroupMember(Long leaderId, Long courseId, Long groupId, Long memberId) {
-        // 1. Kiểm tra Group có tồn tại không
+
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Kiểm tra xem người gọi API có phải là Leader của nhóm không
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền xóa thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
         }
-
-        // 3. Kiểm tra xem memberId có phải là chính Leader không (không được xóa chính
-        // mình)
         if (leaderId.equals(memberId)) {
             throw new RuntimeException("Trưởng nhóm không thể xóa chính mình khỏi nhóm!");
         }
 
-        // 4. Tìm thành viên cần xóa
         GroupMember memberToRemove = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new RuntimeException("Thành viên không tồn tại trong nhóm này!"));
 
-        // 5. Xóa thành viên
         groupMemberRepository.delete(memberToRemove);
 
         return "Đã xóa thành viên khỏi nhóm thành công!";

@@ -50,6 +50,6 @@ public class SubmissionController {
     @DeleteMapping("/submissions/{id}")
     public String delete(@PathVariable Long id) {
         submissionService.deleteSubmission(id);
-        return "Deleted successfully";
+        return "Xóa thành công";
     }
 }

@@ -9,7 +9,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -28,13 +30,17 @@ public class SubmissionService {
     public Submission createSubmission(Long projectId, CreateSubmissionRequest request, Long userId) {
 
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy project"));
+
+        if (isSubmissionLocked(project)) {
+            throw new IllegalStateException("Đã hết hạn nộp bài. Bài nộp đã bị khóa.");
+        }
 
         Group group = groupRepository.findById(request.getGroupId())
-                .orElseThrow(() -> new EntityNotFoundException("Group not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy nhóm"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
 
         Submission submission = Submission.builder()
                 .filePath(request.getFilePath())
@@ -50,7 +56,7 @@ public class SubmissionService {
     public Submission updateSubmission(Long id, UpdateSubmissionRequest request) {
 
         Submission sub = submissionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
 
         if (request.getFilePath() != null) {
             sub.setFilePath(request.getFilePath());
@@ -66,7 +72,7 @@ public class SubmissionService {
     public void deleteSubmission(Long id) {
 
         Submission sub = submissionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
 
         submissionRepository.delete(sub);
     }
@@ -78,5 +84,17 @@ public class SubmissionService {
         }
 
         return submission;
+    }
+
+    /**
+     * Bài nộp bị khóa khi project đã được scheduled job đánh dấu khóa,
+     * hoặc đã qua thời hạn nộp (hết ngày endDate) — phòng trường hợp job chưa kịp chạy.
+     */
+    public boolean isSubmissionLocked(Project project) {
+        if (project.isSubmissionLocked()) {
+            return true;
+        }
+        LocalDate endDate = project.getEndDate();
+        return endDate != null && LocalDateTime.now().isAfter(endDate.atTime(LocalTime.MAX));
     }
 }
