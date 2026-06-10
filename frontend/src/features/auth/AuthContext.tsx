@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useContext } from 'react';
 
 import { getCurrentUser, logout as logoutApi } from '../../services/auth.service'
 import type { AuthResponse, UserDto } from '../../types/api/auth'
@@ -55,3 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   )
 }
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth phải được sử dụng bên trong AuthProvider');
+  }
+  return context;
+};
