@@ -39,6 +39,10 @@ public class Project {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "submission_locked", nullable = false)
+    @Builder.Default
+    private boolean submissionLocked = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
