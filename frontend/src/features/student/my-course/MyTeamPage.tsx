@@ -15,24 +15,7 @@ import NotificationModal from '../../../components/ui/student/NotificationModal'
 import Avatar from '../../../components/ui/Avatar' 
 import EmptyTeamState from '../../../components/ui/student/EmptyTeamState' 
 import type { User, Group } from '../../../mocks/types'
-
-import { mockMyGroupMap, mockTeamRequestsMap, userSinhVienTran } from '../../../mocks/tasks.mock'
-
-const fetchTeamData = async (courseId: string | undefined) => {
-  return new Promise<{ group: Group | null, requests: User[], suggests: User[] }>(resolve => {
-    setTimeout(() => {
-      const id = Number(courseId)
-      resolve({
-        group: mockMyGroupMap[id] || null,
-        requests: mockTeamRequestsMap[id] || [],
-        suggests: [
-          { userId: 991, uid: 'SE114', name: 'Nguyễn Văn Tý', email: 'vanty@gmail.com', userProfile: { summary: 'Dev AI' } },
-          { userId: 992, uid: 'SE114', name: 'Trần Thị Mai', email: 'thimai@gmail.com', userProfile: { summary: 'Design UI/UX' } }
-        ] as User[]
-      })
-    }, 500)
-  })
-}
+import { getTeamData } from '../../../services/team.service'
 
 export default function MyTeamPage() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -48,18 +31,19 @@ export default function MyTeamPage() {
   const [memberToKickId, setMemberToKickId] = useState<number | null>(null)
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
   
-  const currentUser = userSinhVienTran 
-  const isCurrentUserLeader = myGroup?.leader?.userId === currentUser.userId
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const isCurrentUserLeader = myGroup?.leader?.userId === currentUser?.userId
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
 
-    fetchTeamData(courseId).then((data) => {
+    getTeamData(courseId ?? '').then((data) => {
       if (isMounted) {
         setMyGroup(data.group)
         setTeamRequests(data.requests)
         setSuggestedUsers(data.suggests)
+        setCurrentUser(data.currentUser)
         setLoading(false)
       }
     })
@@ -128,6 +112,7 @@ export default function MyTeamPage() {
   }
 
   const handleCreateTeamSubmit = (name: string, description: string) => {
+    if (!currentUser) return
     const newGroup: Group = {
       groupId: Math.floor(Math.random() * 1000) + 10,
       name, description, course: null as unknown as Group['course'],
@@ -138,6 +123,7 @@ export default function MyTeamPage() {
   }
 
 const handleAcceptTeamInvitation = (invite: any) => {
+  if (!currentUser) return
   const joinedGroup: Group = {
     groupId: Math.floor(Math.random() * 1000) + 10,
     name: `Nhóm của ${invite.name}`,
@@ -194,7 +180,7 @@ const handleAcceptTeamInvitation = (invite: any) => {
     setSuggestedPopoverId(null)
   }
 
-  if (loading) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
+  if (loading || !currentUser) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
 
   const leader = myGroup?.leader
   const regularMembers = myGroup ? (myGroup.members as User[]).filter((m) => m.userId !== leader?.userId) : []
@@ -204,9 +190,10 @@ const handleAcceptTeamInvitation = (invite: any) => {
       
       {!myGroup ? (
         <div className="lg:col-span-12 xl:col-span-12 w-full">
-           <EmptyTeamState 
-             onCreateTeamClick={() => setActiveModal('create_team')} 
+           <EmptyTeamState
+             onCreateTeamClick={() => setActiveModal('create_team')}
              onAcceptInvitation={handleAcceptTeamInvitation}
+             courseId={courseId}
            />
         </div>
       ) : (

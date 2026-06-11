@@ -16,6 +16,8 @@ import {
   mockCourseGroupsMap,
   mockCourseMembersMap,
   mockTeamRequestsMap,
+  mockClassMembers,
+  userSinhVienTran,
 } from '../mocks/tasks.mock'
 
 const base = (courseId: number | string) => `/courses/${courseId}/groups`
@@ -44,6 +46,62 @@ export const getCourseMembers = (courseId: number | string): Promise<User[]> =>
 
 export const getTeamRequests = (courseId: number | string): Promise<User[]> =>
   resolveMock(mockTeamRequestsMap[Number(courseId)] ?? [])
+
+export type TeamData = {
+  group: Group | null
+  requests: User[]
+  suggests: User[]
+  currentUser: User
+}
+
+const SUGGESTED_USERS = [
+  { userId: 991, uid: 'SE114', name: 'Nguyễn Văn Tý', email: 'vanty@gmail.com', userProfile: { summary: 'Dev AI' } },
+  { userId: 992, uid: 'SE114', name: 'Trần Thị Mai', email: 'thimai@gmail.com', userProfile: { summary: 'Design UI/UX' } },
+] as unknown as User[]
+
+export const getTeamData = (courseId: number | string): Promise<TeamData> =>
+  resolveMock({
+    group: mockMyGroupMap[Number(courseId)] ?? null,
+    requests: mockTeamRequestsMap[Number(courseId)] ?? [],
+    suggests: SUGGESTED_USERS,
+    currentUser: userSinhVienTran,
+  })
+
+export type AvailableTeam = {
+  id: number
+  name: string
+  slotsLeft: number
+  desc: string
+  members: User[]
+}
+
+export type TeamInvitation = {
+  id: number
+  name: string
+  info: string
+  avatarUrl: string | null
+}
+
+export const getAvailableTeams = (courseId: number | string): Promise<AvailableTeam[]> =>
+  resolveMock(
+    (mockCourseGroupsMap[Number(courseId)] || []).map((g) => ({
+      id: g.groupId,
+      name: g.name,
+      slotsLeft: Math.max(0, 5 - (g.members?.length || 0)),
+      desc: g.description,
+      members: g.members || [],
+    })),
+  )
+
+export const getTeamInvitations = (): Promise<TeamInvitation[]> =>
+  resolveMock(
+    mockClassMembers.slice(4, 12).map((u) => ({
+      id: u.userId,
+      name: u.name,
+      info: u.userProfile?.summary || 'Sinh viên',
+      avatarUrl: u.userProfile?.avatarUrl || null,
+    })),
+  )
 
 export const listTeams = (courseId: number | string): Promise<ApiResponse<Team[]>> =>
   axiosClient.get<ApiResponse<Team[]>>(base(courseId)).then((r) => r.data)

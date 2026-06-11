@@ -1,44 +1,46 @@
-import { useState } from 'react';
-import { mockCourseGroupsMap, mockClassMembers } from '../../../mocks/tasks.mock';
+import { useEffect, useState } from 'react';
 import Avatar from '../Avatar';
 import NotificationModal from './NotificationModal';
-
-const MOCK_AVAILABLE_TEAMS = (mockCourseGroupsMap[1] || []).map(group => ({
-  id: group.groupId,
-  name: group.name,
-  slotsLeft: Math.max(0, 5 - (group.members?.length || 0)),
-  desc: group.description,
-  members: group.members || [] 
-}));
-
-const MOCK_INVITATIONS = mockClassMembers.slice(4, 12).map(user => ({
-  id: user.userId,
-  name: user.name,
-  info: user.userProfile?.summary || 'Sinh viên',
-  avatarUrl: user.userProfile?.avatarUrl || null
-}));
+import {
+  getAvailableTeams,
+  getTeamInvitations,
+  type AvailableTeam,
+  type TeamInvitation,
+} from '../../../services/team.service';
 
 interface EmptyTeamStateProps {
   onCreateTeamClick: () => void;
-  onAcceptInvitation: (invite: any) => void;
+  onAcceptInvitation: (invite: TeamInvitation) => void;
+  courseId?: string;
 }
 
-export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }: EmptyTeamStateProps) {
-  const [invitations, setInvitations] = useState(MOCK_INVITATIONS);
+export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, courseId }: EmptyTeamStateProps) {
+  const [availableTeams, setAvailableTeams] = useState<AvailableTeam[]>([]);
+  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
-  
+
   const [showAllTeams, setShowAllTeams] = useState(false);
   const [showAllInvites, setShowAllInvites] = useState(false);
 
-  const displayedTeams = showAllTeams ? MOCK_AVAILABLE_TEAMS : MOCK_AVAILABLE_TEAMS.slice(0, 6);
+  useEffect(() => {
+    let alive = true;
+    Promise.all([getAvailableTeams(courseId ?? '1'), getTeamInvitations()]).then(([teams, invites]) => {
+      if (!alive) return;
+      setAvailableTeams(teams);
+      setInvitations(invites);
+    });
+    return () => { alive = false; };
+  }, [courseId]);
+
+  const displayedTeams = showAllTeams ? availableTeams : availableTeams.slice(0, 6);
   const displayedInvites = showAllInvites ? invitations : invitations.slice(0, 3);
 
-  const handleAccept = (invite: any) => {
+  const handleAccept = (invite: TeamInvitation) => {
     setInvitations(prev => prev.filter(item => item.id !== invite.id));
     onAcceptInvitation(invite);
   };
 
-  const handleDecline = (invite: any) => {
+  const handleDecline = (invite: TeamInvitation) => {
     setNotification({ 
       title: 'Đã từ chối', 
       message: `Bạn đã từ chối lời mời từ ${invite.name}.` 
@@ -57,7 +59,7 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }
             </svg>
             Available Teams
           </h2>
-          {MOCK_AVAILABLE_TEAMS.length > 6 && (
+          {availableTeams.length > 6 && (
             <button 
               onClick={() => setShowAllTeams(!showAllTeams)} 
               className="text-indigo-600 text-sm font-medium hover:underline"
