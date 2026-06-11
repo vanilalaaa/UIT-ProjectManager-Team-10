@@ -11,8 +11,10 @@ import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApproval
 import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
 import type { Project } from '../../../mocks/types'
 import {
+  addApprovedProject,
   getCourseApprovalRequests,
   getCourseProjects,
+  markRequestHandled,
 } from '../../../services/project.service'
 import { addActivity } from '../../../services/activity.service'
 
@@ -63,7 +65,39 @@ export default function TeacherProjectList() {
       actorName: 'Giảng viên',
       scope: 'STUDENT',
     })
-    setRequests(prev => prev.filter(r => r.requestId !== requestId))
+
+    // Duyệt → tạo Project từ yêu cầu đăng ký rồi đưa vào danh sách đồ án của lớp.
+    const accepted = requests.find((r) => r.requestId === requestId)
+    const base = courseProjects[0]
+    if (accepted && base) {
+      const newProject: Project = {
+        projectId: Date.now(),
+        title: accepted.title,
+        description: accepted.description,
+        status: 'IN_PROGRESS',
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: base.course.endDate,
+        course: base.course,
+        category: base.category,
+        registrations: [
+          {
+            groupId: accepted.requestId,
+            project: null,
+            groupMember: accepted.leader,
+            registeredAt: accepted.submittedAt,
+            approvedAt: new Date().toISOString(),
+            status: 'APPROVED',
+            note: note?.trim() ?? '',
+          },
+        ],
+        submissions: [],
+      }
+      addApprovedProject(id, newProject)
+      setCourseProjects((prev) => [newProject, ...prev])
+    }
+
+    markRequestHandled(id, requestId)
+    setRequests((prev) => prev.filter((r) => r.requestId !== requestId))
   }
 
   const handleDeclineRequest = (requestId: number, title: string, e: React.MouseEvent, note?: string) => {
@@ -77,7 +111,8 @@ export default function TeacherProjectList() {
       actorName: 'Giảng viên',
       scope: 'STUDENT',
     })
-    setRequests(prev => prev.filter(r => r.requestId !== requestId))
+    markRequestHandled(id, requestId)
+    setRequests((prev) => prev.filter((r) => r.requestId !== requestId))
   }
 
   const handleDeleteConfirm = () => {

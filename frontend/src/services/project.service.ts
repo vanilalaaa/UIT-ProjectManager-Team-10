@@ -46,10 +46,44 @@ const MOCK_DELAY = 300
 const resolveMock = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
 
+// Đề tài đã được GV duyệt + request đã xử lý — lưu client (localStorage) cho tới
+// khi BE có pipeline đăng ký/duyệt project thật. TODO(BE).
+const APPROVED_KEY = (courseId: number | string) => `app.approvedProjects.${courseId}`
+const HANDLED_KEY = (courseId: number | string) => `app.handledRequests.${courseId}`
+
+const readJson = <T>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+const readApprovedProjects = (courseId: number | string): Project[] =>
+  readJson<Project[]>(APPROVED_KEY(courseId), [])
+
+export const addApprovedProject = (courseId: number | string, project: Project): void => {
+  localStorage.setItem(
+    APPROVED_KEY(courseId),
+    JSON.stringify([project, ...readApprovedProjects(courseId)]),
+  )
+}
+
+export const markRequestHandled = (courseId: number | string, requestId: number): void => {
+  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
+  if (!handled.includes(requestId)) {
+    localStorage.setItem(HANDLED_KEY(courseId), JSON.stringify([...handled, requestId]))
+  }
+}
+
 export const getMyProjects = (): Promise<Project[]> => resolveMock(mockProjects)
 
-export const getCourseProjects = (courseId: number | string): Promise<Project[]> =>
-  resolveMock(mockProjects.filter((p) => p.course?.courseId === Number(courseId)))
+export const getCourseProjects = (courseId: number | string): Promise<Project[]> => {
+  const base = mockProjects.filter((p) => p.course?.courseId === Number(courseId))
+  return resolveMock([...readApprovedProjects(courseId), ...base])
+}
 
 export const getProjectById = (projectId: number | string): Promise<Project | null> =>
   resolveMock(mockProjects.find((p) => p.projectId === Number(projectId)) ?? null)
@@ -60,10 +94,10 @@ export const getProjectActivities = (_projectId: number | string): Promise<Proje
 }
 
 export const getCourseApprovalRequests = (
-  _courseId: number | string,
+  courseId: number | string,
 ): Promise<ProjectApprovalRequest[]> => {
-  void _courseId
-  return resolveMock(mockProjectRequests)
+  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
+  return resolveMock(mockProjectRequests.filter((r) => !handled.includes(r.requestId)))
 }
 
 export const getCourseRequirements = (
@@ -82,14 +116,14 @@ export const getCourseProjectsWithGroup = (
   courseId: number | string,
 ): Promise<ProjectWithGroup[]> => {
   const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-  const enriched = mockProjects
-    .filter((p) => p.course?.courseId === Number(courseId))
-    .map((p) => {
-      const reg = p.registrations?.[0]
-      const group = reg ? allGroups.find((g) => g.groupId === reg.groupId) : null
-      return { ...p, groupName: group?.name }
-    })
-  return resolveMock(enriched)
+  const withGroup = (p: Project): ProjectWithGroup => {
+    const reg = p.registrations?.[0]
+    const group = reg ? allGroups.find((g) => g.groupId === reg.groupId) : null
+    return { ...p, groupName: group?.name }
+  }
+  const base = mockProjects.filter((p) => p.course?.courseId === Number(courseId)).map(withGroup)
+  const approved = readApprovedProjects(courseId).map(withGroup)
+  return resolveMock([...approved, ...base])
 }
 
 export const listCourseProjects = (
