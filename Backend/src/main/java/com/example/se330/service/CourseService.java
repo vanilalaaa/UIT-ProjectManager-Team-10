@@ -67,7 +67,7 @@ public class CourseService {
 
     public Course getCourseByCode(String code) {
         Course course = this.courseRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new RuntimeException("Mã lớp không tồn tại."));
 
         return course;
     }

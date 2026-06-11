@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CourseCard, { type CourseCardData } from '../../../components/ui/student/CourseCard'
-import JoinCourseModal from '../../../components/ui/student/JoinCourseModal' 
+import JoinCourseModal from '../../../components/ui/student/JoinCourseModal'
 import type { User, Project } from '../../../mocks/types'
+import { requestJoinCourse } from '../../../services/course.service'
+import type { ApiError } from '../../../lib/api/axiosClient'
 
 import { mockProjects } from '../../../mocks/projects.mock'
 import { mockCourseMembersMap } from '../../../mocks/tasks.mock'
@@ -80,36 +82,26 @@ export default function MyCoursePage() {
     return () => { isMounted = false }
   }, [])
 
-  const handleJoinCourseSubmit = (code: string) => {
+  const handleJoinCourseSubmit = async (code: string) => {
     setJoinError('')
-    const codeToJoin = code.trim().toUpperCase()
+    const codeToJoin = code.trim()
 
     if (!codeToJoin) {
       setJoinError('Chưa nhập mã lớp!')
       return
     }
 
-    const allDatabaseCourses = transformProjectsToCourses(mockProjects) as Array<CourseCardData & { _maxStudents: number }>
-    const targetCourse = allDatabaseCourses.find(c => c.code.toUpperCase() === codeToJoin || c.id.toString() === codeToJoin)
-
-    if (!targetCourse) {
-      setJoinError('Mã lớp không tồn tại!')
-      return
+    try {
+      await requestJoinCourse({ code: codeToJoin })
+      toast.success('Đã gửi yêu cầu tham gia lớp. Vui lòng chờ giảng viên duyệt.')
+      setIsJoinModalOpen(false)
+    } catch (err) {
+      const apiErr = err as ApiError
+      // 401/403/network đã có toast từ axiosClient — chỉ hiển thị lỗi nghiệp vụ trong modal.
+      if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
+        setJoinError(apiErr?.message || 'Tham gia lớp thất bại.')
+      }
     }
-
-    if (courses.some(c => c.id === targetCourse.id)) {
-      setJoinError('Bạn đã tham gia lớp học này rồi!')
-      return
-    }
-
-    if (targetCourse.membersCount >= targetCourse._maxStudents) {
-      setJoinError(`Lớp này đã đạt sĩ số tối đa (${targetCourse._maxStudents} SV). Rất tiếc!`)
-      return
-    }
-
-    toast.success(`Đã vào lớp ${targetCourse.code} thành công!`)
-    setCourses(prev => [...prev, targetCourse])
-    setIsJoinModalOpen(false)
   }
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách khóa học..." />
