@@ -16,8 +16,9 @@ export interface CourseCardData {
   semester: string
   projectsCount: number
   membersCount: number
-  memberAvatars: CourseMemberAvatar[] 
+  memberAvatars: CourseMemberAvatar[]
   extraMembers: number
+  maxStudents?: number
 }
 
 interface CourseCardProps {

@@ -6,21 +6,61 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.example.se330.dto.course.CourseCardResponse;
 import com.example.se330.dto.course.CourseResponse;
 import com.example.se330.dto.course.CreateCourseRequest;
 import com.example.se330.dto.course.UpdateCourseRequest;
 import com.example.se330.entity.Course;
+import com.example.se330.enums.JoinStatus;
 import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.security.CustomUserDetails;
 
 @Service
 public class CourseService {
     private final CourseRepository courseRepository;
+    private final CourseRequestRepository courseRequestRepository;
 
     public CourseService(
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository,
+            CourseRequestRepository courseRequestRepository) {
         this.courseRepository = courseRepository;
+        this.courseRequestRepository = courseRequestRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseCardResponse> getTeacherCourses(Long lecturerId) {
+        return this.courseRepository.findByLecturer_Id(lecturerId)
+                .stream()
+                .map(this::mapToCard)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseCardResponse> getStudentCourses(Long studentId) {
+        return this.courseRequestRepository.findAllByStudent_IdAndStatus(studentId, JoinStatus.ACTIVE)
+                .stream()
+                .map(cr -> mapToCard(cr.getCourse()))
+                .toList();
+    }
+
+    private CourseCardResponse mapToCard(Course course) {
+        long members = course.getCourseRequests() == null
+                ? 0
+                : course.getCourseRequests().stream().filter(r -> r.getStatus() == JoinStatus.ACTIVE).count();
+        int projects = course.getProjects() == null ? 0 : course.getProjects().size();
+
+        return CourseCardResponse.builder()
+                .courseId(course.getId())
+                .code(course.getCode())
+                .name(course.getName())
+                .lecturerName(course.getLecturer() != null ? course.getLecturer().getName() : "Chưa phân công")
+                .membersCount((int) members)
+                .projectsCount(projects)
+                .maxStudents(course.getMaxStudents())
+                .build();
     }
 
     public CourseResponse createCourse(CreateCourseRequest req) {

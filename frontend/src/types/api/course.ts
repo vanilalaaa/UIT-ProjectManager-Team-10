@@ -14,6 +14,16 @@ export type CourseResponse = {
 
 export type AdminCourseListItem = CourseResponse
 
+export type CourseCardResponse = {
+  courseId: number
+  code: string
+  name: string
+  lecturerName: string
+  membersCount: number
+  projectsCount: number
+  maxStudents: number
+}
+
 export type AdminCourseQuery = {
   page?: number
   size?: number
