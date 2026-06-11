@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom'; // Thêm import này
 import { useAuth } from '../auth/AuthContext';
-import { getStudentQuickStats, getTeacherQuickStats, getStudentChartStats, getTeacherChartStats } from '../../mocks/home.mock';
+import { getStudentQuickStats, getTeacherQuickStats, getStudentChartStats, getTeacherChartStats } from '../../services/home.service';
 import QuickStats from '../../components/ui/home/QuickStats';
 import StatusChart from '../../components/ui/home/StatusChart';
 import ActivityCalendar from '../../components/ui/home/ActivityCalendar';

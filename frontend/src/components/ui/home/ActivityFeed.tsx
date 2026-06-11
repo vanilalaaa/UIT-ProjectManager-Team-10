@@ -1,4 +1,4 @@
-import { mockStudentActivities, mockTeacherActivities } from '../../../mocks/home.mock';
+import { mockStudentActivities, mockTeacherActivities } from '../../../services/home.service';
 // 1. Import component Avatar (điều chỉnh đường dẫn cho đúng với dự án của em)
 import Avatar from '../../ui/Avatar'; 
 
