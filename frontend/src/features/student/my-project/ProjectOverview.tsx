@@ -9,6 +9,13 @@ import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import Avatar from '../../../components/ui/Avatar'
+import ProjectResourcesCard, { type ProjectResource } from '../../../components/ui/student/ProjectResourcesCard'
+import { useAuth } from '../../auth/useAuth'
+
+const MOCK_RESOURCES: ProjectResource[] = [
+  { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
+  { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
+]
 
 const MOCK_ACTIVITIES = [
   {
@@ -44,10 +51,20 @@ const MOCK_ACTIVITIES = [
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>()
   
+  const { currentUser } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
+  const [resources, setResources] = useState<ProjectResource[]>(MOCK_RESOURCES)
+
+  const handleAddResource = (resource: Omit<ProjectResource, 'id'>) => {
+    setResources(prev => [{ ...resource, id: `r${Date.now()}` }, ...prev])
+  }
+
+  const handleRemoveResource = (id: string) => {
+    setResources(prev => prev.filter(r => r.id !== id))
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -78,6 +95,17 @@ export default function ProjectOverview() {
   const isRegistered = !!registration
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
+
+  const isGroupLeader = !!(
+    currentGroup?.leader &&
+    currentUser &&
+    (currentUser.uid === currentGroup.leader.uid || currentUser.email === currentGroup.leader.email)
+  )
+  const isMemberOfGroup =
+    currentGroup?.members?.some(m => m.uid === currentUser?.uid || m.email === currentUser?.email) ?? false
+  // Mock: user đăng nhập (BE seed) chưa chắc khớp nhóm mock → cho quản lý ở chế độ xem thử.
+  // Khi nối nhóm thật, đổi thành: const canManageResources = isGroupLeader
+  const canManageResources = isGroupLeader || !isMemberOfGroup
 
   const displayedActivities = MOCK_ACTIVITIES.slice(0, 4)
 
@@ -125,8 +153,9 @@ export default function ProjectOverview() {
       </div>
 
       {isRegistered && currentGroup && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          
+
           <div className="lg:col-span-1 rounded-[28px] border border-border bg-surface p-6 shadow-xl flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-text flex items-center gap-2">
@@ -188,8 +217,16 @@ export default function ProjectOverview() {
               })}
             </div>
           </div>
-          
+
         </div>
+
+        <ProjectResourcesCard
+          resources={resources}
+          canManage={canManageResources}
+          onAdd={handleAddResource}
+          onRemove={handleRemoveResource}
+        />
+        </>
       )}
     </div>
   )
