@@ -5,9 +5,8 @@ import ProjectDetailCard from '../../../components/ui/student//ProjectDetailCard
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import type { Project, Group, User } from '../../../mocks/types'
-
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import { getProjectById } from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 export default function StudentProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -20,21 +19,17 @@ export default function StudentProjectDetail() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
-        setProject(foundProject || null)
 
-        const registration = foundProject?.registrations?.[0]
-        if (registration) {
-          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-          const group = allGroups.find(g => g.groupId === registration.groupId)
-          setCurrentGroup(group || null)
-        }
-        setLoading(false)
+    getProjectById(projectId ?? '').then(async (foundProject) => {
+      if (!isMounted) return
+      setProject(foundProject)
+      const groupId = foundProject?.registrations?.[0]?.groupId
+      if (groupId) {
+        const group = await getGroupById(groupId)
+        if (isMounted) setCurrentGroup(group)
       }
-    }, 500)
+      setLoading(false)
+    })
 
     return () => { isMounted = false }
   }, [projectId])

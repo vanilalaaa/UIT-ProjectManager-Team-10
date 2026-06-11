@@ -4,8 +4,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
-import { mockCourseMembersMap, mockCourseGroupsMap } from '../../../mocks/tasks.mock'
-import type { User } from '../../../mocks/types'
+import { getCourseMembers, getCourseGroups } from '../../../services/team.service'
+import type { Group, User } from '../../../mocks/types'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -40,6 +40,7 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
 export default function TeacherCourseMember() {
   const { courseId } = useParams<{ courseId: string }>()
   const [members, setMembers] = useState<User[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
@@ -48,23 +49,21 @@ export default function TeacherCourseMember() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const id = Number(courseId)
-        setMembers(mockCourseMembersMap[id] || [])
+
+    Promise.all([getCourseMembers(courseId ?? ''), getCourseGroups(courseId ?? '')]).then(
+      ([memberList, groupList]) => {
+        if (!isMounted) return
+        setMembers(memberList)
+        setGroups(groupList)
         setLoading(false)
-      }
-    }, 500)
-    
+      },
+    )
+
     return () => { isMounted = false }
   }, [courseId])
 
   const handleRemoveMemberFromTeam = (userId: number) => {
-    const currentCourseId = Number(courseId)
-    const courseGroups = mockCourseGroupsMap[currentCourseId] || []
-    
-    const isLeader = courseGroups.some(team => team.leader.userId === userId)
+    const isLeader = groups.some(team => team.leader.userId === userId)
 
     if (isLeader) {
       setNotification({

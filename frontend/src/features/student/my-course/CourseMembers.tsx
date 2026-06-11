@@ -4,17 +4,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import type { User } from '../../../mocks/types'
-
-import { mockCourseMembersMap } from '../../../mocks/tasks.mock'
-
-const fetchCourseMembers = async (courseId: string | undefined): Promise<User[]> => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const id = Number(courseId)
-      resolve(mockCourseMembersMap[id] || [])
-    }, 500)
-  })
-}
+import { getCourseMembers } from '../../../services/team.service'
 
 export default function CourseMembers() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -27,7 +17,7 @@ export default function CourseMembers() {
     let isMounted = true
     setLoading(true)
     
-    fetchCourseMembers(courseId).then(data => {
+    getCourseMembers(courseId ?? '').then(data => {
       if (isMounted) {
         setMembers(data)
         setLoading(false)

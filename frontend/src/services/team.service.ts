@@ -6,8 +6,42 @@ import type {
   TeamJoinRequestPatch,
   TeamMember,
 } from '../types/api/team'
+import type { Group, User } from '../mocks/types'
+import {
+  groupPhoenix,
+  groupAster,
+  groupNimbus,
+  groupOrion,
+  mockMyGroupMap,
+  mockCourseGroupsMap,
+  mockCourseMembersMap,
+  mockTeamRequestsMap,
+} from '../mocks/tasks.mock'
 
 const base = (courseId: number | string) => `/courses/${courseId}/groups`
+
+// Mock fallback (PROJECT_RULES §3): các màn team/group cần Group/User giàu
+// (members + profile + tasks). BE GroupResponse/GroupMemberResponse hiện phẳng.
+// TODO(BE): enrich rồi thay bằng listTeams/listTeamMembers ở trên.
+const MOCK_DELAY = 300
+const resolveMock = <T>(value: T): Promise<T> =>
+  new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
+const ALL_GROUPS = [groupPhoenix, groupAster, groupNimbus, groupOrion]
+
+export const getGroupById = (groupId: number | string): Promise<Group | null> =>
+  resolveMock(ALL_GROUPS.find((g) => g.groupId === Number(groupId)) ?? null)
+
+export const getMyGroup = (courseId: number | string): Promise<Group | null> =>
+  resolveMock(mockMyGroupMap[Number(courseId)] ?? null)
+
+export const getCourseGroups = (courseId: number | string): Promise<Group[]> =>
+  resolveMock(mockCourseGroupsMap[Number(courseId)] ?? [])
+
+export const getCourseMembers = (courseId: number | string): Promise<User[]> =>
+  resolveMock(mockCourseMembersMap[Number(courseId)] ?? [])
+
+export const getTeamRequests = (courseId: number | string): Promise<User[]> =>
+  resolveMock(mockTeamRequestsMap[Number(courseId)] ?? [])
 
 export const listTeams = (courseId: number | string): Promise<ApiResponse<Team[]>> =>
   axiosClient.get<ApiResponse<Team[]>>(base(courseId)).then((r) => r.data)

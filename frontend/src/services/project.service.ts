@@ -7,6 +7,27 @@ import type {
 } from '../types/api/project'
 import { mockProjects } from '../mocks/projects.mock'
 import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../mocks/tasks.mock'
+import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
+
+export type ProjectActivity = {
+  id: number
+  user: { name: string; avatarUrl: string | null }
+  action: string
+  target: string
+  time: string
+}
+
+const MOCK_ACTIVITIES: ProjectActivity[] = [
+  { id: 1, user: { name: 'Sinh viên Trần', avatarUrl: null }, action: 'đã nộp tệp đính kèm', target: 'srs-v1.pdf', time: '2 giờ trước' },
+  { id: 2, user: { name: 'Nguyễn Minh An', avatarUrl: null }, action: 'đã chuyển trạng thái đồ án task', target: 'IN_PROGRESS', time: '1 ngày trước' },
+  { id: 3, user: { name: 'Lê Hoàng Vy', avatarUrl: null }, action: 'đã chuyển trạng thái Task', target: 'Website quản lý đồ án môn SE330', time: '3 ngày trước' },
+  { id: 4, user: { name: 'Sinh viên Trần', avatarUrl: null }, action: 'đã tạo task cho Lê Hoàng Vy', target: 'Thiết kế API danh sách đồ án', time: '2 giờ trước' },
+]
+
+const MOCK_RESOURCES: ProjectResource[] = [
+  { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
+  { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
+]
 
 // Mock fallback (PROJECT_RULES §3): các màn list/detail cần Project dạng giàu
 // (course.name, registrations, submissions, member profile). BE hiện trả
@@ -24,6 +45,16 @@ export const getCourseProjects = (courseId: number | string): Promise<Project[]>
 
 export const getProjectById = (projectId: number | string): Promise<Project | null> =>
   resolveMock(mockProjects.find((p) => p.projectId === Number(projectId)) ?? null)
+
+export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
+  void _projectId
+  return resolveMock(MOCK_ACTIVITIES)
+}
+
+export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
+  void _projectId
+  return resolveMock(MOCK_RESOURCES)
+}
 
 export type ProjectWithGroup = Project & { groupName?: string }
 

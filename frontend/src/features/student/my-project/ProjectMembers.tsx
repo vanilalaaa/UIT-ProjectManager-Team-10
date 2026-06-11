@@ -3,26 +3,15 @@ import { useParams } from 'react-router-dom'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student//UserProfilePopover'
 import type { User, Group } from '../../../mocks/types'
-
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import { getProjectById } from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 const fetchGroupData = async (projectId: string | undefined): Promise<Group | null> => {
-  // --- BẮT ĐẦU VÙNG MOCK (Xóa khi có API) ---
-  const project = mockProjects.find((p) => p.projectId.toString() === projectId)
-  const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-  const registration = project?.registrations?.[0]
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(registration ? allGroups.find(g => g.groupId === registration.groupId) || null : null)
-    }, 500)
-  })
-
-  /* KHI CÓ API THẬT:
-  const response = await axios.get(`/api/projects/${projectId}/group`)
-  return response.data
-  */
+  if (!projectId) return null
+  const project = await getProjectById(projectId)
+  const groupId = project?.registrations?.[0]?.groupId
+  if (!groupId) return null
+  return getGroupById(groupId)
 }
 
 export default function ProjectMembers() {

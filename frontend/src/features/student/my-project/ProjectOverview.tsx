@@ -1,8 +1,13 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Project, Group, User } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import {
+  getProjectById,
+  getProjectActivities,
+  getProjectResources,
+  type ProjectActivity,
+} from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 import ProjectDetailCard from '../../../components/ui/student/ProjectDetailCard'
 import MemberRow from '../../../components/ui/student/MemberRow'
@@ -12,51 +17,16 @@ import Avatar from '../../../components/ui/Avatar'
 import ProjectResourcesCard, { type ProjectResource } from '../../../components/ui/student/ProjectResourcesCard'
 import { useAuth } from '../../auth/useAuth'
 
-const MOCK_RESOURCES: ProjectResource[] = [
-  { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
-  { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
-]
-
-const MOCK_ACTIVITIES = [
-  {
-    id: 1,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã nộp tệp đính kèm',
-    target: 'srs-v1.pdf',
-    time: '2 giờ trước'
-  },
-  {
-    id: 2,
-    user: { name: 'Nguyễn Minh An', avatarUrl: null },
-    action: 'đã chuyển trạng thái đồ án task',
-    target: 'IN_PROGRESS',
-    time: '1 ngày trước'
-  },
-  {
-    id: 3,
-    user: { name: 'Lê Hoàng Vy', avatarUrl: null },
-    action: 'đã chuyển trạng thái Task ',
-    target: 'Website quản lý đồ án môn SE330',
-    time: '3 ngày trước'
-  },
-  {
-    id: 4,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã tạo task cho Lê Hoàng Vy ',
-    target: 'Thiết kế API danh sách đồ án',
-    time: '2 giờ trước'
-  },
-];
-
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>()
-  
+
   const { currentUser } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
-  const [resources, setResources] = useState<ProjectResource[]>(MOCK_RESOURCES)
+  const [resources, setResources] = useState<ProjectResource[]>([])
+  const [activities, setActivities] = useState<ProjectActivity[]>([])
 
   const handleAddResource = (resource: Omit<ProjectResource, 'id'>) => {
     setResources(prev => [{ ...resource, id: `r${Date.now()}` }, ...prev])
@@ -69,21 +39,23 @@ export default function ProjectOverview() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
-        setProject(foundProject || null)
+    const pid = projectId ?? ''
 
-        const registration = foundProject?.registrations?.[0]
-        if (registration) {
-          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-          const group = allGroups.find(g => g.groupId === registration.groupId)
-          setCurrentGroup(group || null)
+    Promise.all([getProjectById(pid), getProjectActivities(pid), getProjectResources(pid)]).then(
+      async ([foundProject, acts, res]) => {
+        if (!isMounted) return
+        setProject(foundProject)
+        setActivities(acts)
+        setResources(res)
+
+        const groupId = foundProject?.registrations?.[0]?.groupId
+        if (groupId) {
+          const group = await getGroupById(groupId)
+          if (isMounted) setCurrentGroup(group)
         }
         setLoading(false)
-      }
-    }, 500)
+      },
+    )
 
     return () => { isMounted = false }
   }, [projectId])
@@ -107,7 +79,7 @@ export default function ProjectOverview() {
   // Khi nối nhóm thật, đổi thành: const canManageResources = isGroupLeader
   const canManageResources = isGroupLeader || !isMemberOfGroup
 
-  const displayedActivities = MOCK_ACTIVITIES.slice(0, 4)
+  const displayedActivities = activities.slice(0, 4)
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
