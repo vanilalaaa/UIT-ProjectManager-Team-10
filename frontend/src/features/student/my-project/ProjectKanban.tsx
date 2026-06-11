@@ -4,8 +4,7 @@ import TaskCard from '../../../components/ui/student/TaskCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CreateTaskModal from '../../../components/ui/student/CreateTaskModal'
 import type { Task, User, Group } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { mockTasks, mockMyGroupMap, mockCourseMembersMap } from '../../../mocks/tasks.mock'
+import { getProjectBoard } from '../../../services/task.service'
 
 const COLUMNS = [
   { id: 'TODO', title: 'To Do', dot: 'bg-text-soft', text: 'text-text-soft' },
@@ -13,23 +12,6 @@ const COLUMNS = [
   { id: 'REVIEW', title: 'Review', dot: 'bg-primary', text: 'text-primary' },
   { id: 'DONE', title: 'Done', dot: 'bg-secondary', text: 'text-secondary' }
 ]
-
-const fetchBoardData = async (projectId: string | undefined) => {
-  return new Promise<{ tasks: Task[], currentUser: User | null, currentGroup: Group | null }>(resolve => {
-    setTimeout(() => {
-      const project = mockProjects.find(p => p.projectId.toString() === projectId)
-      const courseId = project?.course?.courseId || 1
-      
-      const group = mockMyGroupMap[courseId] || null
-      const members = mockCourseMembersMap[courseId] || []
-      
-      const currentUser = members.length > 0 ? members[0] : null
-      const groupTasks = group ? mockTasks.filter(t => t.group.groupId === group.groupId) : []
-
-      resolve({ tasks: groupTasks, currentUser, currentGroup: group })
-    }, 500)
-  })
-}
 
 export default function ProjectKanban() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -44,7 +26,7 @@ export default function ProjectKanban() {
     let isMounted = true
     setLoading(true)
 
-    fetchBoardData(projectId).then(data => {
+    getProjectBoard(projectId ?? '').then(data => {
       if (isMounted) {
         setTasks(data.tasks)
         setCurrentUser(data.currentUser)
