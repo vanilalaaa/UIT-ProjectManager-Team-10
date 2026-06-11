@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import CourseCard, { type CourseCardData } from '../../../components/ui/CourseCard'
+import CourseCard, { type CourseCardData } from '../../../components/ui/student/CourseCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import CourseFormModal, { type CourseFormData } from '../../../components/ui/CourseFormModal'
-import ConfirmModal from '../../../components/ui/ConfirmModal'
+import CourseFormModal, { type CourseFormData } from '../../../components/ui/teacher/CourseFormModal'
+import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import type { Project } from '../../../mocks/types'
 import { mockProjects } from '../../../mocks/projects.mock'
 import { mockCourseMembersMap } from '../../../mocks/tasks.mock' 
 
 const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
   const uniqueCoursesMap = new Map<number, CourseCardData>()
+  
   projects.forEach((project) => {
     const course = project.course
     if (course && !uniqueCoursesMap.has(course.courseId)) {
@@ -17,8 +18,12 @@ const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
       const courseName = nameParts[1] || course.name
       const allMembersInClass = mockCourseMembersMap[course.courseId] || []
       const totalActualMembers = allMembersInClass.length
-      const actualAvatars = allMembersInClass
-        .map(user => user.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`)
+      
+      const memberAvatars = allMembersInClass
+        .map(user => ({
+          name: user.name,
+          avatarUrl: user.userProfile?.avatarUrl || null
+        }))
         .slice(0, 3)
 
       uniqueCoursesMap.set(course.courseId, {
@@ -29,11 +34,12 @@ const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
         semester: 'Fall Semester 2026',
         projectsCount: projects.filter((p) => p.course.courseId === course.courseId).length,
         membersCount: totalActualMembers > 0 ? totalActualMembers : (course.maxStudents || 120),
-        avatars: actualAvatars,
+        memberAvatars: memberAvatars, 
         extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
       })
     }
   })
+  
   return Array.from(uniqueCoursesMap.values())
 }
 
@@ -64,7 +70,20 @@ export default function TeacherCoursePage() {
     if (selectedCourse) {
       setCourses(prev => prev.map(c => c.id === selectedCourse.id ? { ...c, name: data.name, code: data.courseCode } : c))
     } else {
-      setCourses(prev => [{ id: Math.random(), ...data, code: data.courseCode, lecturer: 'Bạn', semester: 'Fall 2026', projectsCount: 0, membersCount: data.maxStudents, avatars: [], extraMembers: 0 }, ...prev])
+      setCourses(prev => [
+        { 
+          id: Math.random(), 
+          ...data, 
+          code: data.courseCode, 
+          lecturer: 'Bạn', 
+          semester: 'Fall 2026', 
+          projectsCount: 0, 
+          membersCount: data.maxStudents, 
+          memberAvatars: [], 
+          extraMembers: 0 
+        }, 
+        ...prev
+      ])
     }
     setIsFormModalOpen(false)
   }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import FileAttachment from '../../components/ui/FileAttachment'
-import type { Project } from '../../mocks/types'
+import FileAttachment from '../student/FileAttachment'
+import Avatar from '../Avatar' 
+import type { Project } from '../../../mocks/types'
 
 interface Props {
   project: Project
@@ -13,12 +14,11 @@ export default function ProjectWorkspaceCard({ project }: Props) {
   const previewMembers = uniqueMembers.slice(0, 2)
 
   return (
-    <div className="bg-surface p-6 rounded-2xl border border-border shadow-soft flex flex-col">
+    <div className="bg-surface p-6 rounded-2xl border border-border border-t-4 border-t-primary shadow-soft flex flex-col h-full">
       <div className="flex justify-between items-start">
         <span className="bg-primary-soft text-primary text-xs font-bold px-2 py-1 rounded">
           {project.course?.name?.split(' - ')[0] || 'N/A'}
         </span>
-        <button className="text-text-soft hover:text-text">...</button>
       </div>
 
       <h3 className="font-bold text-lg mt-3 text-text">{project.title || 'Untitled Project'}</h3>
@@ -34,16 +34,17 @@ export default function ProjectWorkspaceCard({ project }: Props) {
       </div>
 
       <div className="mt-auto pt-6 flex items-center justify-between border-t border-border">
-        <div className="flex -space-x-2">
+        <div className="flex items-center -space-x-2">
           {previewMembers.length > 0 ? (
             <>
               {previewMembers.map((member, idx) => (
-                <img 
+                <Avatar 
                   key={idx}
-                  src={member?.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${member?.name}&background=random`} 
-                  alt={member?.name || 'Member'}
-                  className="size-8 rounded-full border-2 border-surface object-cover relative z-10"
-                  title={member?.name}
+                  name={member?.name}
+                  avatarUrl={member?.userProfile?.avatarUrl}
+                  sizeClass="size-8 border-2 border-surface"
+                  textClass="text-[10px]"
+                  className="relative z-10"
                 />
               ))}
               
@@ -54,17 +55,21 @@ export default function ProjectWorkspaceCard({ project }: Props) {
               )}
             </>
           ) : (
-             <div className="size-8 rounded-full bg-slate-200 border-2 border-surface flex items-center justify-center text-[10px] text-slate-500 relative z-10">
-               ?
-             </div>
+            <Avatar 
+              name="?" 
+              sizeClass="size-8 border-2 border-surface" 
+              textClass="text-[10px]"
+              className="relative z-10"
+            />
           )}
         </div>
 
         <Link 
           to={`/my-project/${project.projectId}`} 
-          className="text-primary font-bold text-sm hover:underline"
+          className="text-primary font-bold text-sm hover:text-primary/90 transition-colors flex items-center gap-1 shrink-0"
         >
-          Open Workspace →
+          <span>Open Workspace</span>
+          <span className="text-base font-semibold leading-none transform translate-y-[-0.5px]">→</span>
         </Link>
       </div>
     </div>

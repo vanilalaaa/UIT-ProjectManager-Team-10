@@ -1,21 +1,34 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import MemberRow from '../../../components/ui/MemberRow'
-import UserProfilePopover from '../../../components/ui/UserProfilePopover'
-import InviteListModal from '../../../components/ui/InviteListModal'
-import CreateTeamModal from '../../../components/ui/CreateTeamModal' 
+import MemberRow from '../../../components/ui/student/MemberRow'
+import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
+import InviteListModal from '../../../components/ui/student/InviteListModal'
+import CreateTeamModal from '../../../components/ui/student/CreateTeamModal' 
+import LeaveTeamModal from '../../../components/ui/student/LeaveTeamModal'
+import DeleteTeamModal from '../../../components/ui/student/DeleteTeamModal'
+import KickMemberModal from '../../../components/ui/student/KickMemberModal'
+import TransferLeaderModal from '../../../components/ui/student/TransferLeaderModal'
+import CreateProjectModal from '../../../components/ui/student/CreateProjectModal'
+import TeamInfoCard from '../../../components/ui/student/TeamInfoCard'
+import NotificationModal from '../../../components/ui/student/NotificationModal'
+import Avatar from '../../../components/ui/Avatar' 
+import EmptyTeamState from '../../../components/ui/student/EmptyTeamState' 
 import type { User, Group } from '../../../mocks/types'
 
 import { mockMyGroupMap, mockTeamRequestsMap, userSinhVienTran } from '../../../mocks/tasks.mock'
 
 const fetchTeamData = async (courseId: string | undefined) => {
-  return new Promise<{ group: Group | null, requests: User[] }>(resolve => {
+  return new Promise<{ group: Group | null, requests: User[], suggests: User[] }>(resolve => {
     setTimeout(() => {
       const id = Number(courseId)
       resolve({
         group: mockMyGroupMap[id] || null,
-        requests: mockTeamRequestsMap[id] || []
+        requests: mockTeamRequestsMap[id] || [],
+        suggests: [
+          { userId: 991, uid: 'SE114', name: 'Nguyễn Văn Tý', email: 'vanty@gmail.com', userProfile: { summary: 'Dev AI' } },
+          { userId: 992, uid: 'SE114', name: 'Trần Thị Mai', email: 'thimai@gmail.com', userProfile: { summary: 'Design UI/UX' } }
+        ] as User[]
       })
     }, 500)
   })
@@ -23,12 +36,20 @@ const fetchTeamData = async (courseId: string | undefined) => {
 
 export default function MyTeamPage() {
   const { courseId } = useParams<{ courseId: string }>()
+  const [loading, setLoading] = useState<boolean>(true)
+  
   const [myGroup, setMyGroup] = useState<Group | null>(null)
   const [teamRequests, setTeamRequests] = useState<User[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false) 
+  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
+  const [hasProject, setHasProject] = useState(false)
+
+  const [suggestedPopoverId, setSuggestedPopoverId] = useState<number | null>(null)
+  const [activeModal, setActiveModal] = useState<'invite' | 'create_team' | 'leave_confirm' | 'delete_confirm' | 'kick_confirm' | 'transfer_leader' | 'create_project' | null>(null)
+  const [memberToKickId, setMemberToKickId] = useState<number | null>(null)
+  const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
+  
+  const currentUser = userSinhVienTran 
+  const isCurrentUserLeader = myGroup?.leader?.userId === currentUser.userId
 
   useEffect(() => {
     let isMounted = true
@@ -38,6 +59,7 @@ export default function MyTeamPage() {
       if (isMounted) {
         setMyGroup(data.group)
         setTeamRequests(data.requests)
+        setSuggestedUsers(data.suggests)
         setLoading(false)
       }
     })
@@ -45,162 +67,241 @@ export default function MyTeamPage() {
     return () => { isMounted = false }
   }, [courseId])
 
+  const executeIfLeader = (action: () => void) => {
+    if (!isCurrentUserLeader) {
+      setNotification({ title: 'Thông báo', message: 'Bạn không có quyền thực hiện hành động này. Chỉ Leader mới được phép!' })
+      return
+    }
+    action()
+  }
+
+  const handleKickMemberClick = (memberId: number) => {
+    executeIfLeader(() => {
+      setMemberToKickId(memberId)
+      setActiveModal('kick_confirm')
+    })
+  }
+
+  const confirmKickMember = () => {
+    if (myGroup && memberToKickId !== null) {
+      setMyGroup({
+        ...myGroup,
+        members: myGroup.members?.filter(m => (m as User).userId !== memberToKickId)
+      })
+    }
+    setActiveModal(null)
+    setMemberToKickId(null)
+  }
+
+  const handleLeaveTeam = () => {
+    if (isCurrentUserLeader && (myGroup?.members?.length || 0) > 1) {
+      setActiveModal('transfer_leader')
+    } else {
+      setNotification({ title: 'Thành công', message: 'Bạn đã rời khỏi nhóm thành công!' })
+      setMyGroup(null)
+      setActiveModal(null)
+    }
+  }
+
+  const handleTransferLeadership = (newLeaderId: number) => {
+    setNotification({ title: 'Thành công', message: 'Đã chuyển quyền Leader thành công. Bạn đã rời nhóm!' });
+    setMyGroup(null)
+    setActiveModal(null)
+  }
+
+  const handleDeleteTeamClick = () => {
+    executeIfLeader(() => {
+      setActiveModal('delete_confirm')
+    })
+  }
+
+  const confirmDeleteTeam = () => {
+    setNotification({ title: 'Đã giải tán', message: 'Nhóm đã bị giải tán vĩnh viễn!' });
+    setMyGroup(null)
+    setActiveModal(null)
+  }
+
+  const handleCreateProjectSubmit = (title: string, description: string) => {
+    setNotification({ title: 'Thành công', message: `Đã gửi đề tài "${title}" lên giảng viên duyệt!` });
+    setHasProject(true)
+    setActiveModal(null)
+  }
+
   const handleCreateTeamSubmit = (name: string, description: string) => {
     const newGroup: Group = {
       groupId: Math.floor(Math.random() * 1000) + 10,
-      name,
-      description,
-      // course gắn từ id route, BE sẽ trả lại course đầy đủ sau khi tạo nhóm
-      course: null as unknown as Group['course'],
-      leader: userSinhVienTran, 
-      members: [userSinhVienTran], 
-      tasks: []
+      name, description, course: null as unknown as Group['course'],
+      leader: currentUser, members: [currentUser], tasks: []
     }
-    
-    const id = Number(courseId)
-    mockMyGroupMap[id] = newGroup
-
     setMyGroup(newGroup)
+    setActiveModal(null)
+  }
+
+const handleAcceptTeamInvitation = (invite: any) => {
+  const joinedGroup: Group = {
+    groupId: Math.floor(Math.random() * 1000) + 10,
+    name: `Nhóm của ${invite.name}`,
+    description: invite.info || 'Nhóm thực hiện đồ án môn học.',
+    course: null as any,
+    leader: {
+      userId: invite.id,
+      name: invite.name,
+      uid: 'STUDENT_UID',
+      email: 'leader@gmail.com',
+      userProfile: { 
+        summary: invite.info, 
+        avatarUrl: invite.avatarUrl 
+      } as any
+    } as any,
+    members: [
+      {
+        userId: invite.id,
+        name: invite.name,
+        uid: 'STUDENT_UID',
+        email: 'leader@gmail.com',
+        userProfile: { 
+          summary: invite.info, 
+          avatarUrl: invite.avatarUrl 
+        } as any // 
+      } as any, // 
+      currentUser
+    ],
+    tasks: []
+  };
+
+  setMyGroup(joinedGroup);
+  setNotification({ title: 'Thành công', message: `Bạn đã gia nhập nhóm của ${invite.name}!` });
+};
+
+  const handleAcceptRequest = (user: User) => {
+    if (myGroup) {
+      setMyGroup({
+        ...myGroup,
+        members: [...(myGroup.members || []), user]
+      })
+    }
+    setTeamRequests(teamRequests.filter(req => req.userId !== user.userId))
+    setNotification({ title: 'Thành công', message: `Đã thêm ${user.name} vào nhóm!` })
+  }
+
+  const handleDeclineRequest = (userId: number) => {
+    setTeamRequests(teamRequests.filter(req => req.userId !== userId))
+    setNotification({ title: 'Đã từ chối', message: 'Đã từ chối lời mời tham gia nhóm.' })
+  }
+
+  const handleInviteUser = (user: User) => {
+    setNotification({ title: 'Thành công', message: `Đã gửi lời mời vào nhóm đến ${user.name}!` })
+    setSuggestedPopoverId(null)
   }
 
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
 
   const leader = myGroup?.leader
-  const regularMembers = myGroup
-    ? (myGroup.members as User[]).filter((m) => m.userId !== leader?.userId)
-    : []
-
-  const currentMemberCount = myGroup?.members?.length || 0
-  const maxMembers = 5
+  const regularMembers = myGroup ? (myGroup.members as User[]).filter((m) => m.userId !== leader?.userId) : []
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      <div className="lg:col-span-7 xl:col-span-7">
-        {!myGroup ? (
-          <div className="rounded-card border-2 border-dashed border-border bg-surface p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-soft">
-            <div className="size-16 rounded-full bg-primary-soft text-primary flex items-center justify-center">
-              <svg className="size-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.584-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-text">Bạn chưa tham gia nhóm nào</h3>
-              <p className="text-sm text-text-soft max-w-sm mx-auto leading-relaxed">
-                Hãy tạo nhóm mới hoặc kiểm tra lời mời từ các nhóm khác.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setIsCreateModalOpen(true)} 
-                type="button" 
-                className="bg-brand-gradient text-surface font-semibold px-6 py-2.5 rounded-button shadow-soft hover:opacity-90 transition-opacity flex items-center gap-2 text-sm"
-              >
-                Create new team
-              </button>
-              <button onClick={() => setIsInviteModalOpen(true)} className="bg-surface text-primary border border-primary font-semibold px-6 py-2.5 rounded-button hover:bg-primary-soft transition-all text-sm">
-                View Invitations
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
-              <h2 className="text-xl font-bold text-text">{myGroup.name}</h2>
-              <div className="text-sm font-semibold text-text-soft bg-surface-soft px-3 py-1.5 rounded-full border border-border">
-                {currentMemberCount} / {maxMembers} Members
-              </div>
-            </div>
+      
+      {!myGroup ? (
+        <div className="lg:col-span-12 xl:col-span-12 w-full">
+           <EmptyTeamState 
+             onCreateTeamClick={() => setActiveModal('create_team')} 
+             onAcceptInvitation={handleAcceptTeamInvitation}
+           />
+        </div>
+      ) : (
+        <>
+          <div className="lg:col-span-7 xl:col-span-7 space-y-6">
+            <TeamInfoCard 
+              myGroup={myGroup}
+              currentUser={currentUser}
+              isCurrentUserLeader={isCurrentUserLeader}
+              onLeaveClick={() => setActiveModal('leave_confirm')}
+              onDeleteClick={handleDeleteTeamClick}
+              onKickMember={handleKickMemberClick}
+            />
 
-            {leader && (
-              <div className="rounded-xl border border-primary/30 bg-primary-soft/10 p-4 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <img src={leader.userProfile?.avatarUrl} className="size-12 rounded-full object-cover border border-primary/30" />
-                  <div>
-                    <h3 className="text-sm font-bold text-text">{leader.name} <span className="bg-primary text-surface text-[10px] px-2 py-0.5 rounded-full uppercase">Leader</span></h3>
-                    <p className="text-xs text-text-soft">{leader.uid} • {leader.email}</p>
-                  </div>
-                </div>
-                <div className="relative">
-                  <button onClick={() => setActivePopoverId(activePopoverId === leader.userId ? null : leader.userId)} className="text-xs font-semibold text-primary px-4 py-1.5 border border-primary/30 rounded-full hover:bg-primary-soft">
-                    Xem hồ sơ
-                  </button>
-                  {activePopoverId === leader.userId && (
-                    <div className="absolute right-0 top-full mt-2 z-50 w-72">
-                      <UserProfilePopover user={leader} onClose={() => setActivePopoverId(null)} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-text uppercase tracking-wider mb-3">Thành viên ({regularMembers.length})</h3>
-              <div className="border border-border rounded-xl bg-surface divide-y divide-border shadow-sm">
-                {regularMembers.map((member) => (
-                  <MemberRow key={member.userId} member={member} onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}>
-                    {activePopoverId === member.userId && (
-                      <div className="absolute right-0 top-full mt-2 z-50 w-72">
-                        <UserProfilePopover user={member} onClose={() => setActivePopoverId(null)} />
-                      </div>
-                    )}
+            <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-4">
+              <h3 className="text-lg font-bold text-text border-b border-border pb-4">Invite Members</h3>
+              <div className="divide-y divide-border">
+                {suggestedUsers.map(user => (
+                  <MemberRow key={user.userId} member={user} onViewProfile={(u) => setSuggestedPopoverId(suggestedPopoverId === u.userId ? null : u.userId)}>
+                     {suggestedPopoverId === user.userId && (
+                       <UserProfilePopover 
+                         user={user as any} 
+                         onClose={() => setSuggestedPopoverId(null)} 
+                         showInviteButton={true} 
+                         onInvite={() => handleInviteUser(user)} 
+                       />
+                     )}
                   </MemberRow>
                 ))}
               </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {myGroup && (
-        <div className="lg:col-span-5 xl:col-span-5">
-          <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-5">
-            <div className="flex items-center gap-2 border-b border-border pb-4">
-              <h2 className="text-xl font-bold text-text">Team Requests</h2>
-            </div>
-            
-            {teamRequests.length > 0 ? (
-              <div className="space-y-4">
-                {teamRequests.map((request) => (
-                  <div key={request.userId} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <img src={request.userProfile?.avatarUrl} className="size-12 rounded-full object-cover border border-border shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
-                        <p className="text-xs text-text-soft mt-0.5 break-words leading-relaxed">{request.userProfile?.summary}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">
-                      <div className="relative mr-auto">
-                        <button onClick={() => setActivePopoverId(activePopoverId === request.userId ? null : request.userId)} className="text-xs font-semibold text-primary px-3 py-1.5 rounded hover:bg-primary-soft">
-                          Xem hồ sơ
-                        </button>
-                        {activePopoverId === request.userId && (
-                          <div className="absolute left-0 top-full mt-2 z-50 w-72">
-                            <UserProfilePopover user={request} onClose={() => setActivePopoverId(null)} />
-                          </div>
-                        )}
-                      </div>
-                      <button className="text-xs font-semibold text-text-soft px-3 py-1.5 rounded hover:bg-surface-soft">Decline</button>
-                      <button className="text-xs font-semibold bg-primary text-surface px-4 py-1.5 rounded">Accept</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-text-soft">
-                Không có lời yêu cầu tham gia nào.
+          <div className="lg:col-span-5 xl:col-span-5 space-y-6">
+            {!hasProject && (
+              <div className="bg-brand-gradient rounded-card p-6 shadow-md text-surface flex flex-col justify-center min-h-[160px]">
+                <h3 className="text-lg font-bold mb-2">Đăng ký Đề tài Project</h3>
+                <p className="text-sm text-surface/80 mb-5 leading-relaxed">Nhóm của bạn hiện chưa đăng ký đồ án. Hãy tạo một đề tài mới.</p>
+                <button 
+                  onClick={() => executeIfLeader(() => setActiveModal('create_project'))}
+                  className="bg-surface text-primary font-bold py-2.5 px-4 rounded-button shadow-sm hover:opacity-90 transition-all text-sm w-full"
+                >
+                  + Tạo Project Mới
+                </button>
               </div>
             )}
+
+            <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-5">
+              <h2 className="text-lg font-bold text-text border-b border-border pb-4">Team Requests</h2>
+              {teamRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {teamRequests.map((request) => (
+                    <div key={request.userId} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <Avatar 
+                          name={request.name}
+                          avatarUrl={request.userProfile?.avatarUrl}
+                          sizeClass="size-10"
+                          className="border border-border shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
+                          <p className="text-xs text-text-soft mt-0.5">{request.userProfile?.summary}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">
+                        <button onClick={() => handleDeclineRequest(request.userId)} className="text-xs font-semibold text-text-soft px-3 py-1.5 rounded hover:bg-surface-soft">Decline</button>
+                        <button onClick={() => handleAcceptRequest(request)} className="text-xs font-semibold bg-primary text-surface px-4 py-1.5 rounded">Accept</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-text-soft text-sm">Không có lời yêu cầu tham gia nào.</div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
-      <InviteListModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+      <InviteListModal isOpen={activeModal === 'invite'} onClose={() => setActiveModal(null)} />
+      <CreateTeamModal isOpen={activeModal === 'create_team'} onClose={() => setActiveModal(null)} onSubmit={handleCreateTeamSubmit} />
       
-      <CreateTeamModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-        onSubmit={handleCreateTeamSubmit}
+      <LeaveTeamModal isOpen={activeModal === 'leave_confirm'} onClose={() => setActiveModal(null)} onConfirm={handleLeaveTeam} />
+      <DeleteTeamModal isOpen={activeModal === 'delete_confirm'} onClose={() => setActiveModal(null)} onConfirm={confirmDeleteTeam} />
+      <KickMemberModal isOpen={activeModal === 'kick_confirm'} onClose={() => { setActiveModal(null); setMemberToKickId(null); }} onConfirm={confirmKickMember} />
+      
+      <TransferLeaderModal isOpen={activeModal === 'transfer_leader'} onClose={() => setActiveModal(null)} members={regularMembers} onTransfer={handleTransferLeadership} />
+      <CreateProjectModal isOpen={activeModal === 'create_project'} onClose={() => setActiveModal(null)} onSubmit={handleCreateProjectSubmit} />
+
+      <NotificationModal 
+        isOpen={!!notification} 
+        title={notification?.title || ''} 
+        message={notification?.message || ''} 
+        onClose={() => setNotification(null)} 
       />
     </div>
   )

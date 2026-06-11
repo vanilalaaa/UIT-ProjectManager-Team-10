@@ -1,19 +1,9 @@
 import { useState } from 'react'
-import type { UserDto } from '../../mocks/types'
-
-function getInitials(name = '') {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(-2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase()
-}
+import Avatar from '../Avatar'
+import type { UserDto } from '../../../mocks/types'
 
 export default function ProfileAvatarCard({ user }: { user: UserDto }) {
   const [avatar, setAvatar] = useState('')
-  const initials = getInitials(user.name)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -27,17 +17,12 @@ export default function ProfileAvatarCard({ user }: { user: UserDto }) {
   return (
     <div className="glass-panel rounded-[var(--radius-card)] p-8 flex flex-col items-center text-center">
       
-      {avatar ? (
-        <img 
-          src={avatar} 
-          alt={user.name}
-          className="size-32 rounded-full object-cover mb-4 border-4 border-surface shadow-md bg-surface-soft"
-        />
-      ) : (
-        <div className="size-32 rounded-full mb-4 border-4 border-surface shadow-md bg-primary-soft text-primary flex items-center justify-center text-5xl font-bold tracking-tight">
-          {initials}
-        </div>
-      )}
+      <Avatar 
+        name={user.name} 
+        avatarUrl={avatar || (user as any).userProfile?.avatarUrl} 
+        sizeClass="size-32 mb-4 border-4 border-surface shadow-md" 
+        textClass="text-5xl" 
+      />
 
       <h2 className="text-xl font-bold text-text mb-1">{user.name}</h2>
       <p className="text-sm text-text-soft mb-6">{user.email}</p>

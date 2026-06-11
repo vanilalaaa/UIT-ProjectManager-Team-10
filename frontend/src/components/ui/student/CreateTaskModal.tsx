@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { User, Task } from '../../mocks/types'
+import type { User, Task } from '../../../mocks/types'
 
 interface CreateTaskModalProps {
   isOpen: boolean

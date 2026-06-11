@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import Avatar from '../Avatar'
+
+export interface CourseMemberAvatar {
+  name: string
+  avatarUrl?: string | null
+}
 
 export interface CourseCardData {
   id: number
@@ -9,7 +15,7 @@ export interface CourseCardData {
   semester: string
   projectsCount: number
   membersCount: number
-  avatars: string[]
+  memberAvatars: CourseMemberAvatar[] 
   extraMembers: number
 }
 
@@ -120,8 +126,14 @@ export default function CourseCard({
         </div>
 
         <div className="flex items-center -space-x-2">
-          {course.avatars.map((url, index) => (
-            <img key={index} className="size-8 rounded-full border-2 border-surface object-cover" src={url} alt="Avatar" />
+          {course.memberAvatars.map((member, index) => (
+            <Avatar 
+              key={index} 
+              name={member.name}
+              avatarUrl={member.avatarUrl} 
+              sizeClass="size-8 border-2 border-surface" 
+              textClass="text-[10px]" 
+            />
           ))}
           {course.extraMembers > 0 && (
             <div className="flex size-8 items-center justify-center rounded-full border-2 border-surface bg-surface-soft text-[10px] font-bold text-text-soft ring-1 ring-border-soft">

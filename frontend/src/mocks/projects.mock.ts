@@ -238,3 +238,37 @@
       submissions: [],
     },
   ]
+
+  export interface ProjectApprovalRequest {
+  requestId: number;
+  title: string;
+  description: string;
+  groupName: string;
+  leader: User;
+  members: User[];
+  maxMembers: number;
+  submittedAt: string;
+}
+
+export const mockProjectRequests: ProjectApprovalRequest[] = [
+  {
+    requestId: 1,
+    title: 'Hệ thống Data Engineering cho E-commerce',
+    description: 'Xây dựng đường ống dữ liệu (Data Pipeline) thu thập log real-time từ các nền tảng thương mại điện tử, xử lý qua Kafka và lưu trữ vào Data Lake phục vụ phân tích chuyên sâu hành vi người dùng.',
+    groupName: 'Nhóm 06 - BigData',
+    leader: MockData.userHoangPhuQuy, 
+    members: [MockData.userHoangPhuQuy, MockData.userLeHoangVy, MockData.userNguyenMinhAn], 
+    maxMembers: 5, // Quy định tối đa 5 người (Sẽ hiển thị 3/5)
+    submittedAt: '2026-06-08T14:20:00',
+  },
+  {
+    requestId: 2,
+    title: 'Ứng dụng Portfolio tương tác 3D',
+    description: 'Thiết kế website cá nhân và giới thiệu sản phẩm nghệ thuật chất lượng cao sử dụng Three.js để tăng tính tương tác sinh động, tối ưu hiệu năng render trên các thiết bị di động.',
+    groupName: 'Nhóm 08 - Creative',
+    leader: MockData.userLeViSa, 
+    members: [MockData.userLeViSa, MockData.userTranGiaBao], 
+    maxMembers: 4,
+    submittedAt: '2026-06-09T09:15:00',
+  }
+]

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getHeatmapData, mockTeacherActivities } from '../../mocks/home.mock';
+import { getHeatmapData, mockTeacherActivities } from '../../../mocks/home.mock';
 
 export default function ActivityCalendar({ role, selectedMonth, onMonthChange, selectedDate, onDateSelect }: any) {
   const monthsList = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];

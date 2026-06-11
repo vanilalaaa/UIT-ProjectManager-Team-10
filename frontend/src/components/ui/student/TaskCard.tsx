@@ -1,4 +1,4 @@
-import type { Task } from '../../mocks/types'
+import type { Task } from '../../../mocks/types'
 
 // TaskCard accepts an extended task shape — BE chưa trả `category`/`priority`/
 // `commentsCount`/`attachmentsCount`, nhưng UI demo cần. Khi BE cập nhật

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockProjects } from '../../../mocks/projects.mock';
 import * as MockData from '../../../mocks/tasks.mock';
-import StatusBadge from '../../../components/ui/StatusBadge';
+import StatusBadge from '../../../components/ui/student/StatusBadge';
 
 export default function TeamSubmit() {
   const { projectId } = useParams();

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import DueDateCard from '../../../components/ui/DueDateCard'
-import UploadFilesCard from '../../../components/ui/UploadFilesCard'
-import ProjectStatusCard from '../../../components/ui/ProjectStatusCard'
-import PreviousVersionsCard, { type Version } from '../../../components/ui/PreviousVersionsCard'
+import DueDateCard from '../../../components/ui/student/DueDateCard'
+import UploadFilesCard from '../../../components/ui/student/UploadFilesCard'
+import ProjectStatusCard from '../../../components/ui/student/ProjectStatusCard'
+import PreviousVersionsCard, { type Version } from '../../../components/ui/student/PreviousVersionsCard'
 import type { Project } from '../../../mocks/types'
 
 import { mockProjects } from '../../../mocks/projects.mock'

@@ -1,6 +1,6 @@
-import ProfileAvatarCard from '../../components/ui/ProfileAvatarCard'
-import PasswordSettings from '../../components/ui/PasswordSettings'
-import GeneralDetailsForm from '../../components/ui/GeneralDetailsForm'
+import ProfileAvatarCard from '../../components/ui/profile/ProfileAvatarCard'
+import PasswordSettings from '../../components/ui/profile/PasswordSettings'
+import GeneralDetailsForm from '../../components/ui/profile/GeneralDetailsForm'
 import { AdminLoading, AdminError } from '../admin/components/AdminStates'
 import { useAuth } from '../auth/useAuth'
 

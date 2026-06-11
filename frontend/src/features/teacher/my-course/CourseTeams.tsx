@@ -1,8 +1,9 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import MemberRow from '../../../components/ui/MemberRow'
-import UserProfilePopover from '../../../components/ui/UserProfilePopover'
+import MemberRow from '../../../components/ui/student/MemberRow'
+import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
+import NotificationModal from '../../../components/ui/student/NotificationModal'
 import { mockCourseGroupsMap } from '../../../mocks/tasks.mock'
 import type { Group } from '../../../mocks/types'
 
@@ -44,6 +45,13 @@ export default function CourseTeams() {
   
   const [expandedTeams, setExpandedTeams] = useState<number[]>([])
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
+  
+  const [deleteTarget, setDeleteTarget] = useState<Group | null>(null)
+  const [notification, setNotification] = useState({
+    isOpen: false,
+    title: '',
+    message: ''
+  })
 
   useEffect(() => {
     let isMounted = true
@@ -69,8 +77,85 @@ export default function CourseTeams() {
     setActivePopoverId(null)
   }
 
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return
+    setTeams(prev => prev.filter(t => t.groupId !== deleteTarget.groupId))
+    const groupName = deleteTarget.name
+    setDeleteTarget(null)
+    setNotification({
+      isOpen: true,
+      title: 'Thành công',
+      message: `Đã xóa nhóm ${groupName} thành công!`
+    })
+  }
+
+  const handleRemoveMemberFromTeam = (groupId: number, userId: number) => {
+    const targetTeam = teams.find(t => t.groupId === groupId);
+    if (!targetTeam) return;
+
+    if (targetTeam.leader.userId === userId) {
+      setNotification({
+        isOpen: true,
+        title: 'Không thể thực hiện',
+        message: 'Không thể xóa Leader ra khỏi nhóm!'
+      });
+      return; 
+    }
+
+    setTeams(prevTeams => 
+      prevTeams.map(team => {
+        if (team.groupId === groupId) {
+          return {
+            ...team,
+            members: team.members.filter(m => m.userId !== userId)
+          };
+        }
+        return team;
+      })
+    );
+
+    setNotification({
+      isOpen: true,
+      title: 'Thành công',
+      message: 'Đã xóa thành viên khỏi nhóm!'
+    });
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-20">
+      
+      <NotificationModal 
+        isOpen={notification.isOpen}
+        title={notification.title}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-surface rounded-2xl p-6 shadow-2xl w-full max-w-sm border border-border animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-text mb-2">Xác nhận xóa nhóm</h3>
+            <p className="text-sm text-text-soft mb-6">
+              Bạn có chắc chắn muốn xóa nhóm <strong>{deleteTarget.name}</strong>? Hành động này sẽ xóa vĩnh viễn dữ liệu nhóm và không thể hoàn tác.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition-all text-sm"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-all text-sm"
+              >
+                Xóa nhóm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mb-2">
         <Link to="/teacher/my-course" className="text-sm font-medium text-text-soft hover:text-primary transition-colors">Quản lý lớp học</Link>
         <span className="text-text-soft">/</span>
@@ -120,6 +205,19 @@ export default function CourseTeams() {
                     {team.members.length} / 5 Members
                   </span>
                   
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteTarget(team)
+                    }}
+                    className="p-1.5 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    title="Xóa nhóm"
+                  >
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+
                   <div className={`p-1.5 rounded-full transition-colors ${isExpanded ? 'bg-primary/10 text-primary' : 'text-text-soft group-hover:bg-primary/10 group-hover:text-primary'}`}>
                     <svg 
                       className={`size-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
@@ -147,6 +245,8 @@ export default function CourseTeams() {
                                 user={member}
                                 onClose={() => setActivePopoverId(null)}
                                 showInviteButton={false}
+                                isTeacherView={true}
+                                onDelete={() => handleRemoveMemberFromTeam(team.groupId, member.userId)}
                               />
                             </SmartPopoverWrapper>
                           )}

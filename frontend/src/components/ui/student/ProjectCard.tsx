@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import type { Project } from '../../mocks/types'
+import type { Project } from '../../../mocks/types'
 
 interface ProjectCardProps {
   project: Project
   courseId: string | number
   groupName?: string
-  onDelete: () => void
+  onDelete?: () => void 
   isTeacherView?: boolean 
 }
 
@@ -38,7 +38,7 @@ export default function ProjectCard({
     setIsMenuOpen(false)
     if (isExpired) {
       alert('Đề tài này đã quá thời hạn, không được phép xóa!')
-    } else {
+    } else if (onDelete) {
       onDelete()
     }
   }
@@ -56,31 +56,33 @@ export default function ProjectCard({
             </Link>
           </h3>
           
-          <div className="relative shrink-0" ref={menuRef}>
-            <button 
-              type="button" 
-              onClick={(e) => {
-                e.preventDefault()
-                setIsMenuOpen(!isMenuOpen)
-              }}
-              className="p-1 rounded-full transition-colors hover:bg-surface-soft text-text"
-            >
-              <svg className="size-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
-              </svg>
-            </button>
+          {isTeacherView && (
+            <div className="relative shrink-0" ref={menuRef}>
+              <button 
+                type="button" 
+                onClick={(e) => {
+                  e.preventDefault()
+                  setIsMenuOpen(!isMenuOpen)
+                }}
+                className="p-1 rounded-full transition-colors hover:bg-surface-soft text-text"
+              >
+                <svg className="size-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+                </svg>
+              </button>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 top-8 z-10 w-36 bg-surface border border-border rounded-xl shadow-card py-1 overflow-hidden">
-                <button 
-                  onClick={handleDeleteClick}
-                  className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                >
-                  Xóa đồ án
-                </button>
-              </div>
-            )}
-          </div>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-8 z-10 w-36 bg-surface border border-border rounded-xl shadow-card py-1 overflow-hidden">
+                  <button 
+                    onClick={handleDeleteClick}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Xóa đồ án
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <p className="mt-2 text-sm text-text-soft line-clamp-2 min-h-[2.5rem]">
