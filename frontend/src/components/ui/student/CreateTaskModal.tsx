@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import type { TaskPriority, User, Task } from '../../../mocks/types'
+import type { TaskPriority, UserLite, NewTaskInput } from '../../../types/api/task'
 
 interface CreateTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (task: Partial<Task>) => void
-  members: User[]
+  onSubmit: (task: NewTaskInput) => void
+  members: UserLite[]
 }
 
 const PRIORITY_OPTIONS: { value: TaskPriority; label: string; dotClass: string }[] = [
@@ -27,14 +27,14 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
     e.preventDefault()
     if (!title.trim() || !assigneeId) return
 
-    const assignedUser = members.find(m => m.userId.toString() === assigneeId)
+    const assignedUser = members.find(m => m.id.toString() === assigneeId)
     if (!assignedUser) return
 
     onSubmit({
       title,
       description,
-      deadline: new Date(deadline).toISOString(),
-      assignedTo: assignedUser,
+      deadline: `${deadline}T23:59:00`,
+      assignedToId: assignedUser.id,
       priority,
     })
 
@@ -101,7 +101,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
               >
                 <option value="" disabled>-- Chọn thành viên --</option>
                 {members.map(m => (
-                  <option key={m.userId} value={m.userId}>{m.name}</option>
+                  <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
             </div>

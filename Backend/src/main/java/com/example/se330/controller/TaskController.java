@@ -1,16 +1,19 @@
 package com.example.se330.controller;
 
+import com.example.se330.dto.ApiResponse;
+import com.example.se330.dto.task.BoardResponse;
 import com.example.se330.dto.task.CreateTaskRequest;
+import com.example.se330.dto.task.TaskResponse;
 import com.example.se330.dto.task.UpdateTaskRequest;
 import com.example.se330.dto.task.UpdateTaskStatusRequest;
-import com.example.se330.entity.Task;
 import com.example.se330.enums.TaskStatus;
+import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,89 +24,61 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    // GET /projects/:id/tasks
+    @GetMapping("/projects/{id}/board")
+    public ResponseEntity<ApiResponse<BoardResponse>> getBoard(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long currentUserId = currentUserId(authentication);
+        return ApiResponse.success(taskService.getBoard(id, currentUserId), "Lấy bảng công việc thành công.");
+    }
+
     @GetMapping("/projects/{id}/tasks")
-    public List<Task> getProjectTasks(
-
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getProjectTasks(
             @PathVariable Long id,
+            @RequestParam(required = false) Long assignee,
+            @RequestParam(required = false) TaskStatus status) {
 
-            @RequestParam(required = false)
-            Long assignee,
-
-            @RequestParam(required = false)
-            TaskStatus status
-    ) {
-
-        return taskService.getProjectTasks(
-                id,
-                assignee,
-                status
-        );
+        return ApiResponse.success(taskService.getProjectTasks(id, assignee, status), "Lấy danh sách task thành công.");
     }
 
-    // POST /projects/:id/tasks
     @PostMapping("/projects/{id}/tasks")
-    public Task createTask(
-
+    public ResponseEntity<ApiResponse<TaskResponse>> createTask(
             @PathVariable Long id,
+            @Valid @RequestBody CreateTaskRequest request,
+            Authentication authentication) {
 
-            @Valid
-            @RequestBody
-            CreateTaskRequest request
-    ) {
-
-        Long currentUserId = 1L;
-
-        return taskService.createTask(
-                id,
-                request,
-                currentUserId
-        );
+        Long currentUserId = currentUserId(authentication);
+        return ApiResponse.success(taskService.createTask(id, request, currentUserId), "Tạo task thành công.");
     }
 
-    // PUT /tasks/:id
     @PutMapping("/tasks/{id}")
-    public Task updateTask(
-
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @PathVariable Long id,
+            @RequestBody UpdateTaskRequest request) {
 
-            @RequestBody
-            UpdateTaskRequest request
-    ) {
-
-        return taskService.updateTask(id, request);
+        return ApiResponse.success(taskService.updateTask(id, request), "Cập nhật task thành công.");
     }
 
-    // PATCH /tasks/:id/status
     @PatchMapping("/tasks/{id}/status")
-    public Task updateTaskStatus(
-
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
             @PathVariable Long id,
+            @RequestBody UpdateTaskStatusRequest request) {
 
-            @RequestBody
-            UpdateTaskStatusRequest request
-    ) {
-
-        return taskService.updateTaskStatus(
-                id,
-                request.getStatus()
-        );
+        return ApiResponse.success(taskService.updateTaskStatus(id, request.getStatus()), "Cập nhật trạng thái thành công.");
     }
 
-    // DELETE /tasks/:id
-    @PreAuthorize("hasAuthority('TEACHER')")
-        @DeleteMapping("/tasks/{id}")
-        public String deleteTask(
-                @PathVariable Long id,
-                Authentication authentication
-        ) {
+    // Service tự enforce leader/ADMIN — chỉ cần đăng nhập là gọi được.
+    @DeleteMapping("/tasks/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTask(
+            @PathVariable Long id,
+            Authentication authentication) {
 
-        Long currentUserId = ((com.example.se330.security.CustomUserDetails)
-                authentication.getPrincipal()
-        ).getId();
+        taskService.deleteTask(id, currentUserId(authentication));
+        return ApiResponse.success(null, "Xóa task thành công.");
+    }
 
-        taskService.deleteTask(id, currentUserId);
-
-        return "Task deleted successfully";
-        }
+    private Long currentUserId(Authentication authentication) {
+        return ((CustomUserDetails) authentication.getPrincipal()).getId();
+    }
 }

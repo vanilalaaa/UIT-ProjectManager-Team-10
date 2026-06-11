@@ -1,31 +1,19 @@
 import axiosClient from '../lib/api/axiosClient'
 import type { ApiResponse } from '../types/api/common'
 import type {
+  ProjectBoard,
   Task,
   TaskCreateRequest,
   TaskStatusPatch,
   TaskUpdateRequest,
 } from '../types/api/task'
-import type { Group, User } from '../mocks/types'
-import { mockProjects } from '../mocks/projects.mock'
-import { mockTasks, mockMyGroupMap, mockCourseMembersMap } from '../mocks/tasks.mock'
 
-// Mock fallback (PROJECT_RULES §3): Kanban cần Task giàu + group + currentUser.
-// TODO(BE): thay bằng listProjectTasks khi BE bọc ApiResponse và trả assignee/group đầy đủ.
-export type ProjectBoard = { tasks: Task[]; currentUser: User | null; currentGroup: Group | null }
+export type { ProjectBoard } from '../types/api/task'
 
 export const getProjectBoard = (projectId: number | string): Promise<ProjectBoard> =>
-  new Promise((resolve) =>
-    setTimeout(() => {
-      const project = mockProjects.find((p) => p.projectId === Number(projectId))
-      const courseId = project?.course?.courseId || 1
-      const group = mockMyGroupMap[courseId] || null
-      const members = mockCourseMembersMap[courseId] || []
-      const currentUser = members.length > 0 ? members[0] : null
-      const groupTasks = group ? mockTasks.filter((t) => t.group.groupId === group.groupId) : []
-      resolve(structuredClone({ tasks: groupTasks, currentUser, currentGroup: group }))
-    }, 300),
-  )
+  axiosClient
+    .get<ApiResponse<ProjectBoard>>(`/api/projects/${projectId}/board`)
+    .then((r) => r.data.data)
 
 export const listProjectTasks = (
   projectId: number | string,

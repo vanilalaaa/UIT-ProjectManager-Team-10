@@ -24,4 +24,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     Optional<GroupMember> findByUserId(Long userId);
 
+    // Nhóm của 1 user trong 1 lớp cụ thể (để dựng bảng Kanban theo đồ án).
+    Optional<GroupMember> findFirstByUser_IdAndGroup_Course_Id(Long userId, Long courseId);
+
 }

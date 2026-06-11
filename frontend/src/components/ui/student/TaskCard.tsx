@@ -1,4 +1,4 @@
-import type { Task } from '../../../mocks/types'
+import type { Task } from '../../../types/api/task'
 
 // category/commentsCount/attachmentsCount là field UI demo, BE chưa trả.
 type TaskCardData = Task & {
@@ -17,7 +17,7 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
     ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'No date'
 
-  const taskCategory = task.category || task.group?.name?.split(' - ')[1] || 'Task'
+  const taskCategory = task.category || 'Task'
   const taskPriority = task.priority || 'Medium'
   
   const priorityStyles: Record<string, string> = {
@@ -66,16 +66,16 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
       <hr className="my-4 border-border" />
 
       <div className="flex items-center justify-between">
-        {task.assignedTo?.userProfile?.avatarUrl ? (
-          <img 
-            src={task.assignedTo.userProfile.avatarUrl} 
-            alt={task.assignedTo.name}
+        {task.assignee?.avatar ? (
+          <img
+            src={task.assignee.avatar}
+            alt={task.assignee.name}
             className="size-8 rounded-full object-cover shadow-soft border border-surface"
-            title={task.assignedTo.name}
+            title={task.assignee.name}
           />
         ) : (
-          <div className="size-8 rounded-full bg-surface-soft border border-surface flex items-center justify-center text-xs font-bold text-text-soft" title={task.assignedTo?.name}>
-            {task.assignedTo?.name?.charAt(0) || '?'}
+          <div className="size-8 rounded-full bg-surface-soft border border-surface flex items-center justify-center text-xs font-bold text-text-soft" title={task.assignee?.name}>
+            {task.assignee?.name?.charAt(0) || '?'}
           </div>
         )}
 
