@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import Avatar from '../Avatar'
 
 export interface CourseMemberAvatar {
@@ -47,6 +48,16 @@ export default function CourseCard({
 
   const hasActions = !!(onEdit || onDelete)
 
+  const handleCopyCode = async () => {
+    setIsMenuOpen(false)
+    try {
+      await navigator.clipboard.writeText(course.code)
+      toast.success(`Đã sao chép mã lớp: ${course.code}`)
+    } catch {
+      toast.error('Không sao chép được mã lớp.')
+    }
+  }
+
   return (
     <div className="flex flex-col rounded-card border-t-4 border-primary bg-surface p-5 shadow-soft hover:shadow-card transition-shadow">
       <div className="flex-1">
@@ -70,7 +81,19 @@ export default function CourseCard({
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 top-8 z-10 w-36 bg-surface border border-border rounded-xl shadow-card py-1 overflow-hidden">
+                <div className="absolute right-0 top-8 z-10 w-44 bg-surface border border-border rounded-xl shadow-card py-1 overflow-hidden">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleCopyCode()
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-text hover:bg-surface-soft flex items-center gap-2"
+                  >
+                    <svg className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2m-6-12h6a2 2 0 0 1 2 2v6m-8-8V3" />
+                    </svg>
+                    Sao chép mã lớp
+                  </button>
                   {onEdit && (
                     <button 
                       onClick={(e) => {
