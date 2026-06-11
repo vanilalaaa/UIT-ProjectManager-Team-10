@@ -1,5 +1,6 @@
 package com.example.se330.config;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -7,8 +8,26 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.example.se330.entity.Category;
+import com.example.se330.entity.Course;
+import com.example.se330.entity.CourseRequest;
+import com.example.se330.entity.Group;
+import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Project;
+import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
+import com.example.se330.enums.GroupMemberStatus;
+import com.example.se330.enums.JoinStatus;
+import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.Role;
+import com.example.se330.enums.TaskStatus;
+import com.example.se330.repository.CategoryRepository;
+import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.CourseRequestRepository;
+import com.example.se330.repository.GroupMemberRepository;
+import com.example.se330.repository.GroupRepository;
+import com.example.se330.repository.ProjectRepository;
+import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -18,53 +37,107 @@ import lombok.RequiredArgsConstructor;
 public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CategoryRepository categoryRepository;
+    private final CourseRepository courseRepository;
+    private final CourseRequestRepository courseRequestRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
 
     @Override
     public void run(String... args) throws Exception {
-        // 1. Tạo admin
-        if (!userRepository.existsByEmail("admin@gmail.com")) {
-            User admin = new User();
-            admin.setName("Admin");
-            admin.setEmail("admin@gmail.com");
-            admin.setPassword(passwordEncoder.encode("123123"));
-            admin.setUid(UUID.randomUUID().toString());
-            admin.setRole(Role.ADMIN);
-            admin.setCreatedAt(LocalDateTime.now());
-            admin.setUpdatedAt(LocalDateTime.now());
-            admin.setIsActive(true);
-            userRepository.save(admin);
-            System.out.println("Admin account created: admin@gmail.com / admin123");
-        }
+        ensureUser("admin@gmail.com", "Admin", Role.ADMIN);
+        User teacher = ensureUser("teacher@gmail.com", "Teacher", Role.TEACHER);
+        User student = ensureUser("student@gmail.com", "Student", Role.STUDENT);
 
-        // 2. Tạo Teacher
-        if (!userRepository.existsByEmail("teacher@gmail.com")) {
-            User teacher = new User();
-            teacher.setName("Teacher");
-            teacher.setEmail("teacher@gmail.com");
-            teacher.setPassword(passwordEncoder.encode("123123"));
-            teacher.setUid(UUID.randomUUID().toString());
-            teacher.setRole(Role.TEACHER);
-            teacher.setCreatedAt(LocalDateTime.now());
-            teacher.setUpdatedAt(LocalDateTime.now());
-            teacher.setIsActive(true);
-            userRepository.save(teacher);
-            System.out.println("Teacher account created: admin@gmail.com / admin123");
-        }
+        seedCategory("Web App", "Ứng dụng web, API và quản lý dữ liệu");
+        seedCategory("Research", "Đề tài nghiên cứu");
+        seedCategory("Capstone", "Đồ án tốt nghiệp");
+        seedCategory("UI/UX Design", "Thiết kế trải nghiệm người dùng");
+        seedCategory("Paper", "Bài báo khoa học");
 
-        // 3. Tạo Student
-        if (!userRepository.existsByEmail("student@gmail.com")) {
-            User student = new User();
-            student.setName("Student");
-            student.setEmail("student@gmail.com");
-            student.setPassword(passwordEncoder.encode("123123"));
-            student.setUid(UUID.randomUUID().toString());
-            student.setRole(Role.STUDENT);
-            student.setCreatedAt(LocalDateTime.now());
-            student.setUpdatedAt(LocalDateTime.now());
-            student.setIsActive(true);
-            userRepository.save(student);
-            System.out.println("Student account created: admin@gmail.com / admin123");
+        if (courseRepository.count() == 0) {
+            Category webCat = categoryRepository.findByIsActiveTrue().stream().findFirst().orElse(null);
+
+            Course course = new Course();
+            course.setName("SE330 - Công nghệ phần mềm");
+            course.setCode("SE330A");
+            course.setLecturer(teacher);
+            course.setMaxStudents(60);
+            course.setStartDate(LocalDate.now().minusDays(30));
+            course.setEndDate(LocalDate.now().plusDays(90));
+            course = courseRepository.save(course);
+
+            courseRequestRepository.save(CourseRequest.builder()
+                    .course(course)
+                    .student(student)
+                    .requestAt(LocalDateTime.now())
+                    .status(JoinStatus.ACTIVE)
+                    .build());
+
+            Group group = groupRepository.save(Group.builder()
+                    .name("Nhóm Phoenix")
+                    .description("Nhóm đồ án mẫu môn SE330")
+                    .course(course)
+                    .leader(student)
+                    .build());
+
+            groupMemberRepository.save(GroupMember.builder()
+                    .group(group)
+                    .user(student)
+                    .joinedDate(LocalDate.now())
+                    .status(GroupMemberStatus.ACTIVE)
+                    .isLeader(true)
+                    .build());
+
+            Project project = projectRepository.save(Project.builder()
+                    .title("Website quản lý đồ án môn SE330")
+                    .description("Hệ thống quản lý đề tài, nhóm sinh viên, task và tiến độ nộp bài.")
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .startDate(LocalDate.now().minusDays(20))
+                    .endDate(LocalDate.now().plusDays(40))
+                    .course(course)
+                    .category(webCat)
+                    .build());
+
+            taskRepository.save(Task.builder()
+                    .title("Thiết kế cơ sở dữ liệu")
+                    .description("Vẽ ERD và tạo schema cho hệ thống")
+                    .status(TaskStatus.IN_PROGRESS)
+                    .assignedTo(student)
+                    .createdBy(student)
+                    .group(group)
+                    .project(project)
+                    .deadline(LocalDateTime.now().plusDays(7))
+                    .build());
+
+            System.out.println("Seeded sample course/group/project/task for SE330.");
         }
     }
 
+    private User ensureUser(String email, String name, Role role) {
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            User u = new User();
+            u.setName(name);
+            u.setEmail(email);
+            u.setPassword(passwordEncoder.encode("123123"));
+            u.setUid(UUID.randomUUID().toString());
+            u.setRole(role);
+            u.setCreatedAt(LocalDateTime.now());
+            u.setUpdatedAt(LocalDateTime.now());
+            u.setIsActive(true);
+            return userRepository.save(u);
+        });
+    }
+
+    private void seedCategory(String name, String description) {
+        if (!categoryRepository.existsByName(name)) {
+            categoryRepository.save(Category.builder()
+                    .name(name)
+                    .description(description)
+                    .isActive(true)
+                    .build());
+        }
+    }
 }
