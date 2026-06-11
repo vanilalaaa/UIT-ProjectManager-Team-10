@@ -10,11 +10,9 @@ import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalReque
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
 import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
 import type { Project } from '../../../mocks/types'
-import type { CourseRequirement } from '../../../mocks/tasks.mock'
 import {
   getCourseApprovalRequests,
   getCourseProjects,
-  getCourseRequirements,
 } from '../../../services/project.service'
 import { addActivity } from '../../../services/activity.service'
 
@@ -35,23 +33,16 @@ export default function TeacherProjectList() {
   })
 
   const [courseProjects, setCourseProjects] = useState<Project[]>([])
-  const [courseRequirements, setCourseRequirements] = useState<CourseRequirement | null>(null)
 
   const courseInfo = courseProjects.length > 0 ? courseProjects[0].course : null
-  const courseCategory = courseProjects.length > 0 ? courseProjects[0].category : null
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    Promise.all([
-      getCourseProjects(id),
-      getCourseApprovalRequests(id),
-      getCourseRequirements(id),
-    ]).then(([projects, reqs, requirements]) => {
+    Promise.all([getCourseProjects(id), getCourseApprovalRequests(id)]).then(([projects, reqs]) => {
       if (!isMounted) return
       setCourseProjects(projects)
       setRequests(reqs)
-      setCourseRequirements(requirements)
       setLoading(false)
     })
     return () => { isMounted = false }
@@ -107,11 +98,7 @@ export default function TeacherProjectList() {
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />
 
-      <CourseRequirementCard 
-        course={courseInfo} 
-        category={courseCategory} 
-        requirements={courseRequirements} 
-      />
+      <CourseRequirementCard courseId={id} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         

@@ -4,6 +4,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import OverallGradeCard from '../../../components/ui/OverallGradeCard'
 import ScorecardBreakdown, { type ScoreCriteria } from '../../../components/ui/student/ScorecardBreakdown'
 import LecturerFeedbackCard from '../../../components/ui/student/LecturerFeedbackCard'
+import { getProjectById } from '../../../services/project.service'
+import { getRequirement } from '../../../services/requirement.service'
 
 const MAX_GRADE = 10
 
@@ -16,15 +18,21 @@ type GradeData = {
   feedback: string
 }
 
-// Mock: BE chấm điểm chưa nối (GET /api/projects/:id/grades/me). Đa số đồ án
-// chưa có điểm nên trả về trạng thái "chưa chấm".
-const fetchStudentGrade = (projectId: string | undefined): Promise<GradeData> =>
-  new Promise(resolve => {
-    setTimeout(() => {
-      void projectId
-      resolve({ grade: null, criteria: [], lecturer: null, feedback: '' })
-    }, 400)
-  })
+// Hiển thị barem (tiêu chí + thang điểm) giảng viên đã thiết lập cho lớp.
+// Điểm thực tế chờ BE chấm điểm; hiện show trạng thái "chưa chấm".
+const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
+  const project = await getProjectById(projectId ?? '')
+  const courseId = project?.course?.courseId
+  const req = courseId != null ? getRequirement(courseId) : null
+  const criteria: ScoreCriteria[] = (req?.criteria ?? []).map((c) => ({
+    label: c.name,
+    score: 0,
+    maxScore: c.maxScore,
+    colorClass: 'text-primary',
+    bgFillClass: 'bg-brand-gradient',
+  }))
+  return { grade: null, criteria, lecturer: null, feedback: '' }
+}
 
 export default function ProjectGrades() {
   const { projectId } = useParams<{ projectId: string }>()
