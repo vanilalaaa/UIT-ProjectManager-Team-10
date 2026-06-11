@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectDetailCard from '../../../components/ui/student//ProjectDetailCard' 
@@ -11,7 +11,6 @@ import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mock
 
 export default function StudentProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
-  const navigate = useNavigate()
 
   const [project, setProject] = useState<Project | null>(null)
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
@@ -50,31 +49,7 @@ export default function StudentProjectDetail() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <div className="flex items-center gap-2 text-sm text-text-soft">
-        <button 
-          onClick={() => navigate(-2)} 
-          className="hover:text-primary font-medium transition-colors"
-        >
-          My Course
-        </button>
-
-        <span className="text-border font-bold">{'>'}</span>
-        
-        <button 
-          onClick={() => navigate(-1)} 
-          className="hover:text-primary font-medium transition-colors"
-        >
-          Project List
-        </button>
-        
-        <span className="text-border font-bold">{'>'}</span>
-        
-        <span className="text-text font-semibold truncate max-w-[200px] sm:max-w-[350px]">
-          {project.title}
-        </span>
-      </div>
-
-      <ProjectDetailCard 
+      <ProjectDetailCard
         project={project} 
         showEditButton={false} 
       />
