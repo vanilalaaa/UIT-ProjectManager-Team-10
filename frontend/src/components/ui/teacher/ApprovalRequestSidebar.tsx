@@ -4,8 +4,8 @@ import Avatar from '../Avatar'
 interface ApprovalRequestSidebarProps {
   requests: ProjectApprovalRequest[]
   onSelectRequest: (req: ProjectApprovalRequest) => void
-  onAccept: (requestId: number, title: string, e: React.MouseEvent) => void
-  onDecline: (requestId: number, title: string, e: React.MouseEvent) => void
+  onAccept: (requestId: number, title: string, e: React.MouseEvent, note?: string) => void
+  onDecline: (requestId: number, title: string, e: React.MouseEvent, note?: string) => void
 }
 
 export default function ApprovalRequestSidebar({

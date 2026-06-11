@@ -10,6 +10,7 @@ import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalReque
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
 import { mockProjects, mockProjectRequests } from '../../../mocks/projects.mock'
 import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
+import type { Project } from '../../../mocks/types'
 import { mockCourseRequirements } from '../../../mocks/tasks.mock'
 
 export default function TeacherProjectList() {
@@ -17,7 +18,7 @@ export default function TeacherProjectList() {
   const id = Number(courseId)
   const [loading, setLoading] = useState(true)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [projectToDelete, setProjectToDelete] = useState<any>(null)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   
   const [requests, setRequests] = useState<ProjectApprovalRequest[]>([])
   const [selectedRequest, setSelectedRequest] = useState<ProjectApprovalRequest | null>(null)
@@ -48,15 +49,17 @@ export default function TeacherProjectList() {
     setNotification({ isOpen: true, title, message })
   }
 
-  const handleAcceptRequest = (requestId: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation() 
-    triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}`)
+  const handleAcceptRequest = (requestId: number, title: string, e: React.MouseEvent, note?: string) => {
+    e.stopPropagation()
+    const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+    triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
     setRequests(prev => prev.filter(r => r.requestId !== requestId))
   }
 
-  const handleDeclineRequest = (requestId: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation() 
-    triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}`)
+  const handleDeclineRequest = (requestId: number, title: string, e: React.MouseEvent, note?: string) => {
+    e.stopPropagation()
+    const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+    triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
     setRequests(prev => prev.filter(r => r.requestId !== requestId))
   }
 
