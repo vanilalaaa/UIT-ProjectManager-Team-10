@@ -22,7 +22,7 @@ public class AdminCategoryService {
     }
 
     public Page<CategoryDto> listCategories(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "categoryId"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
         Page<Category> categories;
         if (search == null || search.isBlank()) {

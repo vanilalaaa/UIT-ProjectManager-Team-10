@@ -1,6 +1,7 @@
 package com.example.se330.service;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,6 +47,13 @@ public class CourseService {
         return mapToResponse(this.getCourseById(id));
     }
 
+    public List<CourseResponse> getAllCourses() {
+        return this.courseRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     public Course getCourseById(Long id) {
         Course course = this.courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
@@ -85,7 +93,7 @@ public class CourseService {
                 .courseId(course.getId())
                 .name(course.getName())
                 .code(course.getCode())
-                .lecturer(course.getLecturer().getId())
+                .lecturer(course.getLecturer() != null ? course.getLecturer().getId() : null)
                 .maxStudents(course.getMaxStudents())
                 .startDate(course.getStartDate())
                 .endDate(course.getEndDate())

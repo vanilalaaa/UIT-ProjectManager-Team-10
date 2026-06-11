@@ -36,7 +36,13 @@ public class CourseController {
         this.courseRequestService = courseRequestService;
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CourseResponse>>> getCourses() {
+        List<CourseResponse> resp = this.courseService.getAllCourses();
+        return ApiResponse.success(resp, "Lấy danh sách lớp học thành công.");
+    }
+
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<CourseResponse>> createCourse(@RequestBody CreateCourseRequest req) {
         CourseResponse resp = this.courseService.createCourse(req);
@@ -56,7 +62,7 @@ public class CourseController {
         return ApiResponse.success(resp, "Lấy danh sách thành viên trong lớp thành công.");
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CourseResponse>> updateCourse(@PathVariable Long id,
             @RequestBody UpdateCourseRequest req) {
@@ -64,7 +70,7 @@ public class CourseController {
         return ApiResponse.success(resp, "Cập nhật lớp học thành công.");
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteCourse(@PathVariable Long id) {
         this.courseService.deleteCourse(id);
