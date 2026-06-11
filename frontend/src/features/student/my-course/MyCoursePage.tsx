@@ -39,8 +39,9 @@ export default function MyCoursePage() {
     }
     try {
       await requestJoinCourse({ code: codeToJoin })
-      toast.success('Đã gửi yêu cầu tham gia lớp. Vui lòng chờ giảng viên duyệt.')
+      toast.success('Đã tham gia lớp thành công!')
       setIsJoinModalOpen(false)
+      fetchCourses()
     } catch (err) {
       const apiErr = err as ApiError
       if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {

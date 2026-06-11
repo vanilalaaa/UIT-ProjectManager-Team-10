@@ -19,4 +19,6 @@ public class CourseCardResponse {
     private Integer membersCount;
     private Integer projectsCount;
     private Integer maxStudents;
+    private java.time.LocalDate startDate;
+    private java.time.LocalDate endDate;
 }

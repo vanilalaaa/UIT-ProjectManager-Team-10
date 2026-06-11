@@ -22,6 +22,8 @@ export type CourseCardResponse = {
   membersCount: number
   projectsCount: number
   maxStudents: number
+  startDate: string
+  endDate: string
 }
 
 export type AdminCourseQuery = {

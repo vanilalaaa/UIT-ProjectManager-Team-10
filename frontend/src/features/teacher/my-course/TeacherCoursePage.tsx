@@ -54,12 +54,11 @@ export default function TeacherCoursePage() {
   }
 
   const handleSave = async (data: CourseFormData) => {
-    const today = new Date().toISOString().slice(0, 10)
     const payload = {
       name: data.name,
       maxStudents: data.maxStudents,
-      startDate: today,
-      endDate: data.projectDeadline || today,
+      startDate: data.startDate,
+      endDate: data.endDate,
     }
     try {
       if (selectedCourse) {
@@ -147,13 +146,10 @@ export default function TeacherCoursePage() {
         initialData={
           selectedCourse
             ? {
-                courseCode: selectedCourse.code,
                 name: selectedCourse.name,
                 maxStudents: selectedCourse.maxStudents ?? selectedCourse.membersCount,
-                groupDeadline: '',
-                categoryName: '',
-                categoryDescription: '',
-                projectDeadline: '',
+                startDate: selectedCourse.startDate ?? '',
+                endDate: selectedCourse.endDate ?? '',
               }
             : null
         }

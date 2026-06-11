@@ -60,6 +60,8 @@ public class CourseService {
                 .membersCount((int) members)
                 .projectsCount(projects)
                 .maxStudents(course.getMaxStudents())
+                .startDate(course.getStartDate())
+                .endDate(course.getEndDate())
                 .build();
     }
 

@@ -19,6 +19,8 @@ export interface CourseCardData {
   memberAvatars: CourseMemberAvatar[]
   extraMembers: number
   maxStudents?: number
+  startDate?: string
+  endDate?: string
 }
 
 interface CourseCardProps {

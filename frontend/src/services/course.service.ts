@@ -23,6 +23,8 @@ const toCourseCard = (c: CourseCardResponse): CourseCardData => ({
   memberAvatars: [],
   extraMembers: 0,
   maxStudents: c.maxStudents,
+  startDate: c.startDate,
+  endDate: c.endDate,
 })
 
 export const listStudentCourseCards = (): Promise<CourseCardData[]> =>
