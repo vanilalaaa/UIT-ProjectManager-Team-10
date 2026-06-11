@@ -1,25 +1,22 @@
-import { mockStudentActivities, mockTeacherActivities } from '../../../services/home.service';
-// 1. Import component Avatar (điều chỉnh đường dẫn cho đúng với dự án của em)
-import Avatar from '../../ui/Avatar'; 
+import Avatar from '../../ui/Avatar';
+import type { HomeFeedItem } from '../../../services/home.service';
 
-export default function ActivityFeed({ role, selectedMonth, selectedDate }: any) {
-  const sourceActivities = role === 'TEACHER' ? mockTeacherActivities : mockStudentActivities;
+interface ActivityFeedProps {
+  activities: HomeFeedItem[];
+  selectedMonth: number;
+  selectedDate: number | null;
+}
 
-  const displayedActivities = sourceActivities.filter(act => {
-    const dateObj = new Date(act.createdAt);
-    return dateObj.getMonth() + 1 === selectedMonth && (selectedDate ? dateObj.getDate() === selectedDate : true);
-  });
-
+export default function ActivityFeed({ activities, selectedMonth, selectedDate }: ActivityFeedProps) {
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
-    // Giả sử "hiện tại" để test mock data
-    const now = new Date('2026-06-06T12:00:00'); 
+    const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 1 && diffInHours > 0) return `${Math.floor(diffInHours * 60)}m ago`;
     if (diffInHours < 24 && diffInHours >= 1) return `${Math.floor(diffInHours)}h ago`;
     if (diffInHours >= 24 && diffInHours < 48) return 'Yesterday';
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -32,47 +29,46 @@ export default function ActivityFeed({ role, selectedMonth, selectedDate }: any)
         </svg>
         Hoạt động
       </h3>
-      
+
       <div className="grid grid-cols-12 gap-4 text-xs font-medium text-text-soft border-b border-border-soft pb-3 mb-2 px-3">
         <div className="col-span-5">Nội dung</div>
         <div className="col-span-3">Chủ nhân</div>
         <div className="col-span-2">Thời gian</div>
         <div className="col-span-2">Project</div>
       </div>
-      
+
       <div className="flex flex-col">
-        {displayedActivities.length === 0 ? (
+        {activities.length === 0 ? (
           <div className="text-center py-8 text-text-soft text-sm">
             Không có hoạt động nào trong tháng {selectedMonth}{selectedDate ? `, ngày ${selectedDate}` : ''}.
           </div>
         ) : (
-          displayedActivities.map((act) => (
-            <div key={act.activityId} className="grid grid-cols-12 gap-4 items-center py-4 border-b border-border-soft last:border-0 hover:bg-surface-soft transition-colors rounded-xl px-3 cursor-pointer">
+          activities.map((act) => (
+            <div key={`${act.type}-${act.referenceId}`} className="grid grid-cols-12 gap-4 items-center py-4 border-b border-border-soft last:border-0 hover:bg-surface-soft transition-colors rounded-xl px-3 cursor-pointer">
               <div className="col-span-5 flex items-center gap-3 text-text">
-                <span className="text-lg opacity-80">{act.action === 'MENTION' ? '💬' : '📄'}</span>
+                <span className="text-lg opacity-80">{act.type === 'SUBMISSION' ? '📄' : '📝'}</span>
                 <span className="text-[13px] truncate">
-                  <span className="font-medium">{act.actor.name}</span>{' '}
-                  <span className="text-text-soft">{act.content}</span>
+                  <span className="font-medium">{act.actorName}</span>{' '}
+                  <span className="text-text-soft">{act.title}</span>
                 </span>
               </div>
-              
+
               <div className="col-span-3 flex items-center gap-2">
-                {/* 2. Sử dụng component Avatar ở đây */}
-                <Avatar 
-                  name={act.actor.name} 
-                  avatarUrl={act.actor.userProfile?.avatarUrl} 
+                <Avatar
+                  name={act.actorName}
+                  avatarUrl={act.actorAvatar ?? undefined}
                   sizeClass="size-10"
                   className="border border-border shrink-0"
                 />
-                <span className="text-[13px] font-medium truncate">{act.actor.name}</span>
+                <span className="text-[13px] font-medium truncate">{act.actorName}</span>
               </div>
-              
+
               <div className="col-span-2 text-[13px] text-text-soft">
-                {getRelativeTime(act.createdAt)}
+                {getRelativeTime(act.timestamp)}
               </div>
-              
+
               <div className="col-span-2 text-[13px] text-primary hover:underline font-medium truncate">
-                {act.project?.course?.name?.split('-')[0] || act.targetName}
+                {act.projectTitle || '—'}
               </div>
             </div>
           ))

@@ -1,4 +1,4 @@
-export default function QuickStats({ role, stats }: { role: string, stats: any }) {
+export default function QuickStats({ role, stats }: { role: string; stats: Record<string, number> }) {
   const items = role === 'TEACHER' 
     ? [
         { label: 'Bài chờ chấm', val: stats.pendingGrades, color: 'text-primary', bg: 'bg-primary-soft', icon: '✎' },

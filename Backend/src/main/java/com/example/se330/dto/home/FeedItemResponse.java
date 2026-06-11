@@ -31,5 +31,9 @@ public class FeedItemResponse {
 
     private String projectTitle;
 
+    private String actorName;
+
+    private String actorAvatar;
+
     private LocalDateTime timestamp;
 }

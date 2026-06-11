@@ -1,28 +1,46 @@
-import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom'; // Thêm import này
+import { useState, useEffect, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { getStudentQuickStats, getTeacherQuickStats, getStudentChartStats, getTeacherChartStats } from '../../services/home.service';
 import QuickStats from '../../components/ui/home/QuickStats';
 import StatusChart from '../../components/ui/home/StatusChart';
 import ActivityCalendar from '../../components/ui/home/ActivityCalendar';
 import ActivityFeed from '../../components/ui/home/ActivityFeed';
 import ActivityNotifications from '../../components/ui/home/ActivityNotifications';
+import {
+  getHomeStats,
+  getHomeFeed,
+  filterFeedByMonthDate,
+  computeChart,
+  computeHeatmap,
+  type HomeFeedItem,
+  type HomeQuickStats,
+} from '../../services/home.service';
 
 export default function HomePage() {
-  const { currentUser, isLoading } = useAuth(); 
-  const [stats, setStats] = useState<any>(null);
-  const [chartStats, setChartStats] = useState({ todo: 0, inProgress: 0, readyForTest: 0, total: 0 });
-  const [selectedMonth, setSelectedMonth] = useState(6);
+  const { currentUser, isLoading } = useAuth();
+  const [stats, setStats] = useState<HomeQuickStats>({});
+  const [feed, setFeed] = useState<HomeFeedItem[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
-    setStats(currentUser.role === 'TEACHER' ? getTeacherQuickStats() : getStudentQuickStats(currentUser.id));
-    const statsFunc = currentUser.role === 'TEACHER' ? getTeacherChartStats : getStudentChartStats;
-    setChartStats(statsFunc(selectedMonth, selectedDate));
+    getHomeStats().then(setStats).catch(() => setStats({}));
+    getHomeFeed().then(setFeed).catch(() => setFeed([]));
+  }, [currentUser]);
+
+  const role = currentUser?.role || 'STUDENT';
+  const filtered = useMemo(
+    () => filterFeedByMonthDate(feed, selectedMonth, selectedDate),
+    [feed, selectedMonth, selectedDate],
+  );
+  const chartStats = useMemo(() => computeChart(filtered, role), [filtered, role]);
+  const heatmap = useMemo(() => computeHeatmap(feed, selectedMonth), [feed, selectedMonth]);
+
+  useEffect(() => {
     setSelectedStatus(null);
-  }, [selectedMonth, selectedDate, currentUser]);
+  }, [selectedMonth, selectedDate]);
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -33,13 +51,20 @@ export default function HomePage() {
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold">Welcome back, {currentUser?.name?.split(' ').pop()}</h1>
-      {stats && <QuickStats role={currentUser?.role || 'STUDENT'} stats={stats} />}
+      <QuickStats role={role} stats={stats} />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <StatusChart role={currentUser?.role} chartStats={chartStats} selectedStatus={selectedStatus} onToggle={setSelectedStatus} />
-        <ActivityCalendar role={currentUser?.role} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+        <StatusChart role={role} chartStats={chartStats} selectedStatus={selectedStatus} onToggle={setSelectedStatus} />
+        <ActivityCalendar
+          role={role}
+          selectedMonth={selectedMonth}
+          onMonthChange={setSelectedMonth}
+          selectedDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          heatmap={heatmap}
+        />
       </div>
-      <ActivityFeed role={currentUser?.role} selectedMonth={selectedMonth} selectedDate={selectedDate} />
-      <ActivityNotifications role={currentUser?.role || 'STUDENT'} />
+      <ActivityFeed selectedMonth={selectedMonth} selectedDate={selectedDate} activities={filtered} />
+      <ActivityNotifications role={role} />
     </div>
   );
 }

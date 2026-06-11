@@ -1,5 +1,6 @@
 package com.example.se330.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.home.HomeStatsResponse;
@@ -39,6 +41,7 @@ public class HomeService {
     private final TaskRepository taskRepository;
     private final SubmissionRepository submissionRepository;
 
+    @Transactional(readOnly = true)
     public List<FeedItemResponse> getFeed(Long userId, int limit) {
 
         User user = userRepository.findById(userId)
@@ -59,6 +62,7 @@ public class HomeService {
                         .status(task.getStatus() != null ? task.getStatus().name() : null)
                         .projectId(project.getId())
                         .projectTitle(project.getTitle())
+                        .actorName(task.getAssignedTo() != null ? task.getAssignedTo().getName() : "Hệ thống")
                         .timestamp(task.getUpdatedAt() != null
                                 ? task.getUpdatedAt()
                                 : task.getCreatedAt())
@@ -73,6 +77,7 @@ public class HomeService {
                         .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                         .projectId(project.getId())
                         .projectTitle(project.getTitle())
+                        .actorName("Nhóm nộp bài")
                         .timestamp(submission.getSubmittedAt())
                         .build());
             }
@@ -85,6 +90,7 @@ public class HomeService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public HomeStatsResponse getStats(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -98,6 +104,8 @@ public class HomeService {
 
         long totalTasks = 0;
         long completedTasks = 0;
+        long updatedTasks = 0;
+        long createdTasks = 0;
         long totalSubmissions = 0;
         long pendingSubmissions = 0;
 
@@ -109,6 +117,12 @@ public class HomeService {
 
             for (Task task : taskRepository.findByProject_Id(project.getId())) {
                 totalTasks++;
+                if (task.getUpdatedAt() != null) {
+                    updatedTasks++;
+                }
+                if (task.getCreatedBy() != null && task.getCreatedBy().getId().equals(userId)) {
+                    createdTasks++;
+                }
                 if (task.getStatus() != null) {
                     tasksByStatus.merge(task.getStatus().name(), 1L, Long::sum);
                     if (task.getStatus() == TaskStatus.DONE) {
@@ -128,6 +142,25 @@ public class HomeService {
             }
         }
 
+        Map<String, Long> quickStats = new LinkedHashMap<>();
+        if (user.getRole() == Role.TEACHER) {
+            long upcomingDeadlines = projects.stream()
+                    .filter(p -> p.getEndDate() != null
+                            && !p.getEndDate().isBefore(LocalDate.now())
+                            && p.getEndDate().isBefore(LocalDate.now().plusDays(14)))
+                    .count();
+            quickStats.put("pendingGrades", pendingSubmissions);
+            quickStats.put("totalProjects", (long) projects.size());
+            quickStats.put("pendingRequests", 0L);
+            quickStats.put("upcomingDeadlines", upcomingDeadlines);
+        } else {
+            quickStats.put("completed", completedTasks);
+            quickStats.put("updated", updatedTasks);
+            quickStats.put("created", createdTasks);
+            quickStats.put("dueSoon", totalTasks - completedTasks);
+            quickStats.put("total", totalTasks);
+        }
+
         return HomeStatsResponse.builder()
                 .totalProjects(projects.size())
                 .totalTasks(totalTasks)
@@ -137,6 +170,7 @@ public class HomeService {
                 .tasksByStatus(tasksByStatus)
                 .projectsByStatus(projectsByStatus)
                 .submissionsByStatus(submissionsByStatus)
+                .quickStats(quickStats)
                 .build();
     }
 
