@@ -8,10 +8,14 @@ import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalRequestSidebar'
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
-import { mockProjects, mockProjectRequests } from '../../../mocks/projects.mock'
 import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
 import type { Project } from '../../../mocks/types'
-import { mockCourseRequirements } from '../../../mocks/tasks.mock'
+import type { CourseRequirement } from '../../../mocks/tasks.mock'
+import {
+  getCourseApprovalRequests,
+  getCourseProjects,
+  getCourseRequirements,
+} from '../../../services/project.service'
 
 export default function TeacherProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -29,21 +33,28 @@ export default function TeacherProjectList() {
     message: ''
   })
 
-  const courseProjects = mockProjects.filter(p => p.course.courseId === id)
+  const [courseProjects, setCourseProjects] = useState<Project[]>([])
+  const [courseRequirements, setCourseRequirements] = useState<CourseRequirement | null>(null)
+
   const courseInfo = courseProjects.length > 0 ? courseProjects[0].course : null
   const courseCategory = courseProjects.length > 0 ? courseProjects[0].category : null
-  const courseRequirements = mockCourseRequirements[id] || null
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    setRequests(mockProjectRequests)
-
-    setTimeout(() => {
-      if (isMounted) setLoading(false)
-    }, 500)
+    Promise.all([
+      getCourseProjects(id),
+      getCourseApprovalRequests(id),
+      getCourseRequirements(id),
+    ]).then(([projects, reqs, requirements]) => {
+      if (!isMounted) return
+      setCourseProjects(projects)
+      setRequests(reqs)
+      setCourseRequirements(requirements)
+      setLoading(false)
+    })
     return () => { isMounted = false }
-  }, [courseId])
+  }, [courseId, id])
 
   const triggerNotification = (title: string, message: string) => {
     setNotification({ isOpen: true, title, message })

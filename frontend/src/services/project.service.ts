@@ -5,8 +5,16 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
-import { mockProjects } from '../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../mocks/tasks.mock'
+import { mockProjects, mockProjectRequests } from '../mocks/projects.mock'
+import type { ProjectApprovalRequest } from '../mocks/projects.mock'
+import {
+  groupPhoenix,
+  groupAster,
+  groupNimbus,
+  groupOrion,
+  mockCourseRequirements,
+} from '../mocks/tasks.mock'
+import type { CourseRequirement } from '../mocks/tasks.mock'
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
 
 export type ProjectActivity = {
@@ -50,6 +58,18 @@ export const getProjectActivities = (_projectId: number | string): Promise<Proje
   void _projectId
   return resolveMock(MOCK_ACTIVITIES)
 }
+
+export const getCourseApprovalRequests = (
+  _courseId: number | string,
+): Promise<ProjectApprovalRequest[]> => {
+  void _courseId
+  return resolveMock(mockProjectRequests)
+}
+
+export const getCourseRequirements = (
+  courseId: number | string,
+): Promise<CourseRequirement | null> =>
+  resolveMock(mockCourseRequirements[Number(courseId)] ?? null)
 
 export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
   void _projectId
