@@ -16,6 +16,7 @@ import Avatar from '../../../components/ui/Avatar'
 import EmptyTeamState from '../../../components/ui/student/EmptyTeamState' 
 import type { User, Group } from '../../../mocks/types'
 import { getTeamData } from '../../../services/team.service'
+import { addActivity } from '../../../services/activity.service'
 
 export default function MyTeamPage() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -120,6 +121,12 @@ export default function MyTeamPage() {
     }
     setMyGroup(newGroup)
     setActiveModal(null)
+    addActivity({
+      kind: 'INFO',
+      title: `Nhóm "${name}" vừa được tạo`,
+      actorName: currentUser.name,
+      scope: 'ALL',
+    })
   }
 
 const handleAcceptTeamInvitation = (invite: any) => {

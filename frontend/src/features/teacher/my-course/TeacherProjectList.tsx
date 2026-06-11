@@ -16,6 +16,7 @@ import {
   getCourseProjects,
   getCourseRequirements,
 } from '../../../services/project.service'
+import { addActivity } from '../../../services/activity.service'
 
 export default function TeacherProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -64,6 +65,13 @@ export default function TeacherProjectList() {
     e.stopPropagation()
     const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
     triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
+    addActivity({
+      kind: 'APPROVAL',
+      title: `Đề tài "${title}" đã được DUYỆT`,
+      note: note?.trim() || undefined,
+      actorName: 'Giảng viên',
+      scope: 'STUDENT',
+    })
     setRequests(prev => prev.filter(r => r.requestId !== requestId))
   }
 
@@ -71,6 +79,13 @@ export default function TeacherProjectList() {
     e.stopPropagation()
     const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
     triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
+    addActivity({
+      kind: 'APPROVAL',
+      title: `Đề tài "${title}" đã bị TỪ CHỐI`,
+      note: note?.trim() || undefined,
+      actorName: 'Giảng viên',
+      scope: 'STUDENT',
+    })
     setRequests(prev => prev.filter(r => r.requestId !== requestId))
   }
 

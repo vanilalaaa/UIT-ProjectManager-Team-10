@@ -6,6 +6,7 @@ import QuickStats from '../../components/ui/home/QuickStats';
 import StatusChart from '../../components/ui/home/StatusChart';
 import ActivityCalendar from '../../components/ui/home/ActivityCalendar';
 import ActivityFeed from '../../components/ui/home/ActivityFeed';
+import ActivityNotifications from '../../components/ui/home/ActivityNotifications';
 
 export default function HomePage() {
   const { currentUser, isLoading } = useAuth(); 
@@ -38,6 +39,7 @@ export default function HomePage() {
         <ActivityCalendar role={currentUser?.role} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} selectedDate={selectedDate} onDateSelect={setSelectedDate} />
       </div>
       <ActivityFeed role={currentUser?.role} selectedMonth={selectedMonth} selectedDate={selectedDate} />
+      <ActivityNotifications role={currentUser?.role || 'STUDENT'} />
     </div>
   );
 }

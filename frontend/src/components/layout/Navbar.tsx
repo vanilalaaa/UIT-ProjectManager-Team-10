@@ -8,6 +8,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../features/auth/useAuth'
+import {
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+  subscribeNotifPref,
+} from '../../lib/notificationPrefs'
 import GlobalSearch from './GlobalSearch'
 
 type NotificationOption = {
@@ -21,8 +26,6 @@ const notificationOptions: NotificationOption[] = [
   { label: 'Trong 24 giờ', value: '24h' },
   { label: 'Cho đến khi tôi bật lại', value: 'forever' },
 ]
-
-const NOTIF_KEY = 'notif.enabled'
 
 function getPageTitle(pathname: string): string {
   if (pathname === '/') return 'Trang chủ'
@@ -65,11 +68,11 @@ function getInitials(name = '') {
 
 function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false)
-  const [enabled, setEnabled] = useState<boolean>(
-    () => (typeof window === 'undefined' ? true : localStorage.getItem(NOTIF_KEY) !== 'false'),
-  )
+  const [enabled, setEnabled] = useState<boolean>(() => isNotificationsEnabled())
   const [mutedLabel, setMutedLabel] = useState<string | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => subscribeNotifPref(setEnabled), [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -81,17 +84,15 @@ function NotificationDropdown() {
   }, [isOpen])
 
   const enableNotifications = () => {
-    setEnabled(true)
     setMutedLabel(null)
-    localStorage.setItem(NOTIF_KEY, 'true')
+    setNotificationsEnabled(true)
     toast.success('Đã bật lại thông báo.')
   }
 
   const muteNotifications = (label: string) => {
-    setEnabled(false)
     setMutedLabel(label)
-    localStorage.setItem(NOTIF_KEY, 'false')
-    toast.success(`Đã tắt thông báo (${label.toLowerCase()}).`)
+    setNotificationsEnabled(false)
+    toast.success(`Đã tắt cập nhật hoạt động (${label.toLowerCase()}).`)
   }
 
   return (
