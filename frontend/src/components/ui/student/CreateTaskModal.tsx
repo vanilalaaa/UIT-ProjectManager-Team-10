@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { User, Task } from '../../../mocks/types'
+import type { TaskPriority, User, Task } from '../../../mocks/types'
 
 interface CreateTaskModalProps {
   isOpen: boolean
@@ -8,11 +8,18 @@ interface CreateTaskModalProps {
   members: User[]
 }
 
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string; dotClass: string }[] = [
+  { value: 'Low', label: 'Thấp', dotClass: 'bg-text-soft' },
+  { value: 'Medium', label: 'Trung bình', dotClass: 'bg-secondary' },
+  { value: 'High', label: 'Cao', dotClass: 'bg-primary' },
+]
+
 export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: CreateTaskModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [deadline, setDeadline] = useState('')
   const [assigneeId, setAssigneeId] = useState<string>('')
+  const [priority, setPriority] = useState<TaskPriority>('Medium')
 
   if (!isOpen) return null
 
@@ -27,14 +34,15 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
       title,
       description,
       deadline: new Date(deadline).toISOString(),
-      assignedTo: assignedUser
+      assignedTo: assignedUser,
+      priority,
     })
 
-    // Reset form
     setTitle('')
     setDescription('')
     setDeadline('')
     setAssigneeId('')
+    setPriority('Medium')
     onClose()
   }
 
@@ -96,6 +104,28 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
                   <option key={m.userId} value={m.userId}>{m.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-text-soft uppercase mb-1.5">Mức độ ưu tiên</label>
+            <div className="grid grid-cols-3 gap-2">
+              {PRIORITY_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPriority(opt.value)}
+                  aria-pressed={priority === opt.value}
+                  className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                    priority === opt.value
+                      ? 'border-primary bg-primary-soft text-primary'
+                      : 'border-border bg-surface text-text-soft hover:bg-surface-soft'
+                  }`}
+                >
+                  <span className={`size-2 rounded-full ${opt.dotClass}`}></span>
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 

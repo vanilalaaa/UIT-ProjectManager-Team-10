@@ -1,11 +1,8 @@
 import type { Task } from '../../../mocks/types'
 
-// TaskCard accepts an extended task shape — BE chưa trả `category`/`priority`/
-// `commentsCount`/`attachmentsCount`, nhưng UI demo cần. Khi BE cập nhật
-// schema, chuyển các field này vào `Task` type chính.
+// category/commentsCount/attachmentsCount là field UI demo, BE chưa trả.
 type TaskCardData = Task & {
   category?: string
-  priority?: 'High' | 'Medium' | 'Low'
   commentsCount?: number
   attachmentsCount?: number
 }
