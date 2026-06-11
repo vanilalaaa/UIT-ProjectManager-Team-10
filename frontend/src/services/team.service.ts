@@ -28,6 +28,8 @@ const resolveMock = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
 const ALL_GROUPS = [groupPhoenix, groupAster, groupNimbus, groupOrion]
 
+export const getAllGroups = (): Promise<Group[]> => resolveMock(ALL_GROUPS)
+
 export const getGroupById = (groupId: number | string): Promise<Group | null> =>
   resolveMock(ALL_GROUPS.find((g) => g.groupId === Number(groupId)) ?? null)
 

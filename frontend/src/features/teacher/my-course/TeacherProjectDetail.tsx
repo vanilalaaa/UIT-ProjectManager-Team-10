@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Project } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
+import { getProjectById } from '../../../services/project.service'
 import FileAttachment from '../../../components/ui/student/FileAttachment'
 import StatusBadge from '../../../components/ui/student/StatusBadge'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
@@ -12,12 +12,16 @@ export default function TeacherProjectDetail() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
     setLoading(true)
-    const found = mockProjects.find((p: Project) => p.projectId.toString() === projectId)
-    setTimeout(() => {
-      setProject(found || null)
+    getProjectById(projectId ?? '').then((found) => {
+      if (!isMounted) return
+      setProject(found)
       setLoading(false)
-    }, 500)
+    })
+    return () => {
+      isMounted = false
+    }
   }, [projectId])
 
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />

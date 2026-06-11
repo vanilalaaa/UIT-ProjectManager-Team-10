@@ -4,7 +4,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
-import { mockCourseGroupsMap } from '../../../mocks/tasks.mock'
+import { getCourseGroups } from '../../../services/team.service'
 import type { Group } from '../../../mocks/types'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
@@ -56,13 +56,12 @@ export default function CourseTeams() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    setTimeout(() => {
+    getCourseGroups(courseId ?? '').then((data) => {
       if (isMounted) {
-        const targetId = Number(courseId)
-        setTeams(mockCourseGroupsMap[targetId] || [])
+        setTeams(data)
         setLoading(false)
       }
-    }, 500)
+    })
     return () => { isMounted = false }
   }, [courseId])
 

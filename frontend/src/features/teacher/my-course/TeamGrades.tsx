@@ -1,9 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { mockProjects } from '../../../mocks/projects.mock';
-import type { Project } from '../../../mocks/types';
+import { getProjectById } from '../../../services/project.service';
+import type { Project, Submission } from '../../../mocks/types';
 
 const CRITERIA = ['UI/UX Design', 'Backend Architecture', 'Documentation & Testing'];
+
+type GradedSubmission = Submission & {
+  rubricScores?: Record<string, number>
+  rubricNotes?: Record<string, string>
+}
 
 export default function TeamGrades() {
   const { projectId } = useParams();
@@ -19,22 +24,22 @@ export default function TeamGrades() {
   });
 
   useEffect(() => {
-    const found = mockProjects.find((p) => p.projectId.toString() === projectId);
-    if (found) {
+    getProjectById(projectId ?? '').then((found) => {
+      if (!found) return;
       setProject(found);
-      const sub = found.submissions?.[0] as any;
+      const sub = found.submissions?.[0] as GradedSubmission | undefined;
       if (sub?.rubricScores) {
         setScores(sub.rubricScores);
         setIsGraded(true);
       }
       if (sub?.rubricNotes) setNotes(sub.rubricNotes);
-    }
+    });
   }, [projectId]);
 
   if (!project) return <div>Project not found</div>;
 
   const average = Object.values(scores).reduce((a, b) => a + b, 0) / CRITERIA.length;
-  const sub = project.submissions?.[0] as any;
+  const sub = project.submissions?.[0] as GradedSubmission | undefined;
 
   const handleScoreChange = (key: string, value: string) => {
     if (value === "") {
