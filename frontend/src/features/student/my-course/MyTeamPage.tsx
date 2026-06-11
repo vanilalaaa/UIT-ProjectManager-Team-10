@@ -103,7 +103,7 @@ export default function MyTeamPage() {
     }
   }
 
-  const handleTransferLeadership = (newLeaderId: number) => {
+  const handleTransferLeadership = () => {
     setNotification({ title: 'Thành công', message: 'Đã chuyển quyền Leader thành công. Bạn đã rời nhóm!' });
     setMyGroup(null)
     setActiveModal(null)
@@ -121,7 +121,7 @@ export default function MyTeamPage() {
     setActiveModal(null)
   }
 
-  const handleCreateProjectSubmit = (title: string, description: string) => {
+  const handleCreateProjectSubmit = (title: string) => {
     setNotification({ title: 'Thành công', message: `Đã gửi đề tài "${title}" lên giảng viên duyệt!` });
     setHasProject(true)
     setActiveModal(null)

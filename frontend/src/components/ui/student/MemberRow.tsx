@@ -9,8 +9,6 @@ type MemberRowProps = {
 }
 
 export default function MemberRow({ member, roleLabel, onViewProfile, children }: MemberRowProps) {
-  const isLeader = roleLabel?.toLowerCase() === 'leader'
-
   return (
     <div className="flex items-center justify-between p-4 transition-all group relative border-b border-border/50 last:border-b-0 hover:bg-surface-soft/40">
       <div className="flex items-center gap-4 min-w-0">

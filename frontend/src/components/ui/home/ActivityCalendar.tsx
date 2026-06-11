@@ -6,8 +6,7 @@ export default function ActivityCalendar({ role, selectedMonth, onMonthChange, s
   
   const heatmapData = useMemo(() => {
     const counts: Record<number, number> = {};
-    const activities = role === 'TEACHER' ? mockTeacherActivities : getHeatmapData(selectedMonth);
-    
+
     if (role === 'TEACHER') {
         mockTeacherActivities.forEach(act => {
             const d = new Date(act.createdAt);
