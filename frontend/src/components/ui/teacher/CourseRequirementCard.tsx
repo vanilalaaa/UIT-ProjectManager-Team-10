@@ -6,6 +6,7 @@ import {
   getRequirement,
   saveRequirement,
   newCriterion,
+  EMPTY_REQUIREMENT,
   type ProjectRequirement,
 } from '../../../services/requirement.service'
 import { addActivity } from '../../../services/activity.service'
@@ -15,18 +16,22 @@ interface CourseRequirementCardProps {
 }
 
 export default function CourseRequirementCard({ courseId }: CourseRequirementCardProps) {
-  const [req, setReq] = useState<ProjectRequirement>(() => getRequirement(courseId))
-  const [draft, setDraft] = useState<ProjectRequirement>(req)
+  const [req, setReq] = useState<ProjectRequirement>(EMPTY_REQUIREMENT)
+  const [draft, setDraft] = useState<ProjectRequirement>(EMPTY_REQUIREMENT)
   const [categories, setCategories] = useState<Category[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
-    setReq(getRequirement(courseId))
+    getRequirement(courseId)
+      .then(setReq)
+      .catch(() => setReq(EMPTY_REQUIREMENT))
   }, [courseId])
 
   useEffect(() => {
     if (!isModalOpen) return
-    setDraft(getRequirement(courseId))
+    getRequirement(courseId)
+      .then(setDraft)
+      .catch(() => setDraft(EMPTY_REQUIREMENT))
     listActiveCategories()
       .then(setCategories)
       .catch(() => setCategories([]))
@@ -46,15 +51,18 @@ export default function CourseRequirementCard({ courseId }: CourseRequirementCar
       return
     }
     saveRequirement(courseId, draft)
-    setReq(draft)
-    setIsModalOpen(false)
-    addActivity({
-      kind: 'INFO',
-      title: 'Giảng viên đã cập nhật yêu cầu / barem chấm điểm đồ án',
-      actorName: 'Giảng viên',
-      scope: 'STUDENT',
-    })
-    toast.success('Đã lưu yêu cầu đồ án.')
+      .then((saved) => {
+        setReq(saved)
+        setIsModalOpen(false)
+        addActivity({
+          kind: 'INFO',
+          title: 'Giảng viên đã cập nhật yêu cầu / barem chấm điểm đồ án',
+          actorName: 'Giảng viên',
+          scope: 'STUDENT',
+        })
+        toast.success('Đã lưu yêu cầu đồ án.')
+      })
+      .catch(() => toast.error('Không lưu được yêu cầu đồ án. Vui lòng thử lại.'))
   }
 
   return (

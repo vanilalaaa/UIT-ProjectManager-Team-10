@@ -16,7 +16,11 @@ export default function TeamGrades() {
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    setCriteria(getRequirement(courseId ?? '').criteria);
+    if (courseId) {
+      getRequirement(courseId)
+        .then((r) => setCriteria(r.criteria))
+        .catch(() => setCriteria([]));
+    }
     getProjectById(projectId ?? '').then((found) => {
       if (found) setProject(found);
     });

@@ -23,7 +23,7 @@ type GradeData = {
 const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
   const project = await getProjectById(projectId ?? '')
   const courseId = project?.course?.courseId
-  const req = courseId != null ? getRequirement(courseId) : null
+  const req = courseId != null ? await getRequirement(courseId).catch(() => null) : null
   const criteria: ScoreCriteria[] = (req?.criteria ?? []).map((c) => ({
     label: c.name,
     score: 0,

@@ -14,6 +14,8 @@ import com.example.se330.entity.CourseRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.Project;
+import com.example.se330.entity.Requirement;
+import com.example.se330.entity.RubricCriterion;
 import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
@@ -27,6 +29,7 @@ import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
+import com.example.se330.repository.RequirementRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
 
@@ -44,6 +47,7 @@ public class DataInitializer implements CommandLineRunner {
     private final GroupMemberRepository groupMemberRepository;
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
+    private final RequirementRepository requirementRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -112,7 +116,26 @@ public class DataInitializer implements CommandLineRunner {
                     .deadline(LocalDateTime.now().plusDays(7))
                     .build());
 
-            System.out.println("Seeded sample course/group/project/task for SE330.");
+            Requirement requirement = Requirement.builder()
+                    .course(course)
+                    .category(webCat)
+                    .description("Xây dựng ứng dụng web quản lý đồ án; nộp báo cáo và mã nguồn.")
+                    .deadline(LocalDate.now().plusDays(40))
+                    .build();
+            String[] critNames = {
+                    "Thiết kế & kiến trúc", "Chức năng hoàn thiện",
+                    "Giao diện UI/UX", "Báo cáo & thuyết trình" };
+            for (int i = 0; i < critNames.length; i++) {
+                requirement.getCriteria().add(RubricCriterion.builder()
+                        .requirement(requirement)
+                        .name(critNames[i])
+                        .maxScore(10)
+                        .orderIndex(i)
+                        .build());
+            }
+            requirementRepository.save(requirement);
+
+            System.out.println("Seeded sample course/group/project/task/requirement for SE330.");
         }
     }
 
