@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { listCategories } from '../../../services/admin/category.service'
+import { listActiveCategories } from '../../../services/admin/category.service'
 import type { Category } from '../../../types/api/category'
 import {
   getRequirement,
@@ -27,8 +27,8 @@ export default function CourseRequirementCard({ courseId }: CourseRequirementCar
   useEffect(() => {
     if (!isModalOpen) return
     setDraft(getRequirement(courseId))
-    listCategories({ size: 100 })
-      .then((res) => setCategories(res.data.content))
+    listActiveCategories()
+      .then(setCategories)
       .catch(() => setCategories([]))
   }, [isModalOpen, courseId])
 

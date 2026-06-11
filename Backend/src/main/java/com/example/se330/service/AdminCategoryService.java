@@ -1,5 +1,7 @@
 package com.example.se330.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,13 @@ public class AdminCategoryService {
 
     public AdminCategoryService(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
+    }
+
+    public List<CategoryDto> listActiveCategories() {
+        return categoryRepository.findByIsActiveTrue()
+                .stream()
+                .map(this::toCategoryDto)
+                .toList();
     }
 
     public Page<CategoryDto> listCategories(int page, int size, String search) {

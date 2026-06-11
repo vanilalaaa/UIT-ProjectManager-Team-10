@@ -26,6 +26,10 @@ export const listCategories = (
     .get<ApiResponse<Page<Category>>>(BASE, { params: cleanParams(query) })
     .then((r) => r.data)
 
+// Đọc danh mục cho mọi role (TEACHER gán loại đồ án) — không dùng endpoint admin.
+export const listActiveCategories = (): Promise<Category[]> =>
+  axiosClient.get<ApiResponse<Category[]>>('/categories').then((r) => r.data.data)
+
 export const createCategory = (
   payload: AdminCategoryCreateRequest,
 ): Promise<ApiResponse<Category>> =>
