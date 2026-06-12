@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import QuickStats from '../../components/ui/home/QuickStats';
 import StatusChart from '../../components/ui/home/StatusChart';
 import ActivityCalendar from '../../components/ui/home/ActivityCalendar';

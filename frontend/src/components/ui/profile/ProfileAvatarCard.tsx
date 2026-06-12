@@ -19,7 +19,7 @@ export default function ProfileAvatarCard({ user }: { user: UserDto }) {
       
       <Avatar 
         name={user.name} 
-        avatarUrl={avatar || (user as any).userProfile?.avatarUrl} 
+        avatarUrl={avatar}
         sizeClass="size-32 mb-4 border-4 border-surface shadow-md" 
         textClass="text-5xl" 
       />

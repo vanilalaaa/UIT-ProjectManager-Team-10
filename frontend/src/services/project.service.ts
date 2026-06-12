@@ -5,8 +5,6 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
-import { mockProjectRequests } from '../mocks/projects.mock'
-import type { ProjectApprovalRequest } from '../mocks/projects.mock'
 import { mockCourseRequirements } from '../mocks/tasks.mock'
 import type { CourseRequirement } from '../mocks/tasks.mock'
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
@@ -35,38 +33,6 @@ const MOCK_DELAY = 300
 const resolveMock = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
 
-// Đề tài GV vừa duyệt — lưu client (localStorage) tới khi BE có pipeline duyệt
-// đăng ký → tạo project thật. TODO(BE).
-const APPROVED_KEY = (courseId: number | string) => `app.approvedProjects.${courseId}`
-const HANDLED_KEY = (courseId: number | string) => `app.handledRequests.${courseId}`
-
-const readJson = <T>(key: string, fallback: T): T => {
-  if (typeof window === 'undefined') return fallback
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-const readApprovedProjects = (courseId: number | string): Project[] =>
-  readJson<Project[]>(APPROVED_KEY(courseId), [])
-
-export const addApprovedProject = (courseId: number | string, project: Project): void => {
-  localStorage.setItem(
-    APPROVED_KEY(courseId),
-    JSON.stringify([project, ...readApprovedProjects(courseId)]),
-  )
-}
-
-export const markRequestHandled = (courseId: number | string, requestId: number): void => {
-  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
-  if (!handled.includes(requestId)) {
-    localStorage.setItem(HANDLED_KEY(courseId), JSON.stringify([...handled, requestId]))
-  }
-}
-
 export const listMyProjects = (): Promise<ApiResponse<Project[]>> =>
   axiosClient.get<ApiResponse<Project[]>>('/students/me/projects').then((r) => r.data)
 
@@ -80,9 +46,8 @@ export const listCourseProjects = (
 export const getMyProjects = (): Promise<Project[]> =>
   listMyProjects().then((r) => r.data)
 
-// Đồ án thật của lớp + đề tài vừa duyệt (localStorage) cho tới khi có pipeline BE.
 export const getCourseProjects = (courseId: number | string): Promise<Project[]> =>
-  listCourseProjects(courseId).then((r) => [...readApprovedProjects(courseId), ...r.data])
+  listCourseProjects(courseId).then((r) => r.data)
 
 export type ProjectWithGroup = Project
 
@@ -129,18 +94,11 @@ export const getProjectById = (projectId: number | string): Promise<Project | nu
     .then((r) => r.data.data)
     .catch(() => null)
 
-// ----- Mock — activity/resources/approval requests chưa có BE, giữ tới slice sau -----
+// ----- Mock — activity/resources chưa có BE, giữ tới slice sau -----
 
 export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
   void _projectId
   return resolveMock(MOCK_ACTIVITIES)
-}
-
-export const getCourseApprovalRequests = (
-  courseId: number | string,
-): Promise<ProjectApprovalRequest[]> => {
-  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
-  return resolveMock(mockProjectRequests.filter((r) => !handled.includes(r.requestId)))
 }
 
 export const getCourseRequirements = (

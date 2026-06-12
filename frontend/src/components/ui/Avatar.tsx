@@ -1,4 +1,4 @@
-export function getInitials(name = '') {
+function getInitials(name = '') {
   const cleanName = name.trim()
   if (!cleanName) return 'U'
   return cleanName
