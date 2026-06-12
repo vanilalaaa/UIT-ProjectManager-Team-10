@@ -21,4 +21,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     // Chặn đề xuất trùng khi nhóm đã có đề tài/đề xuất đang chờ duyệt hoặc đã duyệt.
     boolean existsByGroup_IdAndStatusIn(Long groupId, Collection<RegistrationStatus> statuses);
+
+    // Đề tài/đề xuất hiện tại của nhóm (để hiện trạng thái "chờ duyệt" / "đã có đồ án").
+    Optional<Registration> findFirstByGroup_IdAndStatusIn(Long groupId, Collection<RegistrationStatus> statuses);
 }

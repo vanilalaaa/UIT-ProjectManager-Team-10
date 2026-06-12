@@ -34,6 +34,7 @@ public class GroupMember {
     @Column(name = "joined_date")
     private LocalDate joinedDate;
 
+    @Enumerated(EnumType.STRING)
     private GroupMemberStatus status;
 
     @Column(name = "is_leader")

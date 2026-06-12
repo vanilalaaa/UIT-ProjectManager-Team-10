@@ -20,6 +20,9 @@ export type Team = {
   leaderName: string | null
   members: TeamMember[]
   memberCount: number
+  // Trạng thái đề tài của nhóm: "PENDING" (chờ duyệt) / "APPROVED" (đã có đồ án) / null.
+  projectStatus: string | null
+  projectTitle: string | null
 }
 
 export type TeamCreateRequest = {

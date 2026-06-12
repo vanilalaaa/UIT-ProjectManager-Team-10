@@ -44,9 +44,10 @@ public class RegistrationController {
 
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @GetMapping("/courses/{courseId}/registrations")
-    public ResponseEntity<ApiResponse<List<RegistrationResponse>>> getPending(@PathVariable Long courseId) {
+    public ResponseEntity<ApiResponse<List<RegistrationResponse>>> getPending(
+            @PathVariable Long courseId, Authentication authentication) {
         return ApiResponse.success(
-                registrationService.getPending(courseId),
+                registrationService.getPending(courseId, currentUserId(authentication)),
                 "Lấy danh sách yêu cầu đăng ký thành công.");
     }
 

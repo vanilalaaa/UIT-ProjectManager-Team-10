@@ -18,13 +18,16 @@ import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.entity.Course;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Registration;
 import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.JoinStatus;
+import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
+import com.example.se330.repository.RegistrationRepository;
 
 @Service
 @Transactional
@@ -34,15 +37,17 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final CourseService courseService;
     private final CourseRequestRepository courseRequestRepository;
+    private final RegistrationRepository registrationRepository;
 
     public GroupService(GroupRepository groupRepository, StudentService studentService,
             GroupMemberRepository groupMemberRepository, CourseService courseService,
-            CourseRequestRepository courseRequestRepository) {
+            CourseRequestRepository courseRequestRepository, RegistrationRepository registrationRepository) {
         this.groupRepository = groupRepository;
         this.studentService = studentService;
         this.groupMemberRepository = groupMemberRepository;
         this.courseService = courseService;
         this.courseRequestRepository = courseRequestRepository;
+        this.registrationRepository = registrationRepository;
     }
 
     public GroupResponse createGroup(Long userId, Long courseId, CreateGroupRequest request) {
@@ -316,7 +321,8 @@ public class GroupService {
         return courseRequestRepository.findAllByCourseAndStatus(course, JoinStatus.ACTIVE).stream()
                 .map(cr -> cr.getStudent())
                 .filter(u -> u != null)
-                .map(this::toClassmate)
+                .map(student -> toClassmate(student, groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
+                        student.getId(), courseId, GroupMemberStatus.ACTIVE)))
                 .collect(Collectors.toList());
     }
 
@@ -328,6 +334,10 @@ public class GroupService {
             throw new RuntimeException("Chỉ Trưởng nhóm mới được mời thành viên.");
         }
         User invited = studentService.getStudentById(invitedUserId);
+
+        courseRequestRepository.findByCourse_IdAndStudent_Id(courseId, invitedUserId)
+                .filter(cr -> cr.getStatus() == JoinStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Sinh viên này chưa tham gia lớp, không thể mời."));
 
         groupMemberRepository.findByGroupIdAndUserId(groupId, invitedUserId).ifPresent(gm -> {
             throw new RuntimeException("Sinh viên này đã ở trong nhóm hoặc đã được mời/đăng ký.");
@@ -383,7 +393,7 @@ public class GroupService {
         return invitation;
     }
 
-    private GroupMemberResponse toClassmate(User user) {
+    private GroupMemberResponse toClassmate(User user, boolean grouped) {
         return GroupMemberResponse.builder()
                 .groupMemberId(null)
                 .userId(user.getId())
@@ -393,7 +403,8 @@ public class GroupService {
                 .uid(user.getUid())
                 .email(user.getEmail())
                 .isLeader(false)
-                .status(GroupMemberStatus.ACTIVE.name())
+                // "ACTIVE" = đã có nhóm (FE ẩn nút mời); "FREE" = chưa có nhóm.
+                .status(grouped ? GroupMemberStatus.ACTIVE.name() : "FREE")
                 .build();
     }
 
@@ -434,6 +445,9 @@ public class GroupService {
                 .map(m -> toMemberResponse(m, leaderId))
                 .collect(Collectors.toList());
 
+        Registration projectReg = registrationRepository.findFirstByGroup_IdAndStatusIn(
+                group.getId(), List.of(RegistrationStatus.PENDING, RegistrationStatus.APPROVED)).orElse(null);
+
         return GroupResponse.builder()
                 .groupId(group.getId())
                 .name(group.getName())
@@ -443,6 +457,8 @@ public class GroupService {
                 .leaderName(group.getLeader() != null ? group.getLeader().getName() : null)
                 .members(members)
                 .memberCount(members.size())
+                .projectStatus(projectReg != null && projectReg.getStatus() != null ? projectReg.getStatus().name() : null)
+                .projectTitle(projectReg != null && projectReg.getProject() != null ? projectReg.getProject().getTitle() : null)
                 .build();
     }
 

@@ -27,6 +27,7 @@ public class Submission {
     @Builder.Default
     private LocalDateTime submittedAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
     private SubmissionStatus status;
 
     @Column(name = "file_path")

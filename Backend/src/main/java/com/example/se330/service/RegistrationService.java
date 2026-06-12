@@ -17,6 +17,7 @@ import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
+import com.example.se330.entity.Course;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.RegistrationRepository;
@@ -28,14 +29,17 @@ public class RegistrationService {
     private final RegistrationRepository registrationRepository;
     private final ProjectRepository projectRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final CourseService courseService;
 
     public RegistrationService(
             RegistrationRepository registrationRepository,
             ProjectRepository projectRepository,
-            GroupMemberRepository groupMemberRepository) {
+            GroupMemberRepository groupMemberRepository,
+            CourseService courseService) {
         this.registrationRepository = registrationRepository;
         this.projectRepository = projectRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.courseService = courseService;
     }
 
     // Trưởng nhóm đề xuất đề tài (tên + mô tả) → tạo Project trạng thái PENDING
@@ -82,7 +86,11 @@ public class RegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<RegistrationResponse> getPending(Long courseId) {
+    public List<RegistrationResponse> getPending(Long courseId, Long teacherId) {
+        Course course = courseService.getCourseById(courseId);
+        if (course.getLecturer() == null || !course.getLecturer().getId().equals(teacherId)) {
+            throw new RuntimeException("Bạn không phải giảng viên của lớp này");
+        }
         return registrationRepository
                 .findByProject_Course_IdAndStatus(courseId, RegistrationStatus.PENDING)
                 .stream().map(this::toResponse).toList();

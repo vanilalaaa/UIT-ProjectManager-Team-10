@@ -49,7 +49,6 @@ export default function MyTeamPage() {
   const [myGroup, setMyGroup] = useState<Team | null>(null)
   const [teamRequests, setTeamRequests] = useState<TeamMember[]>([])
   const [suggestedUsers, setSuggestedUsers] = useState<TeamMember[]>([])
-  const [hasProject, setHasProject] = useState(false)
 
   const [suggestedPopoverId, setSuggestedPopoverId] = useState<number | null>(null)
   const [activeModal, setActiveModal] = useState<ModalKind>(null)
@@ -74,7 +73,8 @@ export default function MyTeamPage() {
         return Promise.all([reqP, memP]).then(([reqs, members]) => {
           setTeamRequests(reqs)
           const ids = new Set((group?.members ?? []).map((m) => m.userId))
-          setSuggestedUsers(members.filter((m) => !ids.has(m.userId)))
+          // Chỉ gợi ý SV CHƯA có nhóm (status "FREE"); SV đã có nhóm bị loại.
+          setSuggestedUsers(members.filter((m) => !ids.has(m.userId) && m.status !== 'ACTIVE'))
         })
       })
       .catch(() => {
@@ -173,8 +173,8 @@ export default function MyTeamPage() {
     proposeProject(courseId, myGroup.groupId, { title, description })
       .then(() => {
         setNotification({ title: 'Thành công', message: `Đã gửi đề xuất đề tài "${title}", chờ giảng viên duyệt.` })
-        setHasProject(true)
         setActiveModal(null)
+        return reload()
       })
       .catch((err: { message?: string }) =>
         setNotification({ title: 'Lỗi', message: err?.message || 'Không gửi được đề xuất đề tài.' }),
@@ -282,7 +282,14 @@ export default function MyTeamPage() {
           </div>
 
           <div className="lg:col-span-5 xl:col-span-5 space-y-6">
-            {!hasProject && (
+            {myGroup.projectStatus === 'APPROVED' ? null : myGroup.projectStatus === 'PENDING' ? (
+              <div className="bg-surface rounded-card p-6 shadow-soft border border-border flex flex-col justify-center min-h-[160px]">
+                <h3 className="text-lg font-bold mb-2 text-text">Đề tài đang chờ duyệt</h3>
+                <p className="text-sm text-text-soft leading-relaxed">
+                  Đề tài <span className="font-bold text-text">"{myGroup.projectTitle}"</span> đã gửi, đang chờ giảng viên duyệt.
+                </p>
+              </div>
+            ) : (
               <div className="bg-brand-gradient rounded-card p-6 shadow-md text-surface flex flex-col justify-center min-h-[160px]">
                 <h3 className="text-lg font-bold mb-2">Đăng ký Đề tài Project</h3>
                 <p className="text-sm text-surface/80 mb-5 leading-relaxed">Nhóm của bạn hiện chưa đăng ký đồ án. Hãy tạo một đề tài mới.</p>
