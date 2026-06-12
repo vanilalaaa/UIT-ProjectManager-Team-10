@@ -5,7 +5,7 @@ import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import { getCourseMembers, getCourseGroups } from '../../../services/team.service'
-import type { Group, User } from '../../../mocks/types'
+import type { Team, TeamMember } from '../../../types/api/team'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -39,8 +39,8 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
 
 export default function TeacherCourseMember() {
   const { courseId } = useParams<{ courseId: string }>()
-  const [members, setMembers] = useState<User[]>([])
-  const [groups, setGroups] = useState<Group[]>([])
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [groups, setGroups] = useState<Team[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
@@ -63,7 +63,7 @@ export default function TeacherCourseMember() {
   }, [courseId])
 
   const handleRemoveMemberFromTeam = (userId: number) => {
-    const isLeader = groups.some(team => team.leader.userId === userId)
+    const isLeader = groups.some(team => team.leaderId === userId)
 
     if (isLeader) {
       setNotification({
@@ -83,10 +83,10 @@ export default function TeacherCourseMember() {
     })
   }
 
-  const filteredMembers = members.filter(member => 
-    member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    member.uid.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (member.uid ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (member.email ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách lớp học..." />

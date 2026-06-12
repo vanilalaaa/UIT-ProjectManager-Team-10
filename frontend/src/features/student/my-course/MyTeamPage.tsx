@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import InviteListModal from '../../../components/ui/student/InviteListModal'
-import CreateTeamModal from '../../../components/ui/student/CreateTeamModal' 
+import CreateTeamModal from '../../../components/ui/student/CreateTeamModal'
 import LeaveTeamModal from '../../../components/ui/student/LeaveTeamModal'
 import DeleteTeamModal from '../../../components/ui/student/DeleteTeamModal'
 import KickMemberModal from '../../../components/ui/student/KickMemberModal'
@@ -12,45 +12,85 @@ import TransferLeaderModal from '../../../components/ui/student/TransferLeaderMo
 import CreateProjectModal from '../../../components/ui/student/CreateProjectModal'
 import TeamInfoCard from '../../../components/ui/student/TeamInfoCard'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
-import Avatar from '../../../components/ui/Avatar' 
-import EmptyTeamState from '../../../components/ui/student/EmptyTeamState' 
-import type { User, Group } from '../../../mocks/types'
-import { getTeamData } from '../../../services/team.service'
+import Avatar from '../../../components/ui/Avatar'
+import EmptyTeamState from '../../../components/ui/student/EmptyTeamState'
+import type { Team, TeamMember } from '../../../types/api/team'
+import {
+  getMyGroup,
+  getJoinRequests,
+  getCourseMembers,
+  createTeam,
+  reviewJoinRequest,
+  removeMember,
+  deleteTeam,
+  transferLeader,
+} from '../../../services/team.service'
 import { addActivity } from '../../../services/activity.service'
+import { useAuth } from '../../auth/useAuth'
+
+type ModalKind =
+  | 'invite'
+  | 'create_team'
+  | 'leave_confirm'
+  | 'delete_confirm'
+  | 'kick_confirm'
+  | 'transfer_leader'
+  | 'create_project'
+  | null
 
 export default function MyTeamPage() {
   const { courseId } = useParams<{ courseId: string }>()
+  const { currentUser } = useAuth()
   const [loading, setLoading] = useState<boolean>(true)
-  
-  const [myGroup, setMyGroup] = useState<Group | null>(null)
-  const [teamRequests, setTeamRequests] = useState<User[]>([])
-  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
+
+  const [myGroup, setMyGroup] = useState<Team | null>(null)
+  const [teamRequests, setTeamRequests] = useState<TeamMember[]>([])
+  const [suggestedUsers, setSuggestedUsers] = useState<TeamMember[]>([])
   const [hasProject, setHasProject] = useState(false)
 
   const [suggestedPopoverId, setSuggestedPopoverId] = useState<number | null>(null)
-  const [activeModal, setActiveModal] = useState<'invite' | 'create_team' | 'leave_confirm' | 'delete_confirm' | 'kick_confirm' | 'transfer_leader' | 'create_project' | null>(null)
+  const [activeModal, setActiveModal] = useState<ModalKind>(null)
   const [memberToKickId, setMemberToKickId] = useState<number | null>(null)
-  const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
-  
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const isCurrentUserLeader = myGroup?.leader?.userId === currentUser?.userId
+  const [notification, setNotification] = useState<{ title: string; message: string } | null>(null)
+
+  const isCurrentUserLeader = !!(myGroup && currentUser && myGroup.leaderId === currentUser.id)
+
+  const reload = useCallback((): Promise<void> => {
+    if (!courseId) return Promise.resolve()
+    return getMyGroup(courseId)
+      .then((group) => {
+        setMyGroup(group)
+        const isLeader = !!(group && currentUser && group.leaderId === currentUser.id)
+        const reqP =
+          group && isLeader
+            ? getJoinRequests(courseId, group.groupId).catch(() => [] as TeamMember[])
+            : Promise.resolve<TeamMember[]>([])
+        const memP = group
+          ? getCourseMembers(courseId).catch(() => [] as TeamMember[])
+          : Promise.resolve<TeamMember[]>([])
+        return Promise.all([reqP, memP]).then(([reqs, members]) => {
+          setTeamRequests(reqs)
+          const ids = new Set((group?.members ?? []).map((m) => m.userId))
+          setSuggestedUsers(members.filter((m) => !ids.has(m.userId)))
+        })
+      })
+      .catch(() => {
+        setMyGroup(null)
+        setTeamRequests([])
+        setSuggestedUsers([])
+      })
+  }, [courseId, currentUser])
 
   useEffect(() => {
-    let isMounted = true
+    let mounted = true
     setLoading(true)
-
-    getTeamData(courseId ?? '').then((data) => {
-      if (isMounted) {
-        setMyGroup(data.group)
-        setTeamRequests(data.requests)
-        setSuggestedUsers(data.suggests)
-        setCurrentUser(data.currentUser)
-        setLoading(false)
-      }
+    reload().finally(() => {
+      if (mounted) setLoading(false)
     })
-
-    return () => { isMounted = false }
-  }, [courseId])
+    return () => {
+      mounted = false
+    }
+  }, [reload])
 
   const executeIfLeader = (action: () => void) => {
     if (!isCurrentUserLeader) {
@@ -68,133 +108,121 @@ export default function MyTeamPage() {
   }
 
   const confirmKickMember = () => {
-    if (myGroup && memberToKickId !== null) {
-      setMyGroup({
-        ...myGroup,
-        members: myGroup.members?.filter(m => (m as User).userId !== memberToKickId)
+    if (!courseId || !myGroup || memberToKickId === null) return
+    removeMember(courseId, myGroup.groupId, memberToKickId)
+      .then(() => {
+        setNotification({ title: 'Thành công', message: 'Đã xóa thành viên khỏi nhóm.' })
+        return reload()
       })
-    }
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không xóa được thành viên.' }))
     setActiveModal(null)
     setMemberToKickId(null)
   }
 
   const handleLeaveTeam = () => {
-    if (isCurrentUserLeader && (myGroup?.members?.length || 0) > 1) {
+    if (!courseId || !myGroup) return
+    if (isCurrentUserLeader && myGroup.members.length > 1) {
       setActiveModal('transfer_leader')
-    } else {
-      setNotification({ title: 'Thành công', message: 'Bạn đã rời khỏi nhóm thành công!' })
-      setMyGroup(null)
-      setActiveModal(null)
+      return
     }
+    if (isCurrentUserLeader) {
+      // Leader một mình → giải tán nhóm.
+      deleteTeam(courseId, myGroup.groupId)
+        .then(() => {
+          setNotification({ title: 'Thành công', message: 'Bạn đã rời và giải tán nhóm.' })
+          setMyGroup(null)
+        })
+        .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không rời được nhóm.' }))
+      setActiveModal(null)
+      return
+    }
+    setNotification({ title: 'Thông báo', message: 'Thành viên cần Trưởng nhóm xóa khỏi nhóm. Vui lòng liên hệ Trưởng nhóm.' })
+    setActiveModal(null)
   }
 
-  const handleTransferLeadership = () => {
-    setNotification({ title: 'Thành công', message: 'Đã chuyển quyền Leader thành công. Bạn đã rời nhóm!' });
-    setMyGroup(null)
+  const handleTransferLeadership = (newLeaderId: number) => {
+    if (!courseId || !myGroup) return
+    transferLeader(courseId, myGroup.groupId, newLeaderId)
+      .then(() => {
+        setNotification({ title: 'Thành công', message: 'Đã chuyển quyền Trưởng nhóm.' })
+        return reload()
+      })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không chuyển được quyền.' }))
     setActiveModal(null)
   }
 
   const handleDeleteTeamClick = () => {
-    executeIfLeader(() => {
-      setActiveModal('delete_confirm')
-    })
+    executeIfLeader(() => setActiveModal('delete_confirm'))
   }
 
   const confirmDeleteTeam = () => {
-    setNotification({ title: 'Đã giải tán', message: 'Nhóm đã bị giải tán vĩnh viễn!' });
-    setMyGroup(null)
+    if (!courseId || !myGroup) return
+    deleteTeam(courseId, myGroup.groupId)
+      .then(() => {
+        setNotification({ title: 'Đã giải tán', message: 'Nhóm đã bị giải tán vĩnh viễn!' })
+        setMyGroup(null)
+      })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không xóa được nhóm.' }))
     setActiveModal(null)
   }
 
+  // Đề xuất đề tài mới chưa có API riêng (pipeline đăng ký là chọn đề tài có sẵn).
   const handleCreateProjectSubmit = (title: string) => {
-    setNotification({ title: 'Thành công', message: `Đã gửi đề tài "${title}" lên giảng viên duyệt!` });
+    setNotification({ title: 'Thông báo', message: `Đã ghi nhận đề xuất đề tài "${title}". Vui lòng đăng ký đề tài ở mục Đồ án.` })
     setHasProject(true)
     setActiveModal(null)
   }
 
   const handleCreateTeamSubmit = (name: string, description: string) => {
-    if (!currentUser) return
-    const newGroup: Group = {
-      groupId: Math.floor(Math.random() * 1000) + 10,
-      name, description, course: null as unknown as Group['course'],
-      leader: currentUser, members: [currentUser], tasks: []
-    }
-    setMyGroup(newGroup)
-    setActiveModal(null)
-    addActivity({
-      kind: 'INFO',
-      title: `Nhóm "${name}" vừa được tạo`,
-      actorName: currentUser.name,
-      scope: 'ALL',
-    })
+    if (!courseId) return
+    createTeam(courseId, { name, description })
+      .then((team) => {
+        setActiveModal(null)
+        addActivity({ kind: 'INFO', title: `Nhóm "${name}" vừa được tạo`, actorName: currentUser?.name ?? 'Sinh viên', scope: 'ALL' })
+        setNotification({ title: 'Thành công', message: `Đã tạo nhóm "${team.name}".` })
+        return reload()
+      })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không tạo được nhóm.' }))
   }
 
-const handleAcceptTeamInvitation = (invite: any) => {
-  if (!currentUser) return
-  const joinedGroup: Group = {
-    groupId: Math.floor(Math.random() * 1000) + 10,
-    name: `Nhóm của ${invite.name}`,
-    description: invite.info || 'Nhóm thực hiện đồ án môn học.',
-    course: null as any,
-    leader: {
-      userId: invite.id,
-      name: invite.name,
-      uid: 'STUDENT_UID',
-      email: 'leader@gmail.com',
-      userProfile: { 
-        summary: invite.info, 
-        avatarUrl: invite.avatarUrl 
-      } as any
-    } as any,
-    members: [
-      {
-        userId: invite.id,
-        name: invite.name,
-        uid: 'STUDENT_UID',
-        email: 'leader@gmail.com',
-        userProfile: { 
-          summary: invite.info, 
-          avatarUrl: invite.avatarUrl 
-        } as any // 
-      } as any, // 
-      currentUser
-    ],
-    tasks: []
-  };
+  // Lời mời đến (mock) chưa có API duyệt — đăng ký tham gia nhóm dùng nút "Request to Join".
+  const handleAcceptTeamInvitation = () => {
+    setNotification({ title: 'Thông báo', message: 'Hãy dùng "Request to Join" ở danh sách nhóm để gửi yêu cầu tham gia.' })
+  }
 
-  setMyGroup(joinedGroup);
-  setNotification({ title: 'Thành công', message: `Bạn đã gia nhập nhóm của ${invite.name}!` });
-};
-
-  const handleAcceptRequest = (user: User) => {
-    if (myGroup) {
-      setMyGroup({
-        ...myGroup,
-        members: [...(myGroup.members || []), user]
+  const handleAcceptRequest = (member: TeamMember) => {
+    if (!courseId || !myGroup) return
+    reviewJoinRequest(courseId, myGroup.groupId, member.userId, true)
+      .then(() => {
+        setNotification({ title: 'Thành công', message: `Đã thêm ${member.name} vào nhóm!` })
+        return reload()
       })
-    }
-    setTeamRequests(teamRequests.filter(req => req.userId !== user.userId))
-    setNotification({ title: 'Thành công', message: `Đã thêm ${user.name} vào nhóm!` })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không duyệt được yêu cầu.' }))
   }
 
   const handleDeclineRequest = (userId: number) => {
-    setTeamRequests(teamRequests.filter(req => req.userId !== userId))
-    setNotification({ title: 'Đã từ chối', message: 'Đã từ chối lời mời tham gia nhóm.' })
+    if (!courseId || !myGroup) return
+    reviewJoinRequest(courseId, myGroup.groupId, userId, false)
+      .then(() => {
+        setNotification({ title: 'Đã từ chối', message: 'Đã từ chối yêu cầu tham gia nhóm.' })
+        return reload()
+      })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không từ chối được yêu cầu.' }))
   }
 
-  const handleInviteUser = (user: User) => {
-    setNotification({ title: 'Thành công', message: `Đã gửi lời mời vào nhóm đến ${user.name}!` })
+  // Mời thành viên chưa có API → thông báo client.
+  const handleInviteUser = (user: TeamMember) => {
+    setNotification({ title: 'Thông báo', message: `Tính năng mời ${user.name} sẽ sớm được hỗ trợ. Hiện sinh viên tự gửi yêu cầu tham gia.` })
     setSuggestedPopoverId(null)
   }
 
   if (loading || !currentUser) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
 
-  const leader = myGroup?.leader
-  const regularMembers = myGroup ? (myGroup.members as User[]).filter((m) => m.userId !== leader?.userId) : []
+  const regularMembers = myGroup ? myGroup.members.filter((m) => !m.isLeader) : []
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      
+
       {!myGroup ? (
         <div className="lg:col-span-12 xl:col-span-12 w-full">
            <EmptyTeamState
@@ -206,9 +234,9 @@ const handleAcceptTeamInvitation = (invite: any) => {
       ) : (
         <>
           <div className="lg:col-span-7 xl:col-span-7 space-y-6">
-            <TeamInfoCard 
+            <TeamInfoCard
               myGroup={myGroup}
-              currentUser={currentUser}
+              currentUserId={currentUser.id}
               isCurrentUserLeader={isCurrentUserLeader}
               onLeaveClick={() => setActiveModal('leave_confirm')}
               onDeleteClick={handleDeleteTeamClick}
@@ -221,15 +249,18 @@ const handleAcceptTeamInvitation = (invite: any) => {
                 {suggestedUsers.map(user => (
                   <MemberRow key={user.userId} member={user} onViewProfile={(u) => setSuggestedPopoverId(suggestedPopoverId === u.userId ? null : u.userId)}>
                      {suggestedPopoverId === user.userId && (
-                       <UserProfilePopover 
-                         user={user as any} 
-                         onClose={() => setSuggestedPopoverId(null)} 
-                         showInviteButton={true} 
-                         onInvite={() => handleInviteUser(user)} 
+                       <UserProfilePopover
+                         user={user}
+                         onClose={() => setSuggestedPopoverId(null)}
+                         showInviteButton={true}
+                         onInvite={() => handleInviteUser(user)}
                        />
                      )}
                   </MemberRow>
                 ))}
+                {suggestedUsers.length === 0 && (
+                  <div className="text-center py-6 text-text-soft text-sm">Không có gợi ý thành viên.</div>
+                )}
               </div>
             </div>
           </div>
@@ -239,7 +270,7 @@ const handleAcceptTeamInvitation = (invite: any) => {
               <div className="bg-brand-gradient rounded-card p-6 shadow-md text-surface flex flex-col justify-center min-h-[160px]">
                 <h3 className="text-lg font-bold mb-2">Đăng ký Đề tài Project</h3>
                 <p className="text-sm text-surface/80 mb-5 leading-relaxed">Nhóm của bạn hiện chưa đăng ký đồ án. Hãy tạo một đề tài mới.</p>
-                <button 
+                <button
                   onClick={() => executeIfLeader(() => setActiveModal('create_project'))}
                   className="bg-surface text-primary font-bold py-2.5 px-4 rounded-button shadow-sm hover:opacity-90 transition-all text-sm w-full"
                 >
@@ -255,15 +286,15 @@ const handleAcceptTeamInvitation = (invite: any) => {
                   {teamRequests.map((request) => (
                     <div key={request.userId} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                       <div className="flex items-start gap-3">
-                        <Avatar 
+                        <Avatar
                           name={request.name}
-                          avatarUrl={request.userProfile?.avatarUrl}
+                          avatarUrl={request.avatar}
                           sizeClass="size-10"
                           className="border border-border shrink-0"
                         />
                         <div className="min-w-0 flex-1">
                           <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
-                          <p className="text-xs text-text-soft mt-0.5">{request.userProfile?.summary}</p>
+                          <p className="text-xs text-text-soft mt-0.5">{request.summary}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">
@@ -283,19 +314,19 @@ const handleAcceptTeamInvitation = (invite: any) => {
 
       <InviteListModal isOpen={activeModal === 'invite'} onClose={() => setActiveModal(null)} />
       <CreateTeamModal isOpen={activeModal === 'create_team'} onClose={() => setActiveModal(null)} onSubmit={handleCreateTeamSubmit} />
-      
+
       <LeaveTeamModal isOpen={activeModal === 'leave_confirm'} onClose={() => setActiveModal(null)} onConfirm={handleLeaveTeam} />
       <DeleteTeamModal isOpen={activeModal === 'delete_confirm'} onClose={() => setActiveModal(null)} onConfirm={confirmDeleteTeam} />
       <KickMemberModal isOpen={activeModal === 'kick_confirm'} onClose={() => { setActiveModal(null); setMemberToKickId(null); }} onConfirm={confirmKickMember} />
-      
+
       <TransferLeaderModal isOpen={activeModal === 'transfer_leader'} onClose={() => setActiveModal(null)} members={regularMembers} onTransfer={handleTransferLeadership} />
       <CreateProjectModal isOpen={activeModal === 'create_project'} onClose={() => setActiveModal(null)} onSubmit={handleCreateProjectSubmit} />
 
-      <NotificationModal 
-        isOpen={!!notification} 
-        title={notification?.title || ''} 
-        message={notification?.message || ''} 
-        onClose={() => setNotification(null)} 
+      <NotificationModal
+        isOpen={!!notification}
+        title={notification?.title || ''}
+        message={notification?.message || ''}
+        onClose={() => setNotification(null)}
       />
     </div>
   )

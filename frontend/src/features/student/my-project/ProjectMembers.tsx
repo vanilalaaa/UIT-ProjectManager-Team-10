@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student//UserProfilePopover'
-import type { User, Group } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
 import { getProjectById } from '../../../services/project.service'
 import { getGroupById } from '../../../services/team.service'
 
-const fetchGroupData = async (projectId: string | undefined): Promise<Group | null> => {
+const fetchGroupData = async (projectId: string | undefined): Promise<Team | null> => {
   if (!projectId) return null
   const project = await getProjectById(projectId)
   const groupId = project?.groupId
@@ -16,7 +16,7 @@ const fetchGroupData = async (projectId: string | undefined): Promise<Group | nu
 
 export default function ProjectMembers() {
   const { projectId } = useParams()
-  const [group, setGroup] = useState<Group | null>(null)
+  const [group, setGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
@@ -58,8 +58,8 @@ export default function ProjectMembers() {
     )
   }
 
-  const leader = group.leader
-  const regularMembers = group.members.filter((m: User) => m.userId !== leader.userId)
+  const leader = group.members.find((m) => m.isLeader) ?? null
+  const regularMembers = group.members.filter((m) => !m.isLeader)
 
   return (
     <div className="max-w-4xl">
@@ -73,6 +73,7 @@ export default function ProjectMembers() {
 
         <hr className="border-border mb-6" />
 
+        {leader && (
         <div className="mb-8 border border-primary/30 rounded-xl bg-primary-soft/10">
           <MemberRow
             member={leader}
@@ -86,6 +87,7 @@ export default function ProjectMembers() {
             )}
           </MemberRow>
         </div>
+        )}
 
         {regularMembers.length > 0 && (
           <div>
@@ -94,7 +96,7 @@ export default function ProjectMembers() {
             </h3>
 
             <div className="border border-border rounded-xl bg-surface divide-y divide-border shadow-sm">
-              {regularMembers.map((member: User) => (
+              {regularMembers.map((member) => (
                 <MemberRow
                   key={member.userId}
                   member={member}

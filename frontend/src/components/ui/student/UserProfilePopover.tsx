@@ -1,9 +1,9 @@
 // src/components/ui/student/UserProfilePopover.tsx
 import Avatar from '../../ui/Avatar'
-import type { User } from '../../../mocks/types'
+import type { TeamMember } from '../../../types/api/team'
 
 interface UserProfilePopoverProps {
-  user: User
+  user: TeamMember
   onClose: () => void
   showInviteButton?: boolean
   onInvite?: () => void 
@@ -36,7 +36,7 @@ export default function UserProfilePopover({
       <div className="flex flex-col items-center text-center">
         <Avatar 
           name={user.name}
-          avatarUrl={user.userProfile?.avatarUrl}
+          avatarUrl={user.avatar}
           sizeClass="size-16 mb-3"
           className="shadow-md"
         />
@@ -52,7 +52,7 @@ export default function UserProfilePopover({
 
         <div className="mt-4 pt-3 border-t border-border/60 w-full">
           <p className="text-xs text-text-soft leading-relaxed line-clamp-3 font-medium bg-surface-soft/40 p-2.5 rounded-xl border border-border/40">
-            {user.userProfile?.summary || 'Thành viên này chưa cập nhật giới thiệu cá nhân.'}
+            {user.summary || 'Thành viên này chưa cập nhật giới thiệu cá nhân.'}
           </p>
         </div>
 

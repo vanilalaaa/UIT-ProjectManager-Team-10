@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Group, User } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
 import type { Project } from '../../../types/api/project'
 import {
   getProjectById,
@@ -23,7 +23,7 @@ export default function ProjectOverview() {
 
   const { currentUser } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
   const [resources, setResources] = useState<ProjectResource[]>([])
@@ -68,10 +68,11 @@ export default function ProjectOverview() {
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 
+  const groupLeader = currentGroup?.members.find((m) => m.isLeader) ?? null
   const isGroupLeader = !!(
-    currentGroup?.leader &&
+    groupLeader &&
     currentUser &&
-    (currentUser.uid === currentGroup.leader.uid || currentUser.email === currentGroup.leader.email)
+    (currentUser.uid === groupLeader.uid || currentUser.email === groupLeader.email)
   )
   const isMemberOfGroup =
     currentGroup?.members?.some(m => m.uid === currentUser?.uid || m.email === currentUser?.email) ?? false
@@ -167,8 +168,8 @@ export default function ProjectOverview() {
             </div>
 
             <div className="flex flex-col">
-              {((currentGroup.members as User[]) || []).map((member: User) => {
-                const isLeader = member.userId === currentGroup.leader?.userId
+              {(currentGroup.members || []).map((member) => {
+                const isLeader = member.isLeader
                 return (
                   <MemberRow 
                     key={member.userId}

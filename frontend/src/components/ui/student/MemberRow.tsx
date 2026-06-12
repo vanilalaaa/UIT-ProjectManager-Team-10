@@ -1,11 +1,11 @@
 import Avatar from '../../ui/Avatar'
-import type { User } from '../../../mocks/types'
+import type { TeamMember } from '../../../types/api/team'
 
 type MemberRowProps = {
-  member: User
+  member: TeamMember
   roleLabel?: string
-  onViewProfile?: (user: User) => void
-  children?: React.ReactNode 
+  onViewProfile?: (user: TeamMember) => void
+  children?: React.ReactNode
 }
 
 export default function MemberRow({ member, roleLabel, onViewProfile, children }: MemberRowProps) {
@@ -15,7 +15,7 @@ export default function MemberRow({ member, roleLabel, onViewProfile, children }
         <div className="relative shrink-0">
           <Avatar 
             name={member.name}
-            avatarUrl={member.userProfile?.avatarUrl}
+            avatarUrl={member.avatar}
             sizeClass="size-10" 
             className="group-hover:border-primary/40 shadow-sm transition-colors"
           />

@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
@@ -21,6 +22,7 @@ import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 
 @Service
+@Transactional
 public class GroupService {
     private final GroupRepository groupRepository;
     private final StudentService studentService;
@@ -163,10 +165,9 @@ public class GroupService {
         List<GroupMember> pendingMembers = groupMemberRepository.findByGroupIdAndStatus(groupId,
                 GroupMemberStatus.PENDING);
 
+        Long leaderId = group.getLeader() != null ? group.getLeader().getId() : null;
         return pendingMembers.stream()
-                .map(member -> new GroupMemberResponse(
-                        member.getGroupMemberId(),
-                        member.getUser().getName()))
+                .map(member -> toMemberResponse(member, leaderId))
                 .collect(Collectors.toList());
     }
 
@@ -198,19 +199,29 @@ public class GroupService {
     }
 
     public List<GroupMemberResponse> getGroupMembers(Long courseId, Long groupId, GroupMemberStatus status) {
-        List<GroupMember> members;
+        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
+        Long leaderId = group.getLeader() != null ? group.getLeader().getId() : null;
 
-        if (status != null) {
-            members = groupMemberRepository.findByGroupIdAndStatus(groupId, status);
-        } else {
-            members = groupMemberRepository.findByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
-        }
-
-        return members.stream()
-                .map(member -> new GroupMemberResponse(
-                        member.getGroupMemberId(),
-                        member.getUser().getName()))
+        GroupMemberStatus filter = status != null ? status : GroupMemberStatus.ACTIVE;
+        return groupMemberRepository.findByGroupIdAndStatus(groupId, filter).stream()
+                .map(member -> toMemberResponse(member, leaderId))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public GroupResponse getGroupByIdOnly(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+        return mapToResponse(group);
+    }
+
+    @Transactional(readOnly = true)
+    public GroupResponse getMyGroup(Long userId, Long courseId) {
+        return groupMemberRepository.findFirstByUser_IdAndGroup_Course_Id(userId, courseId)
+                .map(GroupMember::getGroup)
+                .map(this::mapToResponse)
+                .orElse(null);
     }
     public GroupResponse transferLeaderRole(Long currentLeaderId, Long courseId, Long groupId, Long newLeaderId) {
 
@@ -266,16 +277,37 @@ public class GroupService {
             return null;
         }
 
-        GroupResponse resp = new GroupResponse();
-        resp.setGroupId(group.getId());
-        resp.setName(group.getName());
-        resp.setDescription(group.getDescription());
-        resp.setCourseId(group.getCourse().getId());
-        resp.setLeaderId(group.getLeader().getId());
+        Long leaderId = group.getLeader() != null ? group.getLeader().getId() : null;
         List<GroupMemberResponse> members = group.getMembers().stream()
-                .map(member -> new GroupMemberResponse(member.getGroupMemberId(), member.getUser().getName()))
+                .filter(m -> m.getStatus() == GroupMemberStatus.ACTIVE)
+                .map(m -> toMemberResponse(m, leaderId))
                 .collect(Collectors.toList());
-        resp.setMembers(members);
-        return resp;
+
+        return GroupResponse.builder()
+                .groupId(group.getId())
+                .name(group.getName())
+                .description(group.getDescription())
+                .courseId(group.getCourse() != null ? group.getCourse().getId() : null)
+                .leaderId(leaderId)
+                .leaderName(group.getLeader() != null ? group.getLeader().getName() : null)
+                .members(members)
+                .memberCount(members.size())
+                .build();
+    }
+
+    private GroupMemberResponse toMemberResponse(GroupMember member, Long leaderId) {
+        User user = member.getUser();
+        boolean leader = leaderId != null && user != null && leaderId.equals(user.getId());
+        return GroupMemberResponse.builder()
+                .groupMemberId(member.getGroupMemberId())
+                .userId(user != null ? user.getId() : null)
+                .name(user != null ? user.getName() : null)
+                .avatar(user != null && user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
+                .summary(user != null && user.getUserProfile() != null ? user.getUserProfile().getSummary() : null)
+                .uid(user != null ? user.getUid() : null)
+                .email(user != null ? user.getEmail() : null)
+                .isLeader(leader)
+                .status(member.getStatus() != null ? member.getStatus().name() : null)
+                .build();
     }
 }

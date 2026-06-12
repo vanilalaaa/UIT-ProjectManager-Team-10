@@ -3,12 +3,12 @@ import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
-import type { User } from '../../../mocks/types'
+import type { TeamMember } from '../../../types/api/team'
 import { getCourseMembers } from '../../../services/team.service'
 
 export default function CourseMembers() {
   const { courseId } = useParams<{ courseId: string }>()
-  const [members, setMembers] = useState<User[]>([])
+  const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
@@ -27,9 +27,9 @@ export default function CourseMembers() {
     return () => { isMounted = false }
   }, [courseId])
 
-  const filteredMembers = members.filter(member => 
-    member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    member.uid.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (member.uid ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách lớp học..." />

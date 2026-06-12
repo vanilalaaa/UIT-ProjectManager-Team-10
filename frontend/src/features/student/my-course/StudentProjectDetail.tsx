@@ -4,7 +4,7 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectDetailCard from '../../../components/ui/student//ProjectDetailCard' 
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
-import type { Group, User } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
 import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
 import { getGroupById } from '../../../services/team.service'
@@ -13,7 +13,7 @@ export default function StudentProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
 
   const [project, setProject] = useState<Project | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
@@ -90,8 +90,8 @@ export default function StudentProjectDetail() {
             </div>
 
             <div className="flex flex-col">
-              {((currentGroup.members as User[]) || []).map((member: User) => {
-                const isLeader = member.userId === currentGroup.leader?.userId
+              {(currentGroup.members || []).map((member) => {
+                const isLeader = member.isLeader
                 return (
                   <MemberRow 
                     key={member.userId}

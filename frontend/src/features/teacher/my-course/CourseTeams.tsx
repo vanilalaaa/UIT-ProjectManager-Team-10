@@ -5,7 +5,7 @@ import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import { getCourseGroups } from '../../../services/team.service'
-import type { Group } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -40,13 +40,13 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
 
 export default function CourseTeams() {
   const { courseId } = useParams<{ courseId: string }>()
-  const [teams, setTeams] = useState<Group[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const [expandedTeams, setExpandedTeams] = useState<number[]>([])
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
-  
-  const [deleteTarget, setDeleteTarget] = useState<Group | null>(null)
+
+  const [deleteTarget, setDeleteTarget] = useState<Team | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     title: '',
@@ -92,7 +92,7 @@ export default function CourseTeams() {
     const targetTeam = teams.find(t => t.groupId === groupId);
     if (!targetTeam) return;
 
-    if (targetTeam.leader.userId === userId) {
+    if (targetTeam.leaderId === userId) {
       setNotification({
         isOpen: true,
         title: 'Không thể thực hiện',
@@ -235,7 +235,7 @@ export default function CourseTeams() {
                       <div key={member.userId} className="relative">
                         <MemberRow 
                           member={member}
-                          roleLabel={member.userId === team.leader.userId ? 'LEADER' : undefined}
+                          roleLabel={member.isLeader ? 'LEADER' : undefined}
                           onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
                         >
                           {activePopoverId === member.userId && (

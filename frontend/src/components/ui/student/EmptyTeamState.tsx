@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import Avatar from '../Avatar';
 import NotificationModal from './NotificationModal';
 import {
-  getAvailableTeams,
+  getCourseGroups,
   getTeamInvitations,
-  type AvailableTeam,
+  requestJoinTeam,
   type TeamInvitation,
 } from '../../../services/team.service';
+import type { Team } from '../../../types/api/team';
 
 interface EmptyTeamStateProps {
   onCreateTeamClick: () => void;
@@ -15,7 +16,7 @@ interface EmptyTeamStateProps {
 }
 
 export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, courseId }: EmptyTeamStateProps) {
-  const [availableTeams, setAvailableTeams] = useState<AvailableTeam[]>([]);
+  const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
 
@@ -24,7 +25,7 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getAvailableTeams(courseId ?? '1'), getTeamInvitations()]).then(([teams, invites]) => {
+    Promise.all([getCourseGroups(courseId ?? '1'), getTeamInvitations()]).then(([teams, invites]) => {
       if (!alive) return;
       setAvailableTeams(teams);
       setInvitations(invites);
@@ -34,6 +35,19 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
 
   const displayedTeams = showAllTeams ? availableTeams : availableTeams.slice(0, 6);
   const displayedInvites = showAllInvites ? invitations : invitations.slice(0, 3);
+
+  const handleRequestJoin = (team: Team) => {
+    requestJoinTeam(courseId ?? '', team.groupId)
+      .then(() =>
+        setNotification({
+          title: 'Gửi yêu cầu thành công',
+          message: `Yêu cầu tham gia nhóm "${team.name}" của bạn đã được gửi!`,
+        }),
+      )
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không gửi được yêu cầu tham gia.' }),
+      );
+  };
 
   const handleAccept = (invite: TeamInvitation) => {
     setInvitations(prev => prev.filter(item => item.id !== invite.id));
@@ -70,44 +84,44 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {displayedTeams.map((team) => (
-            <div key={team.id} className="border border-border rounded-xl p-5 flex flex-col h-full hover:border-indigo-300 transition-colors bg-white">
+          {displayedTeams.map((team) => {
+            const slotsLeft = Math.max(0, 5 - team.memberCount)
+            return (
+            <div key={team.groupId} className="border border-border rounded-xl p-5 flex flex-col h-full hover:border-indigo-300 transition-colors bg-white">
               <div className="mb-3">
                 <h3 className="font-bold text-text truncate text-sm">{team.name}</h3>
                 <span className="bg-orange-50 text-orange-600 text-[8px] font-extrabold px-1.5 py-0.5 rounded border border-blue-200/60 whitespace-nowrap uppercase tracking-wider">
-                  {team.slotsLeft} {team.slotsLeft === 1 ? 'SLOT LEFT' : 'SLOTS LEFT'}
+                  {slotsLeft} {slotsLeft === 1 ? 'SLOT LEFT' : 'SLOTS LEFT'}
                 </span>
               </div>
 
               <p className="text-xs text-text-soft line-clamp-2 mb-4 flex-grow leading-relaxed">
-                {team.desc}
+                {team.description}
               </p>
-              
+
               <div className="flex items-center justify-between gap-4 mt-auto">
                 <div className="flex -space-x-2 items-center">
                   {team.members.map((member) => (
-                    <Avatar 
+                    <Avatar
                       key={member.userId}
                       name={member.name}
-                      avatarUrl={member.userProfile?.avatarUrl}
+                      avatarUrl={member.avatar}
                       sizeClass="size-8"
                       className="border-2 border-white"
                     />
                   ))}
                 </div>
-                
-                <button 
-                  onClick={() => setNotification({
-                      title: 'Gửi yêu cầu thành công',
-                      message: `Yêu cầu tham gia nhóm "${team.name}" của bạn đã được gửi!`
-                  })}
+
+                <button
+                  onClick={() => handleRequestJoin(team)}
                   className="bg-brand-gradient text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0 w-[80px] h-10 flex items-center justify-center text-center"
                 >
                   Request to Join
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

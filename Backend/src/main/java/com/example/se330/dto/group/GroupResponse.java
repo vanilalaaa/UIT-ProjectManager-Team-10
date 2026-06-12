@@ -19,5 +19,7 @@ public class GroupResponse {
     private String description;
     private Long courseId;
     private Long leaderId;
+    private String leaderName;
     private List<GroupMemberResponse> members;
+    private Integer memberCount;
 }

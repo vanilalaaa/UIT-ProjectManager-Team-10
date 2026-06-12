@@ -51,6 +51,14 @@ public class GroupController {
         return ApiResponse.success(groups);
     }
 
+    // Nhóm của sinh viên đang đăng nhập trong lớp này (null nếu chưa có nhóm).
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<GroupResponse>> getMyGroup(
+            Authentication authentication, @PathVariable Long courseId) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return ApiResponse.success(groupService.getMyGroup(userDetails.getId(), courseId));
+    }
+
     // [READ ONE] Lấy chi tiết 1 group cụ thể
     @GetMapping("/{groupId}")
     public ResponseEntity<ApiResponse<GroupResponse>> getGroupById(
