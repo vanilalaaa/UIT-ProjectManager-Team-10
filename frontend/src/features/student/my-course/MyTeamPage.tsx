@@ -25,6 +25,7 @@ import {
   deleteTeam,
   transferLeader,
   leaveGroup,
+  inviteMember,
 } from '../../../services/team.service'
 import { proposeProject } from '../../../services/registration.service'
 import { addActivity } from '../../../services/activity.service'
@@ -192,9 +193,10 @@ export default function MyTeamPage() {
       .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không tạo được nhóm.' }))
   }
 
-  // Lời mời đến (mock) chưa có API duyệt — đăng ký tham gia nhóm dùng nút "Request to Join".
+  // EmptyTeamState đã gọi acceptInvitation; ở đây chỉ cần tải lại để hiện nhóm vừa vào.
   const handleAcceptTeamInvitation = () => {
-    setNotification({ title: 'Thông báo', message: 'Hãy dùng "Request to Join" ở danh sách nhóm để gửi yêu cầu tham gia.' })
+    setLoading(true)
+    reload().finally(() => setLoading(false))
   }
 
   const handleAcceptRequest = (member: TeamMember) => {
@@ -217,9 +219,16 @@ export default function MyTeamPage() {
       .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không từ chối được yêu cầu.' }))
   }
 
-  // Mời thành viên chưa có API → thông báo client.
   const handleInviteUser = (user: TeamMember) => {
-    setNotification({ title: 'Thông báo', message: `Tính năng mời ${user.name} sẽ sớm được hỗ trợ. Hiện sinh viên tự gửi yêu cầu tham gia.` })
+    if (!courseId || !myGroup) return
+    inviteMember(courseId, myGroup.groupId, user.userId)
+      .then(() => {
+        setNotification({ title: 'Thành công', message: `Đã gửi lời mời đến ${user.name}.` })
+        setSuggestedUsers((prev) => prev.filter((u) => u.userId !== user.userId))
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không gửi được lời mời.' }),
+      )
     setSuggestedPopoverId(null)
   }
 

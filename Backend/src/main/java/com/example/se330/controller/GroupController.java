@@ -18,6 +18,7 @@ import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
+import com.example.se330.dto.group.InviteRequest;
 import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.enums.GroupMemberStatus;
@@ -186,5 +187,24 @@ public class GroupController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String message = groupService.removeGroupMember(userDetails.getId(), courseId, groupId, memberId);
         return ApiResponse.success(message);
+    }
+
+    // Danh sách sinh viên đã tham gia lớp (để trưởng nhóm chọn mời).
+    @GetMapping("/classmates")
+    public ResponseEntity<ApiResponse<List<GroupMemberResponse>>> getClassmates(@PathVariable Long courseId) {
+        return ApiResponse.success(groupService.getCourseClassmates(courseId));
+    }
+
+    // Trưởng nhóm mời 1 sinh viên vào nhóm.
+    @PostMapping("/{groupId}/invite")
+    public ResponseEntity<ApiResponse<String>> invite(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId,
+            @RequestBody InviteRequest request) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        groupService.inviteMember(userDetails.getId(), courseId, groupId, request.getUserId());
+        return ApiResponse.success("Đã gửi lời mời tham gia nhóm.");
     }
 }

@@ -12,13 +12,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
+import com.example.se330.dto.group.InvitationResponse;
 import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
+import com.example.se330.entity.Course;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
+import com.example.se330.enums.JoinStatus;
 import com.example.se330.enums.Role;
+import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 
@@ -29,13 +33,16 @@ public class GroupService {
     private final StudentService studentService;
     private final GroupMemberRepository groupMemberRepository;
     private final CourseService courseService;
+    private final CourseRequestRepository courseRequestRepository;
 
     public GroupService(GroupRepository groupRepository, StudentService studentService,
-            GroupMemberRepository groupMemberRepository, CourseService courseService) {
+            GroupMemberRepository groupMemberRepository, CourseService courseService,
+            CourseRequestRepository courseRequestRepository) {
         this.groupRepository = groupRepository;
         this.studentService = studentService;
         this.groupMemberRepository = groupMemberRepository;
         this.courseService = courseService;
+        this.courseRequestRepository = courseRequestRepository;
     }
 
     public GroupResponse createGroup(Long userId, Long courseId, CreateGroupRequest request) {
@@ -159,6 +166,8 @@ public class GroupService {
                 throw new RuntimeException("Bạn đã gửi yêu cầu tham gia nhóm này rồi, vui lòng chờ duyệt!");
             } else if (status == GroupMemberStatus.ACTIVE) {
                 throw new RuntimeException("Bạn đã là thành viên chính thức của nhóm này!");
+            } else if (status == GroupMemberStatus.INVITED) {
+                throw new RuntimeException("Bạn đã được mời vào nhóm này — vào mục Lời mời để chấp nhận.");
             }
         }
 
@@ -191,7 +200,7 @@ public class GroupService {
         List<GroupMember> pendingMembers = groupMemberRepository.findByGroupIdAndStatus(groupId,
                 GroupMemberStatus.PENDING);
 
-        Long leaderId = group.getLeader() != null ? group.getLeader().getId() : null;
+        // leaderId (tham số) chính là id Trưởng nhóm — đã validate ở trên.
         return pendingMembers.stream()
                 .map(member -> toMemberResponse(member, leaderId))
                 .collect(Collectors.toList());
@@ -296,6 +305,111 @@ public class GroupService {
         groupMemberRepository.delete(memberToRemove);
 
         return "Đã xóa thành viên khỏi nhóm thành công!";
+    }
+
+    // ---- Mời thành viên / lời mời ----
+
+    // Sinh viên đã tham gia lớp (để trưởng nhóm chọn mời + màn Thành viên lớp).
+    @Transactional(readOnly = true)
+    public List<GroupMemberResponse> getCourseClassmates(Long courseId) {
+        Course course = courseService.getCourseById(courseId);
+        return courseRequestRepository.findAllByCourseAndStatus(course, JoinStatus.ACTIVE).stream()
+                .map(cr -> cr.getStudent())
+                .filter(u -> u != null)
+                .map(this::toClassmate)
+                .collect(Collectors.toList());
+    }
+
+    // Trưởng nhóm mời 1 sinh viên vào nhóm → GroupMember status INVITED (chờ SV chấp nhận).
+    public void inviteMember(Long leaderId, Long courseId, Long groupId, Long invitedUserId) {
+        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
+        if (group.getLeader() == null || !group.getLeader().getId().equals(leaderId)) {
+            throw new RuntimeException("Chỉ Trưởng nhóm mới được mời thành viên.");
+        }
+        User invited = studentService.getStudentById(invitedUserId);
+
+        groupMemberRepository.findByGroupIdAndUserId(groupId, invitedUserId).ifPresent(gm -> {
+            throw new RuntimeException("Sinh viên này đã ở trong nhóm hoặc đã được mời/đăng ký.");
+        });
+        boolean inAnotherGroup = groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
+                invitedUserId, courseId, GroupMemberStatus.ACTIVE);
+        if (inAnotherGroup) {
+            throw new RuntimeException("Sinh viên này đã thuộc một nhóm khác trong lớp.");
+        }
+
+        GroupMember invitation = new GroupMember();
+        invitation.setGroup(group);
+        invitation.setUser(invited);
+        invitation.setJoinedDate(LocalDate.now());
+        invitation.setStatus(GroupMemberStatus.INVITED);
+        groupMemberRepository.save(invitation);
+    }
+
+    // Lời mời nhóm gửi đến sinh viên đang đăng nhập.
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> getMyInvitations(Long userId) {
+        return groupMemberRepository.findByUser_IdAndStatus(userId, GroupMemberStatus.INVITED).stream()
+                .map(this::toInvitation)
+                .collect(Collectors.toList());
+    }
+
+    // SV chấp nhận lời mời → INVITED -> ACTIVE (gia nhập nhóm).
+    public void acceptInvitation(Long userId, Long groupMemberId) {
+        GroupMember invitation = loadOwnInvitation(userId, groupMemberId);
+        Long courseId = invitation.getGroup() != null && invitation.getGroup().getCourse() != null
+                ? invitation.getGroup().getCourse().getId() : null;
+        if (courseId != null && groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
+                userId, courseId, GroupMemberStatus.ACTIVE)) {
+            throw new RuntimeException("Bạn đã thuộc một nhóm khác trong lớp này.");
+        }
+        invitation.setStatus(GroupMemberStatus.ACTIVE);
+        invitation.setJoinedDate(LocalDate.now());
+        groupMemberRepository.save(invitation);
+    }
+
+    // SV từ chối lời mời → xóa bản ghi INVITED.
+    public void declineInvitation(Long userId, Long groupMemberId) {
+        groupMemberRepository.delete(loadOwnInvitation(userId, groupMemberId));
+    }
+
+    private GroupMember loadOwnInvitation(Long userId, Long groupMemberId) {
+        GroupMember invitation = groupMemberRepository.findById(groupMemberId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lời mời!"));
+        if (invitation.getUser() == null || !invitation.getUser().getId().equals(userId)
+                || invitation.getStatus() != GroupMemberStatus.INVITED) {
+            throw new RuntimeException("Lời mời không hợp lệ.");
+        }
+        return invitation;
+    }
+
+    private GroupMemberResponse toClassmate(User user) {
+        return GroupMemberResponse.builder()
+                .groupMemberId(null)
+                .userId(user.getId())
+                .name(user.getName())
+                .avatar(user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
+                .summary(user.getUserProfile() != null ? user.getUserProfile().getSummary() : null)
+                .uid(user.getUid())
+                .email(user.getEmail())
+                .isLeader(false)
+                .status(GroupMemberStatus.ACTIVE.name())
+                .build();
+    }
+
+    private InvitationResponse toInvitation(GroupMember invitation) {
+        Group group = invitation.getGroup();
+        long activeCount = group == null ? 0
+                : group.getMembers().stream().filter(m -> m.getStatus() == GroupMemberStatus.ACTIVE).count();
+        return InvitationResponse.builder()
+                .groupMemberId(invitation.getGroupMemberId())
+                .groupId(group != null ? group.getId() : null)
+                .groupName(group != null ? group.getName() : null)
+                .courseId(group != null && group.getCourse() != null ? group.getCourse().getId() : null)
+                .courseName(group != null && group.getCourse() != null ? group.getCourse().getName() : null)
+                .leaderName(group != null && group.getLeader() != null ? group.getLeader().getName() : null)
+                .memberCount((int) activeCount)
+                .build();
     }
 
     // Quyền quản lý nhóm: Leader của nhóm, GV phụ trách lớp, hoặc Admin.

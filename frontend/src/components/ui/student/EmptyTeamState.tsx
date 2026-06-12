@@ -3,21 +3,23 @@ import Avatar from '../Avatar';
 import NotificationModal from './NotificationModal';
 import {
   getCourseGroups,
-  getTeamInvitations,
+  getMyInvitations,
   requestJoinTeam,
-  type TeamInvitation,
+  acceptInvitation,
+  declineInvitation,
+  type Invitation,
 } from '../../../services/team.service';
 import type { Team } from '../../../types/api/team';
 
 interface EmptyTeamStateProps {
   onCreateTeamClick: () => void;
-  onAcceptInvitation: (invite: TeamInvitation) => void;
+  onAcceptInvitation: () => void;
   courseId?: string;
 }
 
 export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, courseId }: EmptyTeamStateProps) {
   const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
-  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
 
   const [showAllTeams, setShowAllTeams] = useState(false);
@@ -25,7 +27,7 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getCourseGroups(courseId ?? '1'), getTeamInvitations()]).then(([teams, invites]) => {
+    Promise.all([getCourseGroups(courseId ?? '1'), getMyInvitations()]).then(([teams, invites]) => {
       if (!alive) return;
       setAvailableTeams(teams);
       setInvitations(invites);
@@ -49,17 +51,26 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
       );
   };
 
-  const handleAccept = (invite: TeamInvitation) => {
-    setInvitations(prev => prev.filter(item => item.id !== invite.id));
-    onAcceptInvitation(invite);
+  const handleAccept = (invite: Invitation) => {
+    acceptInvitation(invite.groupMemberId)
+      .then(() => {
+        setInvitations(prev => prev.filter(item => item.groupMemberId !== invite.groupMemberId));
+        onAcceptInvitation();
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không tham gia được nhóm.' }),
+      );
   };
 
-  const handleDecline = (invite: TeamInvitation) => {
-    setNotification({ 
-      title: 'Đã từ chối', 
-      message: `Bạn đã từ chối lời mời từ ${invite.name}.` 
-    });
-    setInvitations(prev => prev.filter(item => item.id !== invite.id));
+  const handleDecline = (invite: Invitation) => {
+    declineInvitation(invite.groupMemberId)
+      .then(() => {
+        setNotification({ title: 'Đã từ chối', message: `Bạn đã từ chối lời mời từ nhóm ${invite.groupName}.` });
+        setInvitations(prev => prev.filter(item => item.groupMemberId !== invite.groupMemberId));
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không từ chối được lời mời.' }),
+      );
   };
 
   return (
@@ -158,18 +169,17 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, 
 
           <div className="space-y-3">
             {displayedInvites.map((invite) => (
-              <div key={invite.id} className="bg-white border border-border/80 rounded-xl p-3 flex flex-col gap-3 shadow-sm hover:border-primary/20 transition-colors">
+              <div key={invite.groupMemberId} className="bg-white border border-border/80 rounded-xl p-3 flex flex-col gap-3 shadow-sm hover:border-primary/20 transition-colors">
                 <div className="flex items-center gap-3">
-                  <Avatar 
-                    name={invite.name}
-                    avatarUrl={invite.avatarUrl}
+                  <Avatar
+                    name={invite.groupName}
                     sizeClass="size-9"
                     className="border border-border shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-text truncate">{invite.name}</h4>
+                    <h4 className="text-xs font-bold text-text truncate">{invite.groupName}</h4>
                     <p className="text-[10px] text-text-soft truncate mt-0.5">
-                      {invite.info}
+                      Trưởng nhóm {invite.leaderName} · {invite.memberCount} thành viên
                     </p>
                   </div>
                 </div>

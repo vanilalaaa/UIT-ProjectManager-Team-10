@@ -1,7 +1,6 @@
 import axiosClient from '../lib/api/axiosClient'
 import type { ApiResponse } from '../types/api/common'
 import type { Team, TeamMember, TeamCreateRequest } from '../types/api/team'
-import { mockCourseMembersMap, mockClassMembers } from '../mocks/tasks.mock'
 
 const base = (courseId: number | string) => `/courses/${courseId}/groups`
 
@@ -92,46 +91,34 @@ export const leaveGroup = (
 ): Promise<void> =>
   axiosClient.post(`${base(courseId)}/${groupId}/leave`).then(() => undefined)
 
-// ----- Chưa có BE: danh sách thành viên lớp + gợi ý/lời mời → giữ mock (flat) -----
+// ----- Mời thành viên / lời mời (API thật) -----
 
-const MOCK_DELAY = 300
-const resolveMock = <T>(value: T): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
-
-const toMember = (u: {
-  userId: number
-  name: string
-  uid?: string
-  email?: string
-  userProfile?: { avatarUrl?: string; summary?: string } | null
-}): TeamMember => ({
-  groupMemberId: null,
-  userId: u.userId,
-  name: u.name,
-  avatar: u.userProfile?.avatarUrl ?? null,
-  summary: u.userProfile?.summary ?? null,
-  uid: u.uid ?? null,
-  email: u.email ?? null,
-  isLeader: false,
-  status: 'ACTIVE',
-})
-
+// Sinh viên đã tham gia lớp (để trưởng nhóm chọn mời + màn Thành viên lớp).
 export const getCourseMembers = (courseId: number | string): Promise<TeamMember[]> =>
-  resolveMock((mockCourseMembersMap[Number(courseId)] ?? []).map(toMember))
+  axiosClient.get<ApiResponse<TeamMember[]>>(`${base(courseId)}/classmates`).then((r) => r.data.data)
 
-export type TeamInvitation = {
-  id: number
-  name: string
-  info: string
-  avatarUrl: string | null
+export const inviteMember = (
+  courseId: number | string,
+  groupId: number | string,
+  userId: number,
+): Promise<void> =>
+  axiosClient.post(`${base(courseId)}/${groupId}/invite`, { userId }).then(() => undefined)
+
+export type Invitation = {
+  groupMemberId: number
+  groupId: number
+  groupName: string
+  courseId: number
+  courseName: string
+  leaderName: string
+  memberCount: number
 }
 
-export const getTeamInvitations = (): Promise<TeamInvitation[]> =>
-  resolveMock(
-    mockClassMembers.slice(4, 12).map((u) => ({
-      id: u.userId,
-      name: u.name,
-      info: u.userProfile?.summary || 'Sinh viên',
-      avatarUrl: u.userProfile?.avatarUrl || null,
-    })),
-  )
+export const getMyInvitations = (): Promise<Invitation[]> =>
+  axiosClient.get<ApiResponse<Invitation[]>>('/students/me/invitations').then((r) => r.data.data)
+
+export const acceptInvitation = (groupMemberId: number | string): Promise<void> =>
+  axiosClient.post(`/students/me/invitations/${groupMemberId}/accept`).then(() => undefined)
+
+export const declineInvitation = (groupMemberId: number | string): Promise<void> =>
+  axiosClient.post(`/students/me/invitations/${groupMemberId}/decline`).then(() => undefined)

@@ -5,8 +5,6 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
-import { mockCourseRequirements } from '../mocks/tasks.mock'
-import type { CourseRequirement } from '../mocks/tasks.mock'
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
 
 export type ProjectActivity = {
@@ -100,11 +98,6 @@ export const getProjectActivities = (_projectId: number | string): Promise<Proje
   void _projectId
   return resolveMock(MOCK_ACTIVITIES)
 }
-
-export const getCourseRequirements = (
-  courseId: number | string,
-): Promise<CourseRequirement | null> =>
-  resolveMock(mockCourseRequirements[Number(courseId)] ?? null)
 
 export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
   void _projectId
