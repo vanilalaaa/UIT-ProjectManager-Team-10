@@ -5,15 +5,12 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
+// Các màn chi tiết (overview/submit/members/grades) còn dùng Project lồng nhau từ
+// mock — giữ alias riêng cho tới khi nối tiếp (slice sau của domain project).
+import type { Project as MockProject } from '../mocks/types'
 import { mockProjects, mockProjectRequests } from '../mocks/projects.mock'
 import type { ProjectApprovalRequest } from '../mocks/projects.mock'
-import {
-  groupPhoenix,
-  groupAster,
-  groupNimbus,
-  groupOrion,
-  mockCourseRequirements,
-} from '../mocks/tasks.mock'
+import { mockCourseRequirements } from '../mocks/tasks.mock'
 import type { CourseRequirement } from '../mocks/tasks.mock'
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
 
@@ -37,17 +34,12 @@ const MOCK_RESOURCES: ProjectResource[] = [
   { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
 ]
 
-// Mock fallback (PROJECT_RULES §3): các màn list/detail cần Project dạng giàu
-// (course.name, registrations, submissions, member profile). BE hiện trả
-// ProjectResponse phẳng (id-only) nên chưa đủ dữ liệu render card/detail.
-// TODO(BE): enrich ProjectResponse rồi thay các hàm dưới bằng listMyProjects/
-// listCourseProjects/getProjectDetail (đã có sẵn ở trên).
 const MOCK_DELAY = 300
 const resolveMock = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
 
-// Đề tài đã được GV duyệt + request đã xử lý — lưu client (localStorage) cho tới
-// khi BE có pipeline đăng ký/duyệt project thật. TODO(BE).
+// Đề tài GV vừa duyệt — lưu client (localStorage) tới khi BE có pipeline duyệt
+// đăng ký → tạo project thật. TODO(BE).
 const APPROVED_KEY = (courseId: number | string) => `app.approvedProjects.${courseId}`
 const HANDLED_KEY = (courseId: number | string) => `app.handledRequests.${courseId}`
 
@@ -78,53 +70,8 @@ export const markRequestHandled = (courseId: number | string, requestId: number)
   }
 }
 
-export const getMyProjects = (): Promise<Project[]> => resolveMock(mockProjects)
-
-export const getCourseProjects = (courseId: number | string): Promise<Project[]> => {
-  const base = mockProjects.filter((p) => p.course?.courseId === Number(courseId))
-  return resolveMock([...readApprovedProjects(courseId), ...base])
-}
-
-export const getProjectById = (projectId: number | string): Promise<Project | null> =>
-  resolveMock(mockProjects.find((p) => p.projectId === Number(projectId)) ?? null)
-
-export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
-  void _projectId
-  return resolveMock(MOCK_ACTIVITIES)
-}
-
-export const getCourseApprovalRequests = (
-  courseId: number | string,
-): Promise<ProjectApprovalRequest[]> => {
-  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
-  return resolveMock(mockProjectRequests.filter((r) => !handled.includes(r.requestId)))
-}
-
-export const getCourseRequirements = (
-  courseId: number | string,
-): Promise<CourseRequirement | null> =>
-  resolveMock(mockCourseRequirements[Number(courseId)] ?? null)
-
-export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
-  void _projectId
-  return resolveMock(MOCK_RESOURCES)
-}
-
-export type ProjectWithGroup = Project & { groupName?: string }
-
-export const getCourseProjectsWithGroup = (
-  courseId: number | string,
-): Promise<ProjectWithGroup[]> => {
-  const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-  const withGroup = (p: Project): ProjectWithGroup => {
-    const reg = p.registrations?.[0]
-    const group = reg ? allGroups.find((g) => g.groupId === reg.groupId) : null
-    return { ...p, groupName: group?.name }
-  }
-  const base = mockProjects.filter((p) => p.course?.courseId === Number(courseId)).map(withGroup)
-  const approved = readApprovedProjects(courseId).map(withGroup)
-  return resolveMock([...approved, ...base])
-}
+export const listMyProjects = (): Promise<ApiResponse<Project[]>> =>
+  axiosClient.get<ApiResponse<Project[]>>('/students/me/projects').then((r) => r.data)
 
 export const listCourseProjects = (
   courseId: number | string,
@@ -132,6 +79,19 @@ export const listCourseProjects = (
   axiosClient
     .get<ApiResponse<Project[]>>(`/courses/${courseId}/projects`)
     .then((r) => r.data)
+
+export const getMyProjects = (): Promise<Project[]> =>
+  listMyProjects().then((r) => r.data)
+
+// Đồ án thật của lớp + đề tài vừa duyệt (localStorage) cho tới khi có pipeline BE.
+export const getCourseProjects = (courseId: number | string): Promise<Project[]> =>
+  listCourseProjects(courseId).then((r) => [...readApprovedProjects(courseId), ...r.data])
+
+export type ProjectWithGroup = Project
+
+export const getCourseProjectsWithGroup = (
+  courseId: number | string,
+): Promise<ProjectWithGroup[]> => getCourseProjects(courseId)
 
 export const createCourseProject = (
   courseId: number | string,
@@ -166,5 +126,29 @@ export const deleteCourseProject = (
     .delete<ApiResponse<void>>(`/courses/${courseId}/projects/${projectId}`)
     .then((r) => r.data)
 
-export const listMyProjects = (): Promise<ApiResponse<Project[]>> =>
-  axiosClient.get<ApiResponse<Project[]>>('/students/me/projects').then((r) => r.data)
+// ----- Mock (Project lồng nhau) — các màn chi tiết chưa nối, giữ tới slice sau -----
+
+export const getProjectById = (projectId: number | string): Promise<MockProject | null> =>
+  resolveMock(mockProjects.find((p) => p.projectId === Number(projectId)) ?? null)
+
+export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
+  void _projectId
+  return resolveMock(MOCK_ACTIVITIES)
+}
+
+export const getCourseApprovalRequests = (
+  courseId: number | string,
+): Promise<ProjectApprovalRequest[]> => {
+  const handled = readJson<number[]>(HANDLED_KEY(courseId), [])
+  return resolveMock(mockProjectRequests.filter((r) => !handled.includes(r.requestId)))
+}
+
+export const getCourseRequirements = (
+  courseId: number | string,
+): Promise<CourseRequirement | null> =>
+  resolveMock(mockCourseRequirements[Number(courseId)] ?? null)
+
+export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
+  void _projectId
+  return resolveMock(MOCK_RESOURCES)
+}

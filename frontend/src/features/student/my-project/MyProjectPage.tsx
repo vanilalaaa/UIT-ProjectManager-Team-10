@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import ProjectWorkspaceCard from '../../../components/ui/student/ProjectWorkspaceCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import { getMyProjects } from '../../../services/project.service'
-import type { Project } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 
 export default function MyProjectPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -26,10 +26,10 @@ export default function MyProjectPage() {
     if (!query) return true 
 
     const projectTitle = project.title?.toLowerCase() || ''
-    
-    const courseName = project.course?.name?.toLowerCase() || ''
-    
-    const courseId = project.course?.courseId?.toString() || ''
+
+    const courseName = project.courseName?.toLowerCase() || ''
+
+    const courseId = project.courseId?.toString() || ''
 
     return (
       projectTitle.includes(query) || 

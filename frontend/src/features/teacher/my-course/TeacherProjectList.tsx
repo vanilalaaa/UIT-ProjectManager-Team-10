@@ -9,7 +9,7 @@ import NotificationModal from '../../../components/ui/student/NotificationModal'
 import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalRequestSidebar'
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
 import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
-import type { Project } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 import {
   addApprovedProject,
   getCourseApprovalRequests,
@@ -35,8 +35,6 @@ export default function TeacherProjectList() {
   })
 
   const [courseProjects, setCourseProjects] = useState<Project[]>([])
-
-  const courseInfo = courseProjects.length > 0 ? courseProjects[0].course : null
 
   useEffect(() => {
     let isMounted = true
@@ -76,21 +74,22 @@ export default function TeacherProjectList() {
         description: accepted.description,
         status: 'IN_PROGRESS',
         startDate: new Date().toISOString().slice(0, 10),
-        endDate: base.course.endDate,
-        course: base.course,
-        category: base.category,
-        registrations: [
-          {
-            groupId: accepted.requestId,
-            project: null,
-            groupMember: accepted.leader,
-            registeredAt: accepted.submittedAt,
-            approvedAt: new Date().toISOString(),
-            status: 'APPROVED',
-            note: note?.trim() ?? '',
-          },
-        ],
+        endDate: base.endDate,
+        courseId: base.courseId,
+        courseName: base.courseName,
+        lecturerName: base.lecturerName,
+        categoryId: base.categoryId,
+        categoryName: base.categoryName,
+        groupId: null,
+        groupName: accepted.groupName,
+        members: accepted.members.map((m) => ({
+          id: m.userId,
+          name: m.name,
+          avatar: m.userProfile?.avatarUrl ?? null,
+        })),
         submissions: [],
+        memberCount: accepted.members.length,
+        submissionCount: 0,
       }
       addApprovedProject(id, newProject)
       setCourseProjects((prev) => [newProject, ...prev])
@@ -121,7 +120,6 @@ export default function TeacherProjectList() {
   }
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
-  if (!courseInfo) return <div className="p-8 text-center text-text-soft font-medium">Không tìm thấy thông tin lớp học.</div>
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20 px-4 relative">
@@ -143,8 +141,7 @@ export default function TeacherProjectList() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {courseProjects.map((project) => {
-              const firstRegistration = project.registrations?.[0]
-              const groupNameDisplay = firstRegistration ? `Nhóm ${firstRegistration.groupId}` : undefined
+              const groupNameDisplay = project.groupName ?? undefined
 
               return (
                 <ProjectCard 
@@ -154,7 +151,7 @@ export default function TeacherProjectList() {
                   isTeacherView={true}
                   groupName={groupNameDisplay}
                   onDelete={() => {
-                    if (new Date(project.endDate) < new Date()) {
+                    if (project.endDate && new Date(project.endDate) < new Date()) {
                       triggerNotification('Lỗi hệ thống', "Đề tài đã quá hạn, không được phép xóa!")
                     } else {
                       setProjectToDelete(project)

@@ -14,6 +14,7 @@ import com.example.se330.entity.CourseRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.Project;
+import com.example.se330.entity.Registration;
 import com.example.se330.entity.Requirement;
 import com.example.se330.entity.RubricCriterion;
 import com.example.se330.entity.Task;
@@ -21,6 +22,7 @@ import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.JoinStatus;
 import com.example.se330.enums.ProjectStatus;
+import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CategoryRepository;
@@ -29,6 +31,7 @@ import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
+import com.example.se330.repository.RegistrationRepository;
 import com.example.se330.repository.RequirementRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
@@ -48,6 +51,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final RequirementRepository requirementRepository;
+    private final RegistrationRepository registrationRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -135,7 +139,16 @@ public class DataInitializer implements CommandLineRunner {
             }
             requirementRepository.save(requirement);
 
-            System.out.println("Seeded sample course/group/project/task/requirement for SE330.");
+            registrationRepository.save(Registration.builder()
+                    .project(project)
+                    .group(group)
+                    .registeredAt(LocalDateTime.now().minusDays(20))
+                    .approvedAt(LocalDateTime.now().minusDays(19))
+                    .status(RegistrationStatus.APPROVED)
+                    .note("Nhóm Phoenix nhận đề tài đồ án môn SE330.")
+                    .build());
+
+            System.out.println("Seeded sample course/group/project/task/requirement/registration for SE330.");
         }
     }
 

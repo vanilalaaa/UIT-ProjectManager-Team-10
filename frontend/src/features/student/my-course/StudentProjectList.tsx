@@ -34,7 +34,7 @@ export default function StudentProjectList() {
           key={project.projectId}
           project={project}
           courseId={courseId || '1'}
-          groupName={project.groupName}
+          groupName={project.groupName ?? undefined}
         />
       ))}
     </div>

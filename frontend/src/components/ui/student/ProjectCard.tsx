@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import type { Project } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 
 interface ProjectCardProps {
   project: Project
@@ -31,7 +31,7 @@ export default function ProjectCard({
   }, [])
 
   const isRegistered = !!groupName
-  const isExpired = new Date(project.endDate) < new Date()
+  const isExpired = project.endDate ? new Date(project.endDate) < new Date() : false
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -93,7 +93,7 @@ export default function ProjectCard({
           <svg className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
           </svg>
-          <span>{project.course?.lecturer?.name || 'Chưa phân công'}</span>
+          <span>{project.lecturerName || 'Chưa phân công'}</span>
         </div>
       </div>
 
