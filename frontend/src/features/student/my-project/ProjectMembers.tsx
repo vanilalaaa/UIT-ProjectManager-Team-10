@@ -9,7 +9,7 @@ import { getGroupById } from '../../../services/team.service'
 const fetchGroupData = async (projectId: string | undefined): Promise<Group | null> => {
   if (!projectId) return null
   const project = await getProjectById(projectId)
-  const groupId = project?.registrations?.[0]?.groupId
+  const groupId = project?.groupId
   if (!groupId) return null
   return getGroupById(groupId)
 }

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getProjectById } from '../../../services/project.service';
 import { getRequirement, type RubricCriterion } from '../../../services/requirement.service';
 import { addActivity } from '../../../services/activity.service';
-import type { Project } from '../../../mocks/types';
+import type { Project } from '../../../types/api/project';
 
 export default function TeamGrades() {
   const { courseId, projectId } = useParams<{ courseId: string; projectId: string }>();

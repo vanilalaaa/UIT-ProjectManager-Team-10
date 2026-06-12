@@ -4,7 +4,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectDetailCard from '../../../components/ui/student//ProjectDetailCard' 
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
-import type { Project, Group, User } from '../../../mocks/types'
+import type { Group, User } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
 import { getGroupById } from '../../../services/team.service'
 
@@ -23,7 +24,7 @@ export default function StudentProjectDetail() {
     getProjectById(projectId ?? '').then(async (foundProject) => {
       if (!isMounted) return
       setProject(foundProject)
-      const groupId = foundProject?.registrations?.[0]?.groupId
+      const groupId = foundProject?.groupId
       if (groupId) {
         const group = await getGroupById(groupId)
         if (isMounted) setCurrentGroup(group)
@@ -37,8 +38,7 @@ export default function StudentProjectDetail() {
   if (loading) return <LoadingSpinner message="Đang tải chi tiết đồ án..." />
   if (!project) return <div className="p-6 text-center text-text-soft">Project not found</div>
 
-  const registration = project.registrations?.[0]
-  const isRegistered = !!registration
+  const isRegistered = project.groupId != null
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 

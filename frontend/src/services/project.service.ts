@@ -5,10 +5,7 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
-// Các màn chi tiết (overview/submit/members/grades) còn dùng Project lồng nhau từ
-// mock — giữ alias riêng cho tới khi nối tiếp (slice sau của domain project).
-import type { Project as MockProject } from '../mocks/types'
-import { mockProjects, mockProjectRequests } from '../mocks/projects.mock'
+import { mockProjectRequests } from '../mocks/projects.mock'
 import type { ProjectApprovalRequest } from '../mocks/projects.mock'
 import { mockCourseRequirements } from '../mocks/tasks.mock'
 import type { CourseRequirement } from '../mocks/tasks.mock'
@@ -126,10 +123,13 @@ export const deleteCourseProject = (
     .delete<ApiResponse<void>>(`/courses/${courseId}/projects/${projectId}`)
     .then((r) => r.data)
 
-// ----- Mock (Project lồng nhau) — các màn chi tiết chưa nối, giữ tới slice sau -----
+export const getProjectById = (projectId: number | string): Promise<Project | null> =>
+  axiosClient
+    .get<ApiResponse<Project>>(`/projects/${projectId}`)
+    .then((r) => r.data.data)
+    .catch(() => null)
 
-export const getProjectById = (projectId: number | string): Promise<MockProject | null> =>
-  resolveMock(mockProjects.find((p) => p.projectId === Number(projectId)) ?? null)
+// ----- Mock — activity/resources/approval requests chưa có BE, giữ tới slice sau -----
 
 export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
   void _projectId

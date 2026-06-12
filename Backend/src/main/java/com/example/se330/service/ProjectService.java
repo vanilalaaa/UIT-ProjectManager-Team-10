@@ -74,6 +74,11 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
+    public ProjectResponse getProjectResponseById(Long projectId) {
+        return toResponse(getProjectById(projectId));
+    }
+
+    @Transactional(readOnly = true)
     public ProjectResponse getProjectDetail(Long courseId, Long projectId) {
         Project project = getProjectAndValidateCourse(courseId, projectId);
         return toResponse(project);

@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Project, Group, User } from '../../../mocks/types'
+import type { Group, User } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 import {
   getProjectById,
   getProjectActivities,
@@ -48,7 +49,7 @@ export default function ProjectOverview() {
         setActivities(acts)
         setResources(res)
 
-        const groupId = foundProject?.registrations?.[0]?.groupId
+        const groupId = foundProject?.groupId
         if (groupId) {
           const group = await getGroupById(groupId)
           if (isMounted) setCurrentGroup(group)
@@ -63,8 +64,7 @@ export default function ProjectOverview() {
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
 
-  const registration = project.registrations?.[0]
-  const isRegistered = !!registration
+  const isRegistered = project.groupId != null
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 

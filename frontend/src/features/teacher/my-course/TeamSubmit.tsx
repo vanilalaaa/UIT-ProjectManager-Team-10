@@ -1,37 +1,29 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProjectById } from '../../../services/project.service';
-import { getAllGroups } from '../../../services/team.service';
 import StatusBadge from '../../../components/ui/student/StatusBadge';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import type { Group, Project } from '../../../mocks/types';
+import type { Project } from '../../../types/api/project';
 
 export default function TeamSubmit() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    Promise.all([getProjectById(projectId ?? ''), getAllGroups()]).then(([p, g]) => {
+    getProjectById(projectId ?? '').then((p) => {
       if (!isMounted) return;
       setProject(p);
-      setGroups(g);
       setLoading(false);
     });
     return () => {
       isMounted = false;
     };
   }, [projectId]);
-
-  const getGroupName = (groupId: number) => {
-    const foundGroup = groups.find((g) => g.groupId === groupId);
-    return foundGroup ? foundGroup.name : `Nhóm ${groupId}`;
-  };
 
   if (loading) return <LoadingSpinner message="Đang tải bài nộp..." />;
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy dự án.</div>;
@@ -44,11 +36,11 @@ export default function TeamSubmit() {
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <a
-                href={sub.filePath}
+                href={sub.filePath ?? '#'}
                 download
                 className="font-bold text-sm text-primary hover:underline cursor-pointer"
               >
-                {sub.filePath.split('/').pop()}
+                {sub.filePath?.split('/').pop()}
               </a>
             </div>
             <div className="flex items-center gap-4">
@@ -68,7 +60,7 @@ export default function TeamSubmit() {
                 <div>
                   <p className="text-text-soft">Nhóm thực hiện:</p>
                   <p className="font-bold text-text truncate">
-                    {project.registrations?.[0] ? getGroupName(project.registrations[0].groupId) : 'Nhóm sinh viên'}
+                    {project.groupName ?? 'Nhóm sinh viên'}
                   </p>
                 </div>
                 <div>

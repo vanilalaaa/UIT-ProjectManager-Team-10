@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Project } from '../../../mocks/types'
+import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
 import FileAttachment from '../../../components/ui/student/FileAttachment'
 import StatusBadge from '../../../components/ui/student/StatusBadge'
@@ -27,9 +27,7 @@ export default function TeacherProjectDetail() {
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
 
-  const members = project.registrations?.map(r => r.groupMember).filter(Boolean) || []
-  const uniqueMembers = Array.from(new Set(members.map(m => m?.userId)))
-    .map(id => members.find(m => m?.userId === id))
+  const members = project.members ?? []
 
   return (
     <div className="grid grid-cols-12 gap-6 animate-fade-in">
@@ -38,7 +36,7 @@ export default function TeacherProjectDetail() {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-text">{project.title}</h1>
-              <p className="text-sm text-text-soft mt-1 font-medium">{project.course?.name}</p>
+              <p className="text-sm text-text-soft mt-1 font-medium">{project.courseName}</p>
             </div>
             <StatusBadge status={project.status} />
           </div>
@@ -51,8 +49,8 @@ export default function TeacherProjectDetail() {
             <h4 className="text-sm font-bold text-text mb-4">Project Files</h4>
             <div className="flex flex-wrap gap-3">
               {project.submissions && project.submissions.length > 0 ? (
-                project.submissions.map((sub, idx) => (
-                  <FileAttachment key={idx} fileName={sub.filePath.split('/').pop() || 'file'} />
+                project.submissions.map((sub) => (
+                  <FileAttachment key={sub.submissionId} fileName={sub.filePath?.split('/').pop() || 'file'} />
                 ))
               ) : (
                 <p className="text-sm text-text-soft italic">Chưa có tệp đính kèm.</p>
@@ -76,7 +74,7 @@ export default function TeacherProjectDetail() {
                 <svg className="size-4 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
-                {project.course?.lecturer?.name || 'Chưa phân công'}
+                {project.lecturerName || 'Chưa phân công'}
               </p>
             </div>
           </div>
@@ -87,17 +85,16 @@ export default function TeacherProjectDetail() {
         <div className="bg-surface p-6 rounded-2xl border border-border shadow-soft">
           <h3 className="font-bold text-text mb-6">Team Members</h3>
           <div className="space-y-4">
-            {uniqueMembers.length > 0 ? (
-              uniqueMembers.map((member) => (
-                <div key={member?.userId} className="flex items-center gap-3">
-                  <img 
-                    src={member?.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${member?.name}&background=random`} 
-                    alt={member?.name}
+            {members.length > 0 ? (
+              members.map((member) => (
+                <div key={member.id} className="flex items-center gap-3">
+                  <img
+                    src={member.avatar || `https://ui-avatars.com/api/?name=${member.name}&background=random`}
+                    alt={member.name}
                     className="size-10 rounded-full object-cover border border-border"
                   />
                   <div>
-                    <p className="text-sm font-bold text-text">{member?.name}</p>
-                    <p className="text-xs text-text-soft">{member?.uid}</p>
+                    <p className="text-sm font-bold text-text">{member.name}</p>
                   </div>
                 </div>
               ))

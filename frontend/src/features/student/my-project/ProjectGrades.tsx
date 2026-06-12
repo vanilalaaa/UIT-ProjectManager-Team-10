@@ -22,7 +22,7 @@ type GradeData = {
 // Điểm thực tế chờ BE chấm điểm; hiện show trạng thái "chưa chấm".
 const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
   const project = await getProjectById(projectId ?? '')
-  const courseId = project?.course?.courseId
+  const courseId = project?.courseId
   const req = courseId != null ? await getRequirement(courseId).catch(() => null) : null
   const criteria: ScoreCriteria[] = (req?.criteria ?? []).map((c) => ({
     label: c.name,
