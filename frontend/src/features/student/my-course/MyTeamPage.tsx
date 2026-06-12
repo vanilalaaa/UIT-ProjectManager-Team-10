@@ -26,6 +26,7 @@ import {
   transferLeader,
   leaveGroup,
 } from '../../../services/team.service'
+import { proposeProject } from '../../../services/registration.service'
 import { addActivity } from '../../../services/activity.service'
 import { useAuth } from '../../auth/useAuth'
 
@@ -165,11 +166,18 @@ export default function MyTeamPage() {
     setActiveModal(null)
   }
 
-  // Đề xuất đề tài mới chưa có API riêng (pipeline đăng ký là chọn đề tài có sẵn).
-  const handleCreateProjectSubmit = (title: string) => {
-    setNotification({ title: 'Thông báo', message: `Đã ghi nhận đề xuất đề tài "${title}". Vui lòng đăng ký đề tài ở mục Đồ án.` })
-    setHasProject(true)
-    setActiveModal(null)
+  // Trưởng nhóm đề xuất đề tài → GV duyệt sẽ tạo đồ án.
+  const handleCreateProjectSubmit = (title: string, description: string) => {
+    if (!courseId || !myGroup) return
+    proposeProject(courseId, myGroup.groupId, { title, description })
+      .then(() => {
+        setNotification({ title: 'Thành công', message: `Đã gửi đề xuất đề tài "${title}", chờ giảng viên duyệt.` })
+        setHasProject(true)
+        setActiveModal(null)
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không gửi được đề xuất đề tài.' }),
+      )
   }
 
   const handleCreateTeamSubmit = (name: string, description: string) => {

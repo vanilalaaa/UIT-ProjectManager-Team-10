@@ -2,12 +2,17 @@ import axiosClient from '../lib/api/axiosClient'
 import type { ApiResponse } from '../types/api/common'
 import type { PendingRegistration } from '../types/api/registration'
 
-export const registerForProject = (
+// Nhóm đề xuất đề tài (tên + mô tả) → GV duyệt sẽ tạo đồ án.
+export const proposeProject = (
   courseId: number | string,
-  projectId: number | string,
+  groupId: number | string,
+  payload: { title: string; description: string },
 ): Promise<ApiResponse<PendingRegistration>> =>
   axiosClient
-    .post<ApiResponse<PendingRegistration>>(`/courses/${courseId}/projects/${projectId}/registrations`)
+    .post<ApiResponse<PendingRegistration>>(
+      `/courses/${courseId}/groups/${groupId}/project-requests`,
+      payload,
+    )
     .then((r) => r.data)
 
 export const getPendingRegistrations = (

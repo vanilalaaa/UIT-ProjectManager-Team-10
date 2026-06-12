@@ -1,5 +1,6 @@
 package com.example.se330.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,26 +38,38 @@ public class RegistrationService {
         this.groupMemberRepository = groupMemberRepository;
     }
 
-    // Sinh viên đăng ký nhóm (của mình trong lớp) cho 1 đề tài → PENDING.
-    public RegistrationResponse register(Long courseId, Long projectId, Long studentId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đề tài"));
+    // Trưởng nhóm đề xuất đề tài (tên + mô tả) → tạo Project trạng thái PENDING
+    // (ẩn khỏi danh sách cho tới khi duyệt) + Registration PENDING gắn nhóm.
+    public RegistrationResponse proposeProject(
+            Long courseId, Long groupId, String title, String description, Long userId) {
 
-        if (project.getCourse() == null || !project.getCourse().getId().equals(courseId)) {
-            throw new RuntimeException("Đề tài không thuộc lớp này");
-        }
-
-        GroupMember membership = groupMemberRepository
-                .findFirstByUser_IdAndGroup_Course_Id(studentId, courseId)
-                .orElseThrow(() -> new RuntimeException("Bạn chưa thuộc nhóm nào trong lớp này"));
+        GroupMember membership = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new RuntimeException("Bạn không thuộc nhóm này"));
         Group group = membership.getGroup();
 
-        boolean already = registrationRepository.existsByProject_IdAndGroup_IdAndStatusIn(
-                projectId, group.getId(),
-                List.of(RegistrationStatus.PENDING, RegistrationStatus.APPROVED));
-        if (already) {
-            throw new RuntimeException("Nhóm đã đăng ký đề tài này");
+        if (group.getCourse() == null || !group.getCourse().getId().equals(courseId)) {
+            throw new RuntimeException("Nhóm không thuộc lớp này");
         }
+        if (group.getLeader() == null || !group.getLeader().getId().equals(userId)) {
+            throw new RuntimeException("Chỉ Trưởng nhóm mới được đề xuất đề tài.");
+        }
+        if (title == null || title.isBlank()) {
+            throw new RuntimeException("Tên đề tài không được để trống.");
+        }
+
+        boolean already = registrationRepository.existsByGroup_IdAndStatusIn(
+                groupId, List.of(RegistrationStatus.PENDING, RegistrationStatus.APPROVED));
+        if (already) {
+            throw new RuntimeException("Nhóm đã có đề tài hoặc đề xuất đang chờ duyệt.");
+        }
+
+        Project project = projectRepository.save(Project.builder()
+                .title(title)
+                .description(description)
+                .course(group.getCourse())
+                .status(ProjectStatus.PENDING)
+                .startDate(LocalDate.now())
+                .build());
 
         Registration registration = Registration.builder()
                 .project(project)
@@ -82,7 +95,8 @@ public class RegistrationService {
 
         Project project = registration.getProject();
         if (project != null) {
-            project.setStatus(ProjectStatus.ALLOCATED);
+            // Duyệt → đề tài thành đồ án đang thực hiện, hiện ở danh sách lớp + SV.
+            project.setStatus(ProjectStatus.IN_PROGRESS);
             projectRepository.save(project);
         }
 
@@ -91,8 +105,16 @@ public class RegistrationService {
 
     public RegistrationResponse reject(Long registrationId, Long teacherId) {
         Registration registration = loadOwned(registrationId, teacherId);
-        registration.setStatus(RegistrationStatus.REJECTED);
-        return toResponse(registrationRepository.save(registration));
+        RegistrationResponse resp = toResponse(registration);
+
+        // Từ chối → xóa luôn project nháp (cascade xóa registration kèm theo).
+        Project project = registration.getProject();
+        if (project != null) {
+            projectRepository.delete(project);
+        } else {
+            registrationRepository.delete(registration);
+        }
+        return resp;
     }
 
     private Registration loadOwned(Long registrationId, Long teacherId) {

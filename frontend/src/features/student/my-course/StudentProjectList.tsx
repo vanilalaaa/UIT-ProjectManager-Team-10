@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { toast } from 'sonner'
 import ProjectCard from '../../../components/ui/student/ProjectCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import { getCourseProjectsWithGroup, type ProjectWithGroup } from '../../../services/project.service'
-import { registerForProject } from '../../../services/registration.service'
 
 export default function StudentProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -27,14 +25,6 @@ export default function StudentProjectList() {
     }
   }, [courseId])
 
-  const handleRegister = (projectId: number) => {
-    registerForProject(courseId ?? '', projectId)
-      .then(() => toast.success('Đã gửi đăng ký đề tài, chờ giảng viên duyệt.'))
-      .catch((err: { message?: string }) =>
-        toast.error(err?.message || 'Không đăng ký được đề tài.'),
-      )
-  }
-
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
 
   return (
@@ -45,7 +35,6 @@ export default function StudentProjectList() {
           project={project}
           courseId={courseId || '1'}
           groupName={project.groupName ?? undefined}
-          onRegister={() => handleRegister(project.projectId)}
         />
       ))}
     </div>

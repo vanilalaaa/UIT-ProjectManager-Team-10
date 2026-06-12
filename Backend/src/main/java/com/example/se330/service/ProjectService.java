@@ -64,6 +64,7 @@ public class ProjectService {
         List<Project> projects = this.projectRepository.findByCourse(course);
 
         return projects.stream()
+                .filter(p -> p.getStatus() != ProjectStatus.PENDING)
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

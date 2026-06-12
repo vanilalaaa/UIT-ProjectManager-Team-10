@@ -19,7 +19,6 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     // Yêu cầu đăng ký theo lớp + trạng thái (GV duyệt các yêu cầu PENDING).
     List<Registration> findByProject_Course_IdAndStatus(Long courseId, RegistrationStatus status);
 
-    // Chặn đăng ký trùng khi nhóm đã có yêu cầu PENDING/APPROVED cho đề tài.
-    boolean existsByProject_IdAndGroup_IdAndStatusIn(
-            Long projectId, Long groupId, Collection<RegistrationStatus> statuses);
+    // Chặn đề xuất trùng khi nhóm đã có đề tài/đề xuất đang chờ duyệt hoặc đã duyệt.
+    boolean existsByGroup_IdAndStatusIn(Long groupId, Collection<RegistrationStatus> statuses);
 }

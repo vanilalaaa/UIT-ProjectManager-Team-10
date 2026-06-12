@@ -7,7 +7,6 @@ interface ProjectCardProps {
   courseId: string | number
   groupName?: string
   onDelete?: () => void
-  onRegister?: () => void
   isTeacherView?: boolean
 }
 
@@ -16,7 +15,6 @@ export default function ProjectCard({
   courseId,
   groupName,
   onDelete,
-  onRegister,
   isTeacherView
 }: ProjectCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -106,15 +104,11 @@ export default function ProjectCard({
           </button>
         ) : isRegistered ? (
           <button type="button" disabled className="w-full bg-surface-soft text-text-soft cursor-not-allowed text-xs font-semibold py-2 px-4 rounded border border-border">
-            {groupName} đã đăng ký
+            {groupName} thực hiện
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => onRegister?.()}
-            className="w-full bg-primary hover:bg-primary/95 text-surface text-xs font-semibold py-2 px-4 rounded shadow-sm transition-colors"
-          >
-            Đăng ký đề tài
+          <button type="button" disabled className="w-full bg-surface-soft text-text-soft cursor-not-allowed text-xs font-semibold py-2 px-4 rounded border border-border">
+            Chưa có nhóm nhận
           </button>
         )}
       </div>

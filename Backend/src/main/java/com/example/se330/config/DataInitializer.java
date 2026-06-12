@@ -148,24 +148,6 @@ public class DataInitializer implements CommandLineRunner {
                     .note("Nhóm Phoenix nhận đề tài đồ án môn SE330.")
                     .build());
 
-            Project project2 = projectRepository.save(Project.builder()
-                    .title("Ứng dụng điểm danh lớp học bằng QR")
-                    .description("Tạo phiên điểm danh, sinh viên quét mã QR và theo dõi lịch sử tham gia.")
-                    .status(ProjectStatus.AVAILABLE)
-                    .startDate(LocalDate.now().minusDays(5))
-                    .endDate(LocalDate.now().plusDays(50))
-                    .course(course)
-                    .category(webCat)
-                    .build());
-
-            registrationRepository.save(Registration.builder()
-                    .project(project2)
-                    .group(group)
-                    .registeredAt(LocalDateTime.now().minusDays(1))
-                    .status(RegistrationStatus.PENDING)
-                    .note("Nhóm Phoenix xin đăng ký đề tài QR.")
-                    .build());
-
             System.out.println("Seeded sample course/group/project/task/requirement/registration for SE330.");
         }
     }

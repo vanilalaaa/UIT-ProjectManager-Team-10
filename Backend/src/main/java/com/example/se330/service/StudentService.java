@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.se330.dto.project.ProjectResponse;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.User;
+import com.example.se330.enums.ProjectStatus;
 import com.example.se330.repository.UserRepository;
 
 @Service
@@ -29,6 +30,7 @@ public class StudentService {
         List<Project> projects = this.userRepository.findProjectsByUser(student);
 
         return projects.stream()
+                .filter(p -> p.getStatus() != ProjectStatus.PENDING)
                 .map(this.projectService::toResponse)
                 .collect(Collectors.toList());
     }
