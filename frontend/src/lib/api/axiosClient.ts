@@ -6,7 +6,7 @@ import axios, {
 import { toast } from 'sonner'
 
 const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080/api'
 
 export const TOKEN_KEY = 'accessToken'
 
@@ -20,12 +20,12 @@ export interface ApiError {
 // Các public auth endpoint — 401 ở đây có nghĩa "sai credentials", KHÔNG phải
 // "phiên hết hạn"; không được redirect/clear localStorage.
 const PUBLIC_AUTH_PATHS = [
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/forgot-password',
-  '/api/auth/reset-password',
-  '/api/auth/verify-email',
-  '/api/auth/resend-verification',
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify-email',
+  '/auth/resend-verification',
 ]
 
 const isPublicAuthRequest = (url?: string): boolean => {

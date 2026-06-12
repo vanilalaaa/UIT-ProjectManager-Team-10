@@ -8,7 +8,7 @@ import type {
   Category,
 } from '../../types/api/category'
 
-const BASE = '/api/admin/categories'
+const BASE = '/admin/categories'
 
 function cleanParams(query: AdminCategoryQuery): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}
@@ -49,3 +49,6 @@ export const patchCategoryStatus = (
 
 export const getCategoryById = (id: number | string): Promise<ApiResponse<Category>> =>
   axiosClient.get<ApiResponse<Category>>(`${BASE}/${id}`).then((r) => r.data)
+
+export const deleteCategory = (id: number | string): Promise<ApiResponse<void>> =>
+  axiosClient.delete<ApiResponse<void>>(`${BASE}/${id}`).then((r) => r.data)

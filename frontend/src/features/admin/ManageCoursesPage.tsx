@@ -69,7 +69,7 @@ export default function ManageCoursesPage() {
                 <tr>
                   <th className="px-4 py-3">Mã lớp</th>
                   <th className="px-4 py-3">Tên lớp</th>
-                  <th className="px-4 py-3">Lecturer ID</th>
+                  <th className="px-4 py-3">Giảng viên</th>
                   <th className="px-4 py-3">Sĩ số</th>
                   <th className="px-4 py-3">Bắt đầu</th>
                   <th className="px-4 py-3">Kết thúc</th>
@@ -82,7 +82,7 @@ export default function ManageCoursesPage() {
                     <td className="px-4 py-3 font-mono text-xs text-text-soft">{c.code}</td>
                     <td className="px-4 py-3 font-medium text-text">{c.name}</td>
                     <td className="px-4 py-3 text-text-soft">
-                      {c.lecturer ?? <span className="italic text-text-soft">—</span>}
+                      {c.lecturerName ?? <span className="italic text-text-soft">Chưa phân công</span>}
                     </td>
                     <td className="px-4 py-3">{c.maxStudents}</td>
                     <td className="px-4 py-3 text-text-soft">{formatDate(c.startDate)}</td>

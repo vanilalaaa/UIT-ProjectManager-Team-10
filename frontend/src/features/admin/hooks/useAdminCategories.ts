@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import {
   createCategory,
+  deleteCategory,
   listCategories,
   patchCategoryStatus,
   updateCategory,
@@ -82,5 +83,14 @@ export function useAdminCategories() {
     [refetch],
   )
 
-  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus }
+  const remove = useCallback(
+    async (id: number) => {
+      await deleteCategory(id)
+      toast.success('Đã xoá danh mục.')
+      await refetch()
+    },
+    [refetch],
+  )
+
+  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus, remove }
 }

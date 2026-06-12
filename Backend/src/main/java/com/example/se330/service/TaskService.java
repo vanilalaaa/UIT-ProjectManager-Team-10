@@ -68,7 +68,10 @@ public class TaskService {
         Long courseId = project.getCourse() != null ? project.getCourse().getId() : null;
 
         GroupMember membership = courseId != null
-                ? groupMemberRepository.findFirstByUser_IdAndGroup_Course_Id(currentUserId, courseId).orElse(null)
+                ? groupMemberRepository
+                        .findFirstByUser_IdAndGroup_Course_IdAndStatus(
+                                currentUserId, courseId, GroupMemberStatus.ACTIVE)
+                        .orElse(null)
                 : null;
 
         BoardGroupResponse groupResp = null;

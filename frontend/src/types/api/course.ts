@@ -7,6 +7,7 @@ export type CourseResponse = {
   code: string
   name: string
   lecturer: number | null
+  lecturerName: string | null
   maxStudents: number
   startDate: string
   endDate: string
@@ -34,6 +35,8 @@ export type AdminCourseQuery = {
 
 export type AdminCourseCreateRequest = {
   name: string
+  // Optional: admin chọn giảng viên; teacher tự tạo lớp -> BE gán chính họ.
+  lecturerId?: number
   maxStudents: number
   startDate: string
   endDate: string

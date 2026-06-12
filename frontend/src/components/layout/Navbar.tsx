@@ -1,30 +1,27 @@
-/**
- * Navbar.tsx
- *
- * Top navigation bar. Reads currentUser from AuthContext — no local fetch.
- * This eliminates the duplicate API call that the old implementation made.
- */
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../../features/auth/useAuth'
 import {
+  enableNotifications as enablePref,
   isNotificationsEnabled,
-  setNotificationsEnabled,
+  muteNotifications as mutePref,
   subscribeNotifPref,
 } from '../../lib/notificationPrefs'
 import GlobalSearch from './GlobalSearch'
 
+const HOUR = 60 * 60 * 1000
+
 type NotificationOption = {
   label: string
-  value: string
+  durationMs: number | null
 }
 
 const notificationOptions: NotificationOption[] = [
-  { label: 'Trong 1 giờ', value: '1h' },
-  { label: 'Trong 12 giờ', value: '12h' },
-  { label: 'Trong 24 giờ', value: '24h' },
-  { label: 'Cho đến khi tôi bật lại', value: 'forever' },
+  { label: 'Trong 1 giờ', durationMs: HOUR },
+  { label: 'Trong 12 giờ', durationMs: 12 * HOUR },
+  { label: 'Trong 24 giờ', durationMs: 24 * HOUR },
+  { label: 'Cho đến khi tôi bật lại', durationMs: null },
 ]
 
 function getPageTitle(pathname: string): string {
@@ -85,13 +82,13 @@ function NotificationDropdown() {
 
   const enableNotifications = () => {
     setMutedLabel(null)
-    setNotificationsEnabled(true)
+    enablePref()
     toast.success('Đã bật lại thông báo.')
   }
 
-  const muteNotifications = (label: string) => {
+  const muteNotifications = (label: string, durationMs: number | null) => {
     setMutedLabel(label)
-    setNotificationsEnabled(false)
+    mutePref(durationMs)
     toast.success(`Đã tắt cập nhật hoạt động (${label.toLowerCase()}).`)
   }
 
@@ -119,7 +116,7 @@ function NotificationDropdown() {
               type="button"
               role="switch"
               aria-checked={enabled}
-              onClick={() => (enabled ? muteNotifications('Cho đến khi tôi bật lại') : enableNotifications())}
+              onClick={() => (enabled ? muteNotifications('Cho đến khi tôi bật lại', null) : enableNotifications())}
               className={[
                 'relative h-5 w-9 rounded-full transition-colors',
                 enabled ? 'bg-primary' : 'bg-border',
@@ -142,9 +139,9 @@ function NotificationDropdown() {
               {notificationOptions.map((option) => (
                 <button
                   className="w-full rounded-lg px-3 py-2 text-left text-sm text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
-                  key={option.value}
+                  key={option.label}
                   onClick={() => {
-                    muteNotifications(option.label)
+                    muteNotifications(option.label, option.durationMs)
                     setIsOpen(false)
                   }}
                   role="menuitem"

@@ -11,6 +11,7 @@ import com.example.se330.dto.project.ProjectMemberResponse;
 import com.example.se330.dto.registration.RegistrationResponse;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Notification;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Registration;
 import com.example.se330.entity.User;
@@ -19,6 +20,7 @@ import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.entity.Course;
 import com.example.se330.repository.GroupMemberRepository;
+import com.example.se330.repository.NotificationRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.RegistrationRepository;
 
@@ -30,16 +32,19 @@ public class RegistrationService {
     private final ProjectRepository projectRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final CourseService courseService;
+    private final NotificationRepository notificationRepository;
 
     public RegistrationService(
             RegistrationRepository registrationRepository,
             ProjectRepository projectRepository,
             GroupMemberRepository groupMemberRepository,
-            CourseService courseService) {
+            CourseService courseService,
+            NotificationRepository notificationRepository) {
         this.registrationRepository = registrationRepository;
         this.projectRepository = projectRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.courseService = courseService;
+        this.notificationRepository = notificationRepository;
     }
 
     // Trưởng nhóm đề xuất đề tài (tên + mô tả) → tạo Project trạng thái PENDING
@@ -96,10 +101,13 @@ public class RegistrationService {
                 .stream().map(this::toResponse).toList();
     }
 
-    public RegistrationResponse approve(Long registrationId, Long teacherId) {
+    public RegistrationResponse approve(Long registrationId, Long teacherId, String note) {
         Registration registration = loadOwned(registrationId, teacherId);
         registration.setStatus(RegistrationStatus.APPROVED);
         registration.setApprovedAt(LocalDateTime.now());
+        if (note != null && !note.isBlank()) {
+            registration.setNote(note);
+        }
 
         Project project = registration.getProject();
         if (project != null) {
@@ -108,21 +116,52 @@ public class RegistrationService {
             projectRepository.save(project);
         }
 
-        return toResponse(registrationRepository.save(registration));
+        Registration saved = registrationRepository.save(registration);
+        notifyLeader(registration, "APPROVED",
+                "đã duyệt đề tài \"" + (project != null ? project.getTitle() : "") + "\"",
+                note,
+                project != null && project.getCourse() != null ? project.getCourse().getId() : null,
+                project != null ? project.getId() : null);
+        return toResponse(saved);
     }
 
-    public RegistrationResponse reject(Long registrationId, Long teacherId) {
+    public RegistrationResponse reject(Long registrationId, Long teacherId, String note) {
         Registration registration = loadOwned(registrationId, teacherId);
         RegistrationResponse resp = toResponse(registration);
 
-        // Từ chối → xóa luôn project nháp (cascade xóa registration kèm theo).
         Project project = registration.getProject();
+        Long courseId = project != null && project.getCourse() != null ? project.getCourse().getId() : null;
+        String title = project != null ? project.getTitle() : "";
+
+        // Thông báo cho trưởng nhóm TRƯỚC khi xoá project nháp (kèm nhận xét nếu có).
+        notifyLeader(registration, "REJECTED", "đã từ chối đề tài \"" + title + "\"", note, courseId, null);
+
+        // Từ chối → xóa luôn project nháp (cascade xóa registration kèm theo).
         if (project != null) {
             projectRepository.delete(project);
         } else {
             registrationRepository.delete(registration);
         }
         return resp;
+    }
+
+    private void notifyLeader(Registration registration, String type, String title, String note,
+            Long courseId, Long projectId) {
+        Group group = registration.getGroup();
+        User leader = group != null ? group.getLeader() : null;
+        if (leader == null) {
+            return;
+        }
+        notificationRepository.save(Notification.builder()
+                .recipient(leader)
+                .type(type)
+                .title(title)
+                .message(note != null && !note.isBlank() ? note : null)
+                .courseId(courseId)
+                .projectId(projectId)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build());
     }
 
     private Registration loadOwned(Long registrationId, Long teacherId) {

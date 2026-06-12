@@ -29,6 +29,8 @@ public class FeedItemResponse {
 
     private Long projectId;
 
+    private Long courseId;
+
     private String projectTitle;
 
     private String actorName;

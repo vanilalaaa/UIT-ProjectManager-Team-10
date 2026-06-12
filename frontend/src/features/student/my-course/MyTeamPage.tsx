@@ -28,7 +28,6 @@ import {
   inviteMember,
 } from '../../../services/team.service'
 import { proposeProject } from '../../../services/registration.service'
-import { addActivity } from '../../../services/activity.service'
 import { useAuth } from '../../auth/useAuth'
 
 type ModalKind =
@@ -186,7 +185,6 @@ export default function MyTeamPage() {
     createTeam(courseId, { name, description })
       .then((team) => {
         setActiveModal(null)
-        addActivity({ kind: 'INFO', title: `Nhóm "${name}" vừa được tạo`, actorName: currentUser?.name ?? 'Sinh viên', scope: 'ALL' })
         setNotification({ title: 'Thành công', message: `Đã tạo nhóm "${team.name}".` })
         return reload()
       })

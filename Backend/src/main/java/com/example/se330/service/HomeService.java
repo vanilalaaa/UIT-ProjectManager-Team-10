@@ -13,17 +13,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.home.HomeStatsResponse;
+import com.example.se330.entity.Course;
+import com.example.se330.entity.Group;
+import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Notification;
 import com.example.se330.entity.Project;
+import com.example.se330.entity.Registration;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
 import com.example.se330.enums.FeedType;
+import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.ProjectStatus;
+import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.GroupMemberRepository;
+import com.example.se330.repository.GroupRepository;
+import com.example.se330.repository.NotificationRepository;
 import com.example.se330.repository.ProjectRepository;
+import com.example.se330.repository.RegistrationRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
@@ -40,6 +51,10 @@ public class HomeService {
     private final CourseRepository courseRepository;
     private final TaskRepository taskRepository;
     private final SubmissionRepository submissionRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final RegistrationRepository registrationRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public List<FeedItemResponse> getFeed(Long userId, int limit) {
@@ -51,9 +66,12 @@ public class HomeService {
 
         List<FeedItemResponse> items = new ArrayList<>();
 
+        // Task là việc nội bộ nhóm → chỉ hiện cho SV. GV chỉ quan tâm bài nộp + đề xuất.
+        final boolean isStudent = user.getRole() == Role.STUDENT;
+
         for (Project project : projects) {
 
-            for (Task task : taskRepository.findByProject_Id(project.getId())) {
+            if (isStudent) for (Task task : taskRepository.findByProject_Id(project.getId())) {
                 items.add(FeedItemResponse.builder()
                         .type(FeedType.TASK)
                         .referenceId(task.getId())
@@ -61,6 +79,7 @@ public class HomeService {
                         .description(task.getDescription())
                         .status(task.getStatus() != null ? task.getStatus().name() : null)
                         .projectId(project.getId())
+                        .courseId(project.getCourse() != null ? project.getCourse().getId() : null)
                         .projectTitle(project.getTitle())
                         .actorName(task.getAssignedTo() != null ? task.getAssignedTo().getName() : "Hệ thống")
                         .timestamp(task.getUpdatedAt() != null
@@ -76,11 +95,29 @@ public class HomeService {
                         .title("Nộp bài cho đồ án: " + project.getTitle())
                         .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                         .projectId(project.getId())
+                        .courseId(project.getCourse() != null ? project.getCourse().getId() : null)
                         .projectTitle(project.getTitle())
                         .actorName("Nhóm nộp bài")
                         .timestamp(submission.getSubmittedAt())
                         .build());
             }
+        }
+
+        appendRequestNotifications(user, items);
+
+        // Thông báo sự kiện đã lưu (vd GV duyệt/từ chối đề tài) gửi riêng cho user này.
+        for (Notification n : notificationRepository.findTop30ByRecipient_IdOrderByCreatedAtDesc(userId)) {
+            items.add(FeedItemResponse.builder()
+                    .type(FeedType.PROJECT_RESULT)
+                    .referenceId(n.getId())
+                    .title(n.getTitle())
+                    .description(n.getMessage())
+                    .status(n.getType())
+                    .courseId(n.getCourseId())
+                    .projectId(n.getProjectId())
+                    .actorName("Giảng viên")
+                    .timestamp(n.getCreatedAt())
+                    .build());
         }
 
         return items.stream()
@@ -174,6 +211,56 @@ public class HomeService {
                 .build();
     }
 
+
+    // Thông báo dạng "yêu cầu cần xử lý": SV trưởng nhóm thấy người xin vào nhóm;
+    // GV thấy nhóm đề xuất đề tài chờ duyệt. (Task/Submission đã có ở feed theo project.)
+    private void appendRequestNotifications(User user, List<FeedItemResponse> items) {
+        if (user.getRole() == Role.STUDENT) {
+            for (Group group : groupRepository.findByLeader_Id(user.getId())) {
+                for (GroupMember pending : groupMemberRepository.findByGroupIdAndStatus(
+                        group.getId(), GroupMemberStatus.PENDING)) {
+                    User actor = pending.getUser();
+                    items.add(FeedItemResponse.builder()
+                            .type(FeedType.GROUP_REQUEST)
+                            .referenceId(pending.getGroupMemberId())
+                            .title("xin gia nhập nhóm " + group.getName())
+                            .status("PENDING")
+                            .courseId(group.getCourse() != null ? group.getCourse().getId() : null)
+                            .projectTitle(group.getName())
+                            .actorName(actor != null ? actor.getName() : "Sinh viên")
+                            .actorAvatar(actor != null && actor.getUserProfile() != null
+                                    ? actor.getUserProfile().getAvatarUrl()
+                                    : null)
+                            .timestamp(pending.getCreatedAt() != null
+                                    ? pending.getCreatedAt()
+                                    : (pending.getJoinedDate() != null
+                                            ? pending.getJoinedDate().atStartOfDay()
+                                            : null))
+                            .build());
+                }
+            }
+        }
+
+        if (user.getRole() == Role.TEACHER) {
+            for (Course course : courseRepository.findByLecturer_Id(user.getId())) {
+                for (Registration reg : registrationRepository.findByProject_Course_IdAndStatus(
+                        course.getId(), RegistrationStatus.PENDING)) {
+                    Project proposed = reg.getProject();
+                    items.add(FeedItemResponse.builder()
+                            .type(FeedType.PROJECT_PROPOSAL)
+                            .referenceId(reg.getRegistrationId())
+                            .title("đề xuất đề tài: " + (proposed != null ? proposed.getTitle() : ""))
+                            .status("PENDING")
+                            .projectId(proposed != null ? proposed.getId() : null)
+                            .courseId(course.getId())
+                            .projectTitle(proposed != null ? proposed.getTitle() : null)
+                            .actorName(reg.getGroup() != null ? reg.getGroup().getName() : "Nhóm")
+                            .timestamp(reg.getRegisteredAt())
+                            .build());
+                }
+            }
+        }
+    }
 
     private List<Project> resolveProjects(User user) {
 

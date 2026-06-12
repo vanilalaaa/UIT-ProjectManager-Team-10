@@ -4,7 +4,6 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CourseCard, { type CourseCardData } from '../../../components/ui/student/CourseCard'
 import JoinCourseModal from '../../../components/ui/student/JoinCourseModal'
 import { listStudentCourseCards, requestJoinCourse } from '../../../services/course.service'
-import { addActivity } from '../../../services/activity.service'
 import type { ApiError } from '../../../lib/api/axiosClient'
 
 export default function MyCoursePage() {
@@ -41,12 +40,6 @@ export default function MyCoursePage() {
     try {
       await requestJoinCourse({ code: codeToJoin })
       toast.success('Đã tham gia lớp thành công!')
-      addActivity({
-        kind: 'INFO',
-        title: `Đã có sinh viên tham gia lớp (mã ${codeToJoin})`,
-        actorName: 'Sinh viên',
-        scope: 'ALL',
-      })
       setIsJoinModalOpen(false)
       fetchCourses()
     } catch (err) {

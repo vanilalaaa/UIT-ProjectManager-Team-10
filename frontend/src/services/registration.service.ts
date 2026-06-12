@@ -24,14 +24,16 @@ export const getPendingRegistrations = (
 
 export const approveRegistration = (
   registrationId: number | string,
+  note?: string,
 ): Promise<ApiResponse<PendingRegistration>> =>
   axiosClient
-    .patch<ApiResponse<PendingRegistration>>(`/registrations/${registrationId}/approve`)
+    .patch<ApiResponse<PendingRegistration>>(`/registrations/${registrationId}/approve`, { note })
     .then((r) => r.data)
 
 export const rejectRegistration = (
   registrationId: number | string,
+  note?: string,
 ): Promise<ApiResponse<PendingRegistration>> =>
   axiosClient
-    .patch<ApiResponse<PendingRegistration>>(`/registrations/${registrationId}/reject`)
+    .patch<ApiResponse<PendingRegistration>>(`/registrations/${registrationId}/reject`, { note })
     .then((r) => r.data)

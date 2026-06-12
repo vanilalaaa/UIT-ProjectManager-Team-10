@@ -9,13 +9,14 @@ import {
   EMPTY_REQUIREMENT,
   type ProjectRequirement,
 } from '../../../services/requirement.service'
-import { addActivity } from '../../../services/activity.service'
 
 interface CourseRequirementCardProps {
   courseId: number
+  // SV chỉ xem (ẩn nút tạo/sửa). Mặc định false = giảng viên có thể chỉnh.
+  readOnly?: boolean
 }
 
-export default function CourseRequirementCard({ courseId }: CourseRequirementCardProps) {
+export default function CourseRequirementCard({ courseId, readOnly = false }: CourseRequirementCardProps) {
   const [req, setReq] = useState<ProjectRequirement>(EMPTY_REQUIREMENT)
   const [draft, setDraft] = useState<ProjectRequirement>(EMPTY_REQUIREMENT)
   const [categories, setCategories] = useState<Category[]>([])
@@ -54,12 +55,6 @@ export default function CourseRequirementCard({ courseId }: CourseRequirementCar
       .then((saved) => {
         setReq(saved)
         setIsModalOpen(false)
-        addActivity({
-          kind: 'INFO',
-          title: 'Giảng viên đã cập nhật yêu cầu / barem chấm điểm đồ án',
-          actorName: 'Giảng viên',
-          scope: 'STUDENT',
-        })
         toast.success('Đã lưu yêu cầu đồ án.')
       })
       .catch(() => toast.error('Không lưu được yêu cầu đồ án. Vui lòng thử lại.'))
@@ -90,15 +85,17 @@ export default function CourseRequirementCard({ courseId }: CourseRequirementCar
             </div>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-brand-gradient text-surface text-sm font-bold rounded-button shadow-sm hover:opacity-90 transition-opacity"
-          >
-            <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-            </svg>
-            {hasRequirement ? 'Chỉnh sửa' : 'Tạo yêu cầu'}
-          </button>
+          {!readOnly ? (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-brand-gradient text-surface text-sm font-bold rounded-button shadow-sm hover:opacity-90 transition-opacity"
+            >
+              <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+              </svg>
+              {hasRequirement ? 'Chỉnh sửa' : 'Tạo yêu cầu'}
+            </button>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2 mb-4">

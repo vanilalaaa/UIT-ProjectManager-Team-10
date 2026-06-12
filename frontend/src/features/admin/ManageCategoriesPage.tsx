@@ -4,16 +4,30 @@ import { toast } from 'sonner'
 import AdminToolbar from './components/AdminToolbar'
 import AdminPagination from './components/AdminPagination'
 import { AdminEmpty, AdminError, AdminLoading } from './components/AdminStates'
+import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import CategoryFormModal from './categories/CategoryFormModal'
 import { useAdminCategories } from './hooks/useAdminCategories'
 import type { ApiError } from '../../lib/api/axiosClient'
 import type { Category } from '../../types/api/category'
 
 export default function ManageCategoriesPage() {
-  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus } =
+  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus, remove } =
     useAdminCategories()
   const [editing, setEditing] = useState<Category | null>(null)
+  const [deleting, setDeleting] = useState<Category | null>(null)
   const [openForm, setOpenForm] = useState(false)
+
+  const handleDelete = async () => {
+    if (!deleting) return
+    try {
+      await remove(deleting.categoryId)
+    } catch (err) {
+      const apiErr = err as ApiError
+      if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
+        toast.error(apiErr?.message ?? 'Xoá thất bại.')
+      }
+    }
+  }
 
   const handleToggleActive = async (item: Category) => {
     try {
@@ -114,6 +128,13 @@ export default function ManageCategoriesPage() {
                           >
                             {item.isActive ? 'Ẩn' : 'Hiện'}
                           </button>
+                          <button
+                            className="rounded-md border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50"
+                            onClick={() => setDeleting(item)}
+                            type="button"
+                          >
+                            Xoá
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -139,6 +160,20 @@ export default function ManageCategoriesPage() {
         onClose={() => setOpenForm(false)}
         onCreate={create}
         onUpdate={update}
+      />
+
+      <ConfirmDialog
+        open={!!deleting}
+        title="Xác nhận xoá danh mục"
+        description={
+          deleting
+            ? `Bạn có chắc chắn muốn xoá danh mục "${deleting.name}"? Hành động không thể hoàn tác.`
+            : ''
+        }
+        confirmLabel="Xoá"
+        destructive
+        onConfirm={handleDelete}
+        onClose={() => setDeleting(null)}
       />
     </div>
   )

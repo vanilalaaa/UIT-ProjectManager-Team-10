@@ -1,6 +1,7 @@
 package com.example.se330.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,7 @@ public class GroupService {
         groupMember.setUser(leader);
         groupMember.setGroup(savedGroup);
         groupMember.setJoinedDate(LocalDate.now());
+        groupMember.setCreatedAt(LocalDateTime.now());
         groupMember.setStatus(GroupMemberStatus.ACTIVE);
 
         groupMemberRepository.save(groupMember);
@@ -189,6 +191,7 @@ public class GroupService {
         newRequest.setUser(student);
         newRequest.setGroup(group);
         newRequest.setJoinedDate(LocalDate.now());
+        newRequest.setCreatedAt(LocalDateTime.now());
         newRequest.setStatus(GroupMemberStatus.PENDING);
 
         groupMemberRepository.save(newRequest);
@@ -219,11 +222,10 @@ public class GroupService {
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền duyệt thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
         }
-        GroupMember memberRequest = groupMemberRepository.findByUserId(memberId)
+        // Phải khóa theo (group, user): 1 user có thể có nhiều bản ghi GroupMember ở
+        // các nhóm khác nhau → findByUserId trả >1 và ném "non-unique result".
+        GroupMember memberRequest = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu gia nhập này!"));
-        if (!memberRequest.getGroup().getId().equals(groupId)) {
-            throw new RuntimeException("Yêu cầu này không thuộc về nhóm của bạn!");
-        }
 
         if (memberRequest.getStatus() != GroupMemberStatus.PENDING) {
             throw new RuntimeException("Yêu cầu này đã được xử lý từ trước!");
@@ -258,7 +260,10 @@ public class GroupService {
 
     @Transactional(readOnly = true)
     public GroupResponse getMyGroup(Long userId, Long courseId) {
-        return groupMemberRepository.findFirstByUser_IdAndGroup_Course_Id(userId, courseId)
+        // Chỉ tính thành viên ACTIVE. Người mới được mời (INVITED) hoặc đang chờ duyệt
+        // (PENDING) chưa thuộc nhóm → trả null để họ thấy màn hình "lời mời / tạo nhóm".
+        return groupMemberRepository
+                .findFirstByUser_IdAndGroup_Course_IdAndStatus(userId, courseId, GroupMemberStatus.ACTIVE)
                 .map(GroupMember::getGroup)
                 .map(this::mapToResponse)
                 .orElse(null);
@@ -321,8 +326,9 @@ public class GroupService {
         return courseRequestRepository.findAllByCourseAndStatus(course, JoinStatus.ACTIVE).stream()
                 .map(cr -> cr.getStudent())
                 .filter(u -> u != null)
-                .map(student -> toClassmate(student, groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
-                        student.getId(), courseId, GroupMemberStatus.ACTIVE)))
+                .map(student -> toClassmate(student, groupMemberRepository.existsByUser_IdAndGroup_Course_IdAndStatusIn(
+                        student.getId(), courseId,
+                        List.of(GroupMemberStatus.ACTIVE, GroupMemberStatus.INVITED, GroupMemberStatus.PENDING))))
                 .collect(Collectors.toList());
     }
 
@@ -352,6 +358,7 @@ public class GroupService {
         invitation.setGroup(group);
         invitation.setUser(invited);
         invitation.setJoinedDate(LocalDate.now());
+        invitation.setCreatedAt(LocalDateTime.now());
         invitation.setStatus(GroupMemberStatus.INVITED);
         groupMemberRepository.save(invitation);
     }

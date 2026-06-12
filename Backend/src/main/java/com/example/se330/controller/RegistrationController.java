@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.registration.ProposeProjectRequest;
 import com.example.se330.dto.registration.RegistrationResponse;
+import com.example.se330.dto.registration.ReviewRegistrationRequest;
 import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.RegistrationService;
 
@@ -54,18 +55,24 @@ public class RegistrationController {
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PatchMapping("/registrations/{id}/approve")
     public ResponseEntity<ApiResponse<RegistrationResponse>> approve(
-            @PathVariable Long id, Authentication authentication) {
+            @PathVariable Long id,
+            @RequestBody(required = false) ReviewRegistrationRequest body,
+            Authentication authentication) {
+        String note = body != null ? body.getNote() : null;
         return ApiResponse.success(
-                registrationService.approve(id, currentUserId(authentication)),
+                registrationService.approve(id, currentUserId(authentication), note),
                 "Đã duyệt yêu cầu đăng ký.");
     }
 
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PatchMapping("/registrations/{id}/reject")
     public ResponseEntity<ApiResponse<RegistrationResponse>> reject(
-            @PathVariable Long id, Authentication authentication) {
+            @PathVariable Long id,
+            @RequestBody(required = false) ReviewRegistrationRequest body,
+            Authentication authentication) {
+        String note = body != null ? body.getNote() : null;
         return ApiResponse.success(
-                registrationService.reject(id, currentUserId(authentication)),
+                registrationService.reject(id, currentUserId(authentication), note),
                 "Đã từ chối yêu cầu đăng ký.");
     }
 

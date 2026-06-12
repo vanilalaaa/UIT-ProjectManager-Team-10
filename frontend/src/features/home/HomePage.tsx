@@ -5,7 +5,7 @@ import QuickStats from '../../components/ui/home/QuickStats';
 import StatusChart from '../../components/ui/home/StatusChart';
 import ActivityCalendar from '../../components/ui/home/ActivityCalendar';
 import ActivityFeed from '../../components/ui/home/ActivityFeed';
-import ActivityNotifications from '../../components/ui/home/ActivityNotifications';
+import { isNotificationsEnabled, subscribeNotifPref } from '../../lib/notificationPrefs';
 import {
   getHomeStats,
   getHomeFeed,
@@ -23,6 +23,9 @@ export default function HomePage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [notifEnabled, setNotifEnabled] = useState(isNotificationsEnabled());
+
+  useEffect(() => subscribeNotifPref(setNotifEnabled), []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -63,8 +66,13 @@ export default function HomePage() {
           heatmap={heatmap}
         />
       </div>
-      <ActivityFeed selectedMonth={selectedMonth} selectedDate={selectedDate} activities={filtered} />
-      <ActivityNotifications role={role} />
+      {notifEnabled ? (
+        <ActivityFeed role={role} selectedMonth={selectedMonth} selectedDate={selectedDate} activities={filtered} />
+      ) : (
+        <div className="glass-panel rounded-[var(--radius-card)] p-6 text-center text-sm text-text-soft">
+          Đã tạm tắt thông báo. Bật lại ở chuông 🔔 trên thanh điều hướng để xem hoạt động.
+        </div>
+      )}
     </div>
   );
 }

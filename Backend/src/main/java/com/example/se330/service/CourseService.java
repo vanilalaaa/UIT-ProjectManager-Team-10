@@ -13,21 +13,27 @@ import com.example.se330.dto.course.CourseResponse;
 import com.example.se330.dto.course.CreateCourseRequest;
 import com.example.se330.dto.course.UpdateCourseRequest;
 import com.example.se330.entity.Course;
+import com.example.se330.entity.User;
 import com.example.se330.enums.JoinStatus;
+import com.example.se330.enums.Role;
 import com.example.se330.repository.CourseRepository;
 import com.example.se330.repository.CourseRequestRepository;
+import com.example.se330.repository.UserRepository;
 import com.example.se330.security.CustomUserDetails;
 
 @Service
 public class CourseService {
     private final CourseRepository courseRepository;
     private final CourseRequestRepository courseRequestRepository;
+    private final UserRepository userRepository;
 
     public CourseService(
             CourseRepository courseRepository,
-            CourseRequestRepository courseRequestRepository) {
+            CourseRequestRepository courseRequestRepository,
+            UserRepository userRepository) {
         this.courseRepository = courseRepository;
         this.courseRequestRepository = courseRequestRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -75,7 +81,7 @@ public class CourseService {
         Course course = new Course();
         course.setName(req.getName());
         course.setCode(generateCode());
-        course.setLecturer(currentUser.getUser());
+        course.setLecturer(resolveLecturer(req.getLecturerId(), currentUser.getUser()));
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
         course.setEndDate(req.getEndDate());
@@ -118,12 +124,27 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
         course.setName(req.getName());
+        if (req.getLecturerId() != null) {
+            course.setLecturer(resolveLecturer(req.getLecturerId(), course.getLecturer()));
+        }
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
         course.setEndDate(req.getEndDate());
         this.courseRepository.save(course);
 
         return mapToResponse(course);
+    }
+
+    private User resolveLecturer(Long lecturerId, User fallback) {
+        if (lecturerId == null) {
+            return fallback;
+        }
+        User lecturer = userRepository.findById(lecturerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên được chọn."));
+        if (lecturer.getRole() != Role.TEACHER) {
+            throw new RuntimeException("Người được chọn không phải là giảng viên.");
+        }
+        return lecturer;
     }
 
     public void deleteCourse(Long id) {
@@ -136,6 +157,7 @@ public class CourseService {
                 .name(course.getName())
                 .code(course.getCode())
                 .lecturer(course.getLecturer() != null ? course.getLecturer().getId() : null)
+                .lecturerName(course.getLecturer() != null ? course.getLecturer().getName() : null)
                 .maxStudents(course.getMaxStudents())
                 .startDate(course.getStartDate())
                 .endDate(course.getEndDate())

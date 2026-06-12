@@ -16,7 +16,6 @@ import {
   getPendingRegistrations,
   rejectRegistration,
 } from '../../../services/registration.service'
-import { addActivity } from '../../../services/activity.service'
 
 export default function TeacherProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
@@ -55,17 +54,10 @@ export default function TeacherProjectList() {
   const handleAcceptRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
     e.stopPropagation()
     setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
-    approveRegistration(registrationId)
+    approveRegistration(registrationId, note)
       .then(() => {
         const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
         triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
-        addActivity({
-          kind: 'APPROVAL',
-          title: `Đề tài "${title}" đã được DUYỆT`,
-          note: note?.trim() || undefined,
-          actorName: 'Giảng viên',
-          scope: 'STUDENT',
-        })
         // Đề tài vừa duyệt giờ đã có nhóm → tải lại danh sách để hiển thị.
         return getCourseProjects(id).then(setCourseProjects)
       })
@@ -75,17 +67,10 @@ export default function TeacherProjectList() {
   const handleDeclineRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
     e.stopPropagation()
     setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
-    rejectRegistration(registrationId)
+    rejectRegistration(registrationId, note)
       .then(() => {
         const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
         triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
-        addActivity({
-          kind: 'APPROVAL',
-          title: `Đề tài "${title}" đã bị TỪ CHỐI`,
-          note: note?.trim() || undefined,
-          actorName: 'Giảng viên',
-          scope: 'STUDENT',
-        })
       })
       .catch(() => triggerNotification('Lỗi', 'Không từ chối được yêu cầu đăng ký.'))
   }

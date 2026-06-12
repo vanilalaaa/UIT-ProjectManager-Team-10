@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getProjectById } from '../../../services/project.service';
 import { getRequirement, type RubricCriterion } from '../../../services/requirement.service';
-import { addActivity } from '../../../services/activity.service';
 import type { Project } from '../../../types/api/project';
 
 export default function TeamGrades() {
@@ -40,13 +39,6 @@ export default function TeamGrades() {
   const handleSave = () => {
     setIsGraded(true);
     setIsEditing(false);
-    addActivity({
-      kind: 'APPROVAL',
-      title: `Đồ án "${project.title}" đã được chấm điểm: ${overall.toFixed(1)}/10`,
-      note: criteria.map((c) => `${c.name}: ${scores[c.id] || 0}/${c.maxScore}${notes[c.id] ? ` — ${notes[c.id]}` : ''}`).join('\n'),
-      actorName: 'Giảng viên',
-      scope: 'STUDENT',
-    });
   };
 
   return (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import ProjectCard from '../../../components/ui/student/ProjectCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import CourseRequirementCard from '../../../components/ui/teacher/CourseRequirementCard'
 import { getCourseProjectsWithGroup, type ProjectWithGroup } from '../../../services/project.service'
 
 export default function StudentProjectList() {
@@ -28,15 +29,19 @@ export default function StudentProjectList() {
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project.projectId}
-          project={project}
-          courseId={courseId || '1'}
-          groupName={project.groupName ?? undefined}
-        />
-      ))}
+    <div className="space-y-6">
+      {courseId ? <CourseRequirementCard courseId={Number(courseId)} readOnly /> : null}
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {projects.map((project) => (
+          <ProjectCard
+            key={project.projectId}
+            project={project}
+            courseId={courseId || '1'}
+            groupName={project.groupName ?? undefined}
+          />
+        ))}
+      </div>
     </div>
   )
 }

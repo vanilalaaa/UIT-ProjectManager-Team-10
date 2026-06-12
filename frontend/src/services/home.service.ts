@@ -4,12 +4,13 @@ import type { ApiResponse } from '../types/api/common'
 export type HomeQuickStats = Record<string, number>
 
 export type HomeFeedItem = {
-  type: 'TASK' | 'SUBMISSION' | 'PROJECT'
+  type: 'TASK' | 'SUBMISSION' | 'PROJECT' | 'GROUP_REQUEST' | 'PROJECT_PROPOSAL' | 'PROJECT_RESULT'
   referenceId: number
   title: string
   description?: string | null
   status?: string | null
   projectId?: number | null
+  courseId?: number | null
   projectTitle?: string | null
   actorName: string
   actorAvatar?: string | null

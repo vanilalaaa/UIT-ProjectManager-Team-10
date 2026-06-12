@@ -14,13 +14,17 @@ import com.example.se330.dto.admin.AdminUpdateCategoryRequest;
 import com.example.se330.dto.admin.AdminUpdateCategoryStatusRequest;
 import com.example.se330.entity.Category;
 import com.example.se330.repository.CategoryRepository;
+import com.example.se330.repository.ProjectRepository;
 
 @Service
 public class AdminCategoryService {
     private final CategoryRepository categoryRepository;
+    private final ProjectRepository projectRepository;
 
-    public AdminCategoryService(CategoryRepository categoryRepository) {
+    public AdminCategoryService(CategoryRepository categoryRepository,
+            ProjectRepository projectRepository) {
         this.categoryRepository = categoryRepository;
+        this.projectRepository = projectRepository;
     }
 
     public List<CategoryDto> listActiveCategories() {
@@ -84,6 +88,17 @@ public class AdminCategoryService {
         category.setIsActive(request.getIsActive());
         Category updated = categoryRepository.save(category);
         return toCategoryDto(updated);
+    }
+
+    public void deleteCategory(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        if (projectRepository.existsByCategory_Id(id)) {
+            throw new IllegalArgumentException("Không thể xoá danh mục đang được dùng bởi đồ án. Hãy ẩn thay vì xoá.");
+        }
+
+        categoryRepository.delete(category);
     }
 
     public CategoryDto getCategoryDto(Long id) {

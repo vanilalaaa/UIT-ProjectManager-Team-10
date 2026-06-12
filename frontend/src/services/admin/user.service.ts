@@ -8,7 +8,7 @@ import type {
   AdminUserUpdateRequest,
 } from '../../types/api/user'
 
-const BASE = '/api/admin/users'
+const BASE = '/admin/users'
 
 function cleanParams(query: AdminUserQuery): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}
@@ -25,6 +25,9 @@ export const listUsers = (
   axiosClient
     .get<ApiResponse<Page<AdminUserListItem>>>(BASE, { params: cleanParams(query) })
     .then((r) => r.data)
+
+export const listTeachers = (): Promise<AdminUserListItem[]> =>
+  listUsers({ role: 'TEACHER', page: 0, size: 200 }).then((r) => r.data.content)
 
 export const createUser = (
   payload: AdminUserCreateRequest,
