@@ -24,6 +24,7 @@ import {
   removeMember,
   deleteTeam,
   transferLeader,
+  leaveGroup,
 } from '../../../services/team.service'
 import { addActivity } from '../../../services/activity.service'
 import { useAuth } from '../../auth/useAuth'
@@ -121,22 +122,20 @@ export default function MyTeamPage() {
 
   const handleLeaveTeam = () => {
     if (!courseId || !myGroup) return
+    // Leader còn thành viên khác → phải chuyển quyền trước.
     if (isCurrentUserLeader && myGroup.members.length > 1) {
       setActiveModal('transfer_leader')
       return
     }
-    if (isCurrentUserLeader) {
-      // Leader một mình → giải tán nhóm.
-      deleteTeam(courseId, myGroup.groupId)
-        .then(() => {
-          setNotification({ title: 'Thành công', message: 'Bạn đã rời và giải tán nhóm.' })
-          setMyGroup(null)
-        })
-        .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không rời được nhóm.' }))
-      setActiveModal(null)
-      return
-    }
-    setNotification({ title: 'Thông báo', message: 'Thành viên cần Trưởng nhóm xóa khỏi nhóm. Vui lòng liên hệ Trưởng nhóm.' })
+    const disband = isCurrentUserLeader
+    leaveGroup(courseId, myGroup.groupId)
+      .then(() => {
+        setNotification({ title: 'Thành công', message: disband ? 'Bạn đã rời và giải tán nhóm.' : 'Bạn đã rời nhóm.' })
+        setMyGroup(null)
+        setTeamRequests([])
+        setSuggestedUsers([])
+      })
+      .catch((err: { message?: string }) => setNotification({ title: 'Lỗi', message: err?.message || 'Không rời được nhóm.' }))
     setActiveModal(null)
   }
 

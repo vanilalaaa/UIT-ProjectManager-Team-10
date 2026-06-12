@@ -1,11 +1,13 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
-import { getCourseMembers, getCourseGroups } from '../../../services/team.service'
+import { getCourseGroups, removeMember } from '../../../services/team.service'
 import type { Team, TeamMember } from '../../../types/api/team'
+
+type RosterMember = TeamMember & { groupId: number; groupName: string }
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -25,8 +27,8 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div 
-      ref={ref} 
+    <div
+      ref={ref}
       style={{ opacity }}
       className={`absolute right-4 z-[9999] w-72 transition-opacity duration-200 animate-fade-in ${
         position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
@@ -39,51 +41,48 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
 
 export default function TeacherCourseMember() {
   const { courseId } = useParams<{ courseId: string }>()
-  const [members, setMembers] = useState<TeamMember[]>([])
   const [groups, setGroups] = useState<Team[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
   const [notification, setNotification] = useState({ isOpen: false, title: '', message: '' })
 
-  useEffect(() => {
-    let isMounted = true
-    setLoading(true)
-
-    Promise.all([getCourseMembers(courseId ?? ''), getCourseGroups(courseId ?? '')]).then(
-      ([memberList, groupList]) => {
-        if (!isMounted) return
-        setMembers(memberList)
-        setGroups(groupList)
-        setLoading(false)
-      },
-    )
-
-    return () => { isMounted = false }
+  const reload = useCallback((): Promise<void> => {
+    if (!courseId) return Promise.resolve()
+    return getCourseGroups(courseId).then(setGroups).catch(() => setGroups([]))
   }, [courseId])
 
-  const handleRemoveMemberFromTeam = (userId: number) => {
-    const isLeader = groups.some(team => team.leaderId === userId)
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    reload().finally(() => {
+      if (mounted) setLoading(false)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [reload])
 
-    if (isLeader) {
-      setNotification({
-        isOpen: true,
-        title: 'Không thể thực hiện',
-        message: 'Không thể xóa Leader ra khỏi nhóm!'
-      })
+  const roster: RosterMember[] = groups.flatMap((g) =>
+    g.members.map((m) => ({ ...m, groupId: g.groupId, groupName: g.name })),
+  )
+
+  const handleRemoveMember = (member: RosterMember) => {
+    if (member.isLeader) {
+      setNotification({ isOpen: true, title: 'Không thể thực hiện', message: 'Không thể xóa Trưởng nhóm khỏi nhóm!' })
       return
     }
-
-    setMembers(prevMembers => prevMembers.filter(m => m.userId !== userId))
-
-    setNotification({
-      isOpen: true,
-      title: 'Thành công',
-      message: 'Đã xóa sinh viên khỏi lớp học thành công!'
-    })
+    removeMember(courseId ?? '', member.groupId, member.userId)
+      .then(() => {
+        setNotification({ isOpen: true, title: 'Thành công', message: 'Đã xóa sinh viên khỏi nhóm.' })
+        return reload()
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ isOpen: true, title: 'Lỗi', message: err?.message || 'Không xóa được thành viên.' }),
+      )
   }
 
-  const filteredMembers = members.filter(member =>
+  const filteredMembers = roster.filter(member =>
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (member.uid ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (member.email ?? '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -93,7 +92,7 @@ export default function TeacherCourseMember() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-fade-in pb-20">
-      <NotificationModal 
+      <NotificationModal
         isOpen={notification.isOpen}
         title={notification.title}
         message={notification.message}
@@ -109,7 +108,7 @@ export default function TeacherCourseMember() {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-[24px] font-bold text-text">Thành viên lớp học ({members.length})</h2>
+        <h2 className="text-[24px] font-bold text-text">Thành viên trong nhóm ({roster.length})</h2>
 
         <div className="relative max-w-sm w-full">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -133,20 +132,21 @@ export default function TeacherCourseMember() {
       <div className="rounded-xl border border-border bg-surface shadow-sm transition-all duration-300">
         <div className="divide-y divide-border">
           {filteredMembers.map((member) => (
-            <div key={member.userId} className="relative">
-              <MemberRow 
+            <div key={`${member.groupId}-${member.userId}`} className="relative">
+              <MemberRow
                 member={member}
+                roleLabel={member.isLeader ? `${member.groupName} · Leader` : member.groupName}
                 onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
               >
                 <div className="flex items-center">
                   {activePopoverId === member.userId && (
                     <SmartPopoverWrapper>
-                      <UserProfilePopover 
+                      <UserProfilePopover
                         user={member}
                         onClose={() => setActivePopoverId(null)}
                         showInviteButton={false}
                         isTeacherView={true}
-                        onDelete={() => handleRemoveMemberFromTeam(member.userId)}
+                        onDelete={() => handleRemoveMember(member)}
                       />
                     </SmartPopoverWrapper>
                   )}
@@ -161,7 +161,7 @@ export default function TeacherCourseMember() {
             <svg className="size-12 mb-3 text-border" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-2.533-3.076l-1.408-.47a7.22 7.22 0 0 0-5.617 0l-1.408.47a4.125 4.125 0 0 0-2.533 3.076 9.317 9.317 0 0 0 4.12 1.242 9.347 9.347 0 0 0 1.256-.042Z" />
             </svg>
-            <p className="font-semibold text-[15px]">Không tìm thấy sinh viên nào!</p>
+            <p className="font-semibold text-[15px]">Chưa có sinh viên nào trong nhóm!</p>
             {searchQuery && <p className="text-sm mt-1">Thử lại với từ khóa khác nhé.</p>}
           </div>
         )}

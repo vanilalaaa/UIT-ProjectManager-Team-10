@@ -18,6 +18,7 @@ import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.User;
 import com.example.se330.enums.GroupMemberStatus;
+import com.example.se330.enums.Role;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 
@@ -102,19 +103,44 @@ public class GroupService {
         return mapToResponse(updatedGroup);
     }
 
-    // 5. [DELETE] Xóa Group và các bản ghi liên quan công việc/thành viên
+    // 5. [DELETE] Xóa Group — Leader của nhóm, GV của lớp, hoặc Admin.
     public void deleteGroup(Long userId, Long courseId, Long groupId) {
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Group not found in this course"));
 
-        // Kiểm tra quyền: Chỉ Leader mới được xóa nhóm
-        if (!group.getLeader().getId().equals(userId)) {
-            throw new RuntimeException("You are not authorized to delete this group.");
-        }
+        assertCanManageGroup(group, userId);
 
         // Xóa tất cả thành viên thuộc Group này trước để tránh lỗi liên kết
         groupMemberRepository.deleteByGroupId(groupId);
         groupRepository.delete(group);
+    }
+
+    // Sinh viên tự rời nhóm. Leader chỉ rời được khi là thành viên duy nhất
+    // (nhóm sẽ bị giải tán); còn thành viên khác thì phải chuyển quyền trước.
+    public void leaveGroup(Long userId, Long courseId, Long groupId) {
+        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
+
+        GroupMember membership = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new RuntimeException("Bạn không thuộc nhóm này!"));
+
+        boolean isLeader = group.getLeader() != null && group.getLeader().getId().equals(userId);
+        if (isLeader) {
+            long activeOthers = groupMemberRepository.findByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE)
+                    .stream()
+                    .filter(m -> m.getUser() != null && !m.getUser().getId().equals(userId))
+                    .count();
+            if (activeOthers > 0) {
+                throw new RuntimeException(
+                        "Bạn là Trưởng nhóm — hãy chuyển quyền cho thành viên khác trước khi rời nhóm.");
+            }
+            // Leader là thành viên duy nhất → giải tán nhóm.
+            groupMemberRepository.deleteByGroupId(groupId);
+            groupRepository.delete(group);
+            return;
+        }
+
+        groupMemberRepository.delete(membership);
     }
 
     // 6. Gửi yêu cầu tham gia nhóm
@@ -252,16 +278,16 @@ public class GroupService {
         return mapToResponse(updatedGroup);
     }
 
-    public String removeGroupMember(Long leaderId, Long courseId, Long groupId, Long memberId) {
+    // Xóa thành viên khỏi nhóm — Leader của nhóm, GV của lớp, hoặc Admin.
+    public String removeGroupMember(Long actorId, Long courseId, Long groupId, Long memberId) {
 
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        if (!group.getLeader().getId().equals(leaderId)) {
-            throw new RuntimeException("Bạn không có quyền xóa thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
-        }
-        if (leaderId.equals(memberId)) {
-            throw new RuntimeException("Trưởng nhóm không thể xóa chính mình khỏi nhóm!");
+        assertCanManageGroup(group, actorId);
+
+        if (group.getLeader() != null && group.getLeader().getId().equals(memberId)) {
+            throw new RuntimeException("Không thể xóa Trưởng nhóm khỏi nhóm. Hãy chuyển quyền trước.");
         }
 
         GroupMember memberToRemove = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
@@ -270,6 +296,17 @@ public class GroupService {
         groupMemberRepository.delete(memberToRemove);
 
         return "Đã xóa thành viên khỏi nhóm thành công!";
+    }
+
+    // Quyền quản lý nhóm: Leader của nhóm, GV phụ trách lớp, hoặc Admin.
+    private void assertCanManageGroup(Group group, Long actorId) {
+        boolean isLeader = group.getLeader() != null && group.getLeader().getId().equals(actorId);
+        boolean isCourseTeacher = group.getCourse() != null && group.getCourse().getLecturer() != null
+                && group.getCourse().getLecturer().getId().equals(actorId);
+        boolean isAdmin = studentService.getStudentById(actorId).getRole() == Role.ADMIN;
+        if (!isLeader && !isCourseTeacher && !isAdmin) {
+            throw new RuntimeException("Bạn không có quyền quản lý nhóm này.");
+        }
     }
 
     private GroupResponse mapToResponse(Group group) {

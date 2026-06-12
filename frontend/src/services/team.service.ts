@@ -86,6 +86,12 @@ export const removeMember = (
 ): Promise<void> =>
   axiosClient.post(`${base(courseId)}/${groupId}/members/${userId}/remove`).then(() => undefined)
 
+export const leaveGroup = (
+  courseId: number | string,
+  groupId: number | string,
+): Promise<void> =>
+  axiosClient.post(`${base(courseId)}/${groupId}/leave`).then(() => undefined)
+
 // ----- Chưa có BE: danh sách thành viên lớp + gợi ý/lời mời → giữ mock (flat) -----
 
 const MOCK_DELAY = 300

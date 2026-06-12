@@ -93,6 +93,18 @@ public class GroupController {
         return ApiResponse.success(null); // Hoặc trả về thông báo xóa thành công tùy cấu trúc ApiResponse
     }
 
+    // Sinh viên tự rời nhóm
+    @PostMapping("/{groupId}/leave")
+    public ResponseEntity<ApiResponse<String>> leaveGroup(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        groupService.leaveGroup(userDetails.getId(), courseId, groupId);
+        return ApiResponse.success("Bạn đã rời nhóm thành công.");
+    }
+
     // Gửi lời yêu cầu tham gia nhóm (Student gửi yêu cầu, Leader duyệt)
     @PostMapping("/{groupId}/join")
     public ResponseEntity<ApiResponse<String>> joinGroup(
