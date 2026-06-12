@@ -6,16 +6,18 @@ interface ProjectCardProps {
   project: Project
   courseId: string | number
   groupName?: string
-  onDelete?: () => void 
-  isTeacherView?: boolean 
+  onDelete?: () => void
+  onRegister?: () => void
+  isTeacherView?: boolean
 }
 
-export default function ProjectCard({ 
-  project, 
-  courseId, 
-  groupName, 
-  onDelete, 
-  isTeacherView 
+export default function ProjectCard({
+  project,
+  courseId,
+  groupName,
+  onDelete,
+  onRegister,
+  isTeacherView
 }: ProjectCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -107,7 +109,11 @@ export default function ProjectCard({
             {groupName} đã đăng ký
           </button>
         ) : (
-          <button type="button" className="w-full bg-primary hover:bg-primary/95 text-surface text-xs font-semibold py-2 px-4 rounded shadow-sm transition-colors">
+          <button
+            type="button"
+            onClick={() => onRegister?.()}
+            className="w-full bg-primary hover:bg-primary/95 text-surface text-xs font-semibold py-2 px-4 rounded shadow-sm transition-colors"
+          >
             Đăng ký đề tài
           </button>
         )}

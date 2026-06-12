@@ -8,14 +8,14 @@ import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalRequestSidebar'
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
-import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
 import type { Project } from '../../../types/api/project'
+import type { PendingRegistration } from '../../../types/api/registration'
+import { getCourseProjects } from '../../../services/project.service'
 import {
-  addApprovedProject,
-  getCourseApprovalRequests,
-  getCourseProjects,
-  markRequestHandled,
-} from '../../../services/project.service'
+  approveRegistration,
+  getPendingRegistrations,
+  rejectRegistration,
+} from '../../../services/registration.service'
 import { addActivity } from '../../../services/activity.service'
 
 export default function TeacherProjectList() {
@@ -25,8 +25,8 @@ export default function TeacherProjectList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   
-  const [requests, setRequests] = useState<ProjectApprovalRequest[]>([])
-  const [selectedRequest, setSelectedRequest] = useState<ProjectApprovalRequest | null>(null)
+  const [requests, setRequests] = useState<PendingRegistration[]>([])
+  const [selectedRequest, setSelectedRequest] = useState<PendingRegistration | null>(null)
   
   const [notification, setNotification] = useState({
     isOpen: false,
@@ -39,7 +39,7 @@ export default function TeacherProjectList() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    Promise.all([getCourseProjects(id), getCourseApprovalRequests(id)]).then(([projects, reqs]) => {
+    Promise.all([getCourseProjects(id), getPendingRegistrations(id)]).then(([projects, reqs]) => {
       if (!isMounted) return
       setCourseProjects(projects)
       setRequests(reqs)
@@ -52,66 +52,42 @@ export default function TeacherProjectList() {
     setNotification({ isOpen: true, title, message })
   }
 
-  const handleAcceptRequest = (requestId: number, title: string, e: React.MouseEvent, note?: string) => {
+  const handleAcceptRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
     e.stopPropagation()
-    const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
-    triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
-    addActivity({
-      kind: 'APPROVAL',
-      title: `Đề tài "${title}" đã được DUYỆT`,
-      note: note?.trim() || undefined,
-      actorName: 'Giảng viên',
-      scope: 'STUDENT',
-    })
-
-    // Duyệt → tạo Project từ yêu cầu đăng ký rồi đưa vào danh sách đồ án của lớp.
-    const accepted = requests.find((r) => r.requestId === requestId)
-    const base = courseProjects[0]
-    if (accepted && base) {
-      const newProject: Project = {
-        projectId: Date.now(),
-        title: accepted.title,
-        description: accepted.description,
-        status: 'IN_PROGRESS',
-        startDate: new Date().toISOString().slice(0, 10),
-        endDate: base.endDate,
-        courseId: base.courseId,
-        courseName: base.courseName,
-        lecturerName: base.lecturerName,
-        categoryId: base.categoryId,
-        categoryName: base.categoryName,
-        groupId: null,
-        groupName: accepted.groupName,
-        members: accepted.members.map((m) => ({
-          id: m.userId,
-          name: m.name,
-          avatar: m.userProfile?.avatarUrl ?? null,
-        })),
-        submissions: [],
-        memberCount: accepted.members.length,
-        submissionCount: 0,
-      }
-      addApprovedProject(id, newProject)
-      setCourseProjects((prev) => [newProject, ...prev])
-    }
-
-    markRequestHandled(id, requestId)
-    setRequests((prev) => prev.filter((r) => r.requestId !== requestId))
+    setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
+    approveRegistration(registrationId)
+      .then(() => {
+        const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+        triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
+        addActivity({
+          kind: 'APPROVAL',
+          title: `Đề tài "${title}" đã được DUYỆT`,
+          note: note?.trim() || undefined,
+          actorName: 'Giảng viên',
+          scope: 'STUDENT',
+        })
+        // Đề tài vừa duyệt giờ đã có nhóm → tải lại danh sách để hiển thị.
+        return getCourseProjects(id).then(setCourseProjects)
+      })
+      .catch(() => triggerNotification('Lỗi', 'Không duyệt được yêu cầu đăng ký.'))
   }
 
-  const handleDeclineRequest = (requestId: number, title: string, e: React.MouseEvent, note?: string) => {
+  const handleDeclineRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
     e.stopPropagation()
-    const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
-    triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
-    addActivity({
-      kind: 'APPROVAL',
-      title: `Đề tài "${title}" đã bị TỪ CHỐI`,
-      note: note?.trim() || undefined,
-      actorName: 'Giảng viên',
-      scope: 'STUDENT',
-    })
-    markRequestHandled(id, requestId)
-    setRequests((prev) => prev.filter((r) => r.requestId !== requestId))
+    setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
+    rejectRegistration(registrationId)
+      .then(() => {
+        const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+        triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
+        addActivity({
+          kind: 'APPROVAL',
+          title: `Đề tài "${title}" đã bị TỪ CHỐI`,
+          note: note?.trim() || undefined,
+          actorName: 'Giảng viên',
+          scope: 'STUDENT',
+        })
+      })
+      .catch(() => triggerNotification('Lỗi', 'Không từ chối được yêu cầu đăng ký.'))
   }
 
   const handleDeleteConfirm = () => {

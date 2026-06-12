@@ -1,5 +1,7 @@
 package com.example.se330.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +15,11 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     // Nhóm đang nhận 1 đề tài = registration APPROVED của project.
     Optional<Registration> findFirstByProject_IdAndStatus(Long projectId, RegistrationStatus status);
+
+    // Yêu cầu đăng ký theo lớp + trạng thái (GV duyệt các yêu cầu PENDING).
+    List<Registration> findByProject_Course_IdAndStatus(Long courseId, RegistrationStatus status);
+
+    // Chặn đăng ký trùng khi nhóm đã có yêu cầu PENDING/APPROVED cho đề tài.
+    boolean existsByProject_IdAndGroup_IdAndStatusIn(
+            Long projectId, Long groupId, Collection<RegistrationStatus> statuses);
 }

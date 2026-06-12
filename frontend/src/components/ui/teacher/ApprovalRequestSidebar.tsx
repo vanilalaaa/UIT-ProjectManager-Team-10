@@ -1,11 +1,11 @@
-import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
+import type { PendingRegistration } from '../../../types/api/registration'
 import Avatar from '../Avatar'
 
 interface ApprovalRequestSidebarProps {
-  requests: ProjectApprovalRequest[]
-  onSelectRequest: (req: ProjectApprovalRequest) => void
-  onAccept: (requestId: number, title: string, e: React.MouseEvent, note?: string) => void
-  onDecline: (requestId: number, title: string, e: React.MouseEvent, note?: string) => void
+  requests: PendingRegistration[]
+  onSelectRequest: (req: PendingRegistration) => void
+  onAccept: (registrationId: number, title: string, e: React.MouseEvent, note?: string) => void
+  onDecline: (registrationId: number, title: string, e: React.MouseEvent, note?: string) => void
 }
 
 export default function ApprovalRequestSidebar({
@@ -26,36 +26,36 @@ export default function ApprovalRequestSidebar({
       <div className="space-y-4 max-h-[480px] overflow-y-auto pr-1">
         {requests.map((req) => (
           <div
-            key={req.requestId}
+            key={req.registrationId}
             onClick={() => onSelectRequest(req)}
             className="bg-gray-50 border border-gray-100 hover:border-blue-300 rounded-xl p-4 transition-all cursor-pointer hover:shadow-md group relative"
           >
             <div className="flex items-start gap-3">
-              <Avatar 
-                name={req.leader.name}
-                avatarUrl={req.leader.userProfile?.avatarUrl}
+              <Avatar
+                name={req.leaderName}
+                avatarUrl={req.leaderAvatar}
                 sizeClass="size-9"
                 textClass="text-sm"
                 className="ring-2 ring-sky-100/50 !bg-sky-50 !text-sky-500"
               />
 
               <div className="overflow-hidden w-full">
-                <h4 className="font-bold text-gray-900 text-sm truncate">{req.leader.name}</h4>
+                <h4 className="font-bold text-gray-900 text-sm truncate">{req.groupName}</h4>
                 <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
-                  {req.title}
+                  {req.projectTitle}
                 </p>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-3 pt-2.5 border-t border-gray-200/60">
               <button
-                onClick={(e) => onDecline(req.requestId, req.title, e)}
+                onClick={(e) => onDecline(req.registrationId, req.projectTitle, e)}
                 className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
               >
                 Decline
               </button>
               <button
-                onClick={(e) => onAccept(req.requestId, req.title, e)}
+                onClick={(e) => onAccept(req.registrationId, req.projectTitle, e)}
                 className="text-xs font-bold bg-brand-gradient text-surface px-4 py-1.5 rounded-full hover:bg-primary/90 transition-colors"
               >
                 Accept
