@@ -19,7 +19,7 @@ export const userSinhVienTran: User = {
     summary: 'Sinh viên thực hiện đồ án.',
     firstName: 'Trần',
     lastName: 'Sinh viên',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Sinh+vien+Tran&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0901234567',
     birthday: '2004-01-01',
   },
@@ -44,7 +44,7 @@ export const userLeHoangVy: User = {
     summary: 'Backend developer phụ trách Spring Boot và cơ sở dữ liệu.',
     firstName: 'Vy',
     lastName: 'Lê Hoàng', 
-    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Hoang+Vy&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000002',
     birthday: '2004-10-02',
   },
@@ -69,7 +69,7 @@ export const userTranGiaBao: User = {
     summary: 'QA và tài liệu, theo dõi test case và báo cáo tiến độ.',
     firstName: 'Bảo',
     lastName: 'Trần Gia',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Tran+Gia+Bao&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000003',
     birthday: '2004-03-18',
   },
@@ -94,7 +94,7 @@ export const userPhamQuynhNhu: User = {
     summary: 'Phân tích nghiệp vụ và thiết kế luồng người dùng.',
     firstName: 'Như',
     lastName: 'Phạm Quỳnh',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Pham+Quynh+Nhu&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000004',
     birthday: '2004-12-27',
   },
@@ -119,7 +119,7 @@ export const userNguyenThuyDuong: User = {
     summary: 'AI Specialization và xử lý ngôn ngữ tự nhiên.',
     firstName: 'Dương',
     lastName: 'Nguyễn Thùy',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Nguyen+Thuy+Duong&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000005',
     birthday: '2004-08-14',
   },
@@ -144,7 +144,7 @@ export const userHoangPhuQuy: User = {
     summary: 'Data Engineering, tối ưu hóa câu lệnh SQL và Big Data.',
     firstName: 'Quý',
     lastName: 'Hoàng Phú',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Hoang+Phu+Quy&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000006',
     birthday: '2004-01-22',
   },
@@ -169,7 +169,7 @@ export const userBuiNhatTruong: User = {
     summary: 'BSc Computer Science • Year 2. Đam mê Cloud Computing.',
     firstName: 'Trường',
     lastName: 'Bùi Nhật',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Bui+Nhat+Truong&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000007',
     birthday: '2004-09-05',
   },
@@ -194,7 +194,7 @@ export const userLeViSa: User = {
     summary: 'UI/UX Design Minor. Chuyên thiết kế wireframe và prototype.',
     firstName: 'Sa',
     lastName: 'Lê Vi',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Le+Vi+Sa&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000008',
     birthday: '2004-11-30',
   },
@@ -219,7 +219,7 @@ export const userNguyenMinhAn: User = {
     summary: 'Frontend developer phụ trách React và trải nghiệm người dùng.',
     firstName: 'An',
     lastName: 'Nguyễn Minh',
-    avatarUrl: 'https://ui-avatars.com/api/?name=Nguyen+Minh+An&background=2DD4BF&color=fff&size=256',
+    avatarUrl: '',
     phoneNumber: '0902000001',
     birthday: '2004-05-12',
   },
@@ -428,4 +428,21 @@ export const mockMyGroupMap: Record<number, Group | null> = {
 export const mockTeamRequestsMap: Record<number, User[]> = {
   1: mockTeamRequests, 
   2: [] 
+}
+
+export interface CourseRequirement {
+  description: string;
+  deadline: string;
+}
+
+export const mockCourseRequirements: Record<number, CourseRequirement> = {
+  1: { 
+    description: 'Các nhóm cần nộp đủ 3 file: Báo cáo (PDF), Slide thuyết trình (PPTX) và Source code (.zip). Nộp trễ trừ 50% số điểm.',
+    deadline: '2026-06-30'
+  },
+};
+
+export const mockCourseGroupsMap: Record<number, Group[]> = {
+  1: [groupPhoenix, groupAster], 
+  2: [groupNimbus, groupOrion]
 }

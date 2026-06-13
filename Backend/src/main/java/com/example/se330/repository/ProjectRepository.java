@@ -1,5 +1,6 @@
 package com.example.se330.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,7 @@ import com.example.se330.entity.Project;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByCourse(Course course);
+
+    // Các project đã qua hạn nộp (endDate < ngày truyền vào) mà chưa bị khóa nộp bài
+    List<Project> findByEndDateBeforeAndSubmissionLockedFalse(LocalDate date);
 }

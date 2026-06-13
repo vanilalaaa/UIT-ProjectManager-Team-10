@@ -11,6 +11,7 @@
  *           ... nested pages with NestedTabLayout wrappers
  */
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Toaster } from 'sonner'
 
 import { AuthProvider } from './features/auth/AuthContext'
 import MainLayout from './components/layout/MainLayout'
@@ -45,7 +46,7 @@ import TeacherCoursePage from './features/teacher/my-course/TeacherCoursePage'
 import TeacherCourseLayout from './features/teacher/my-course/TeacherCourseLayout'
 import TeacherProjectList from './features/teacher/my-course/TeacherProjectList'
 import TeacherProjectDetail from './features/teacher/my-course/TeacherProjectDetail'
-import TeamProjects from './features/teacher/my-course/TeamProjects'
+import TeacherProjectLayout from './features/teacher/my-course/TeacherProjectLayout'
 import TeamSubmit from './features/teacher/my-course/TeamSubmit'
 import TeamGrades from './features/teacher/my-course/TeamGrades'
 import CourseTeams from './features/teacher/my-course/CourseTeams'
@@ -64,6 +65,7 @@ import ProfilePage from './features/profile/ProfilePage';
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" richColors closeButton />
       <BrowserRouter>
         <Routes>
           {/* ── Public ──────────────────────────────────────────────────────── */}
@@ -153,11 +155,11 @@ function App() {
                   </Route>
 
                   {/* Project detail outside tab bar — full content area */}
-                  <Route path="project-list/:projectId">
-                    <Route element={<TeacherProjectDetail />} index />
-                    <Route element={<TeamProjects />} path="team-projects" />
-                    <Route element={<TeamSubmit />} path="team-projects/submit" />
-                    <Route element={<TeamGrades />} path="team-projects/grades" />
+                  <Route path="project-list/:projectId" element={<TeacherProjectLayout />}>
+                    <Route index element={<Navigate replace to="projectdetail" />} />
+                    <Route element={<TeacherProjectDetail />} path="projectdetail" />
+                    <Route element={<TeamSubmit />} path="submit" />
+                    <Route element={<TeamGrades />} path="grades" />
                   </Route>
                 </Route>
               </Route>

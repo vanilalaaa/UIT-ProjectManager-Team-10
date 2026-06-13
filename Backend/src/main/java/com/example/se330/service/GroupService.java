@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
+import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
@@ -152,18 +153,13 @@ public class GroupService {
     }
 
     public List<GroupMemberResponse> getJoinRequests(Long leaderId, Long courseId, Long groupId) {
-        // 1. Kiểm tra Group có tồn tại không
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Bảo mật: Chỉ có Leader mới được quyền xem danh sách yêu cầu gia nhập nhóm
-        // này
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền xem danh sách yêu cầu. Chỉ có Trưởng nhóm mới xem được!");
         }
 
-        // 3. Tìm tất cả bản ghi trong bảng GROUP_MEMBER có groupId này và status là
-        // PENDING
         List<GroupMember> pendingMembers = groupMemberRepository.findByGroupIdAndStatus(groupId,
                 GroupMemberStatus.PENDING);
 
@@ -175,30 +171,23 @@ public class GroupService {
     }
 
     public void reviewJoinRequest(Long leaderId, Long courseId, Long groupId, Long memberId, boolean approve) {
-        // 1. Kiểm tra Group có tồn tại hay không
+
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
                 .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
 
-        // 2. Kiểm tra xem người đang gọi API có phải là Leader của nhóm này không
         if (!group.getLeader().getId().equals(leaderId)) {
             throw new RuntimeException("Bạn không có quyền duyệt thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
         }
-
-        // 3. Tìm yêu cầu xin vào nhóm (GroupMember) dựa trên memberId
         GroupMember memberRequest = groupMemberRepository.findByUserId(memberId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu gia nhập này!"));
-
-        // 4. Kiểm tra xem yêu cầu này có thuộc đúng Group đang xử lý không
         if (!memberRequest.getGroup().getId().equals(groupId)) {
             throw new RuntimeException("Yêu cầu này không thuộc về nhóm của bạn!");
         }
 
-        // 5. Kiểm tra xem trạng thái hiện tại có phải là PENDING không
         if (memberRequest.getStatus() != GroupMemberStatus.PENDING) {
             throw new RuntimeException("Yêu cầu này đã được xử lý từ trước!");
         }
 
-        // 6. Thực hiện Duyệt hoặc Từ chối
         if (approve) {
             memberRequest.setStatus(GroupMemberStatus.ACTIVE);
             memberRequest.setJoinedDate(LocalDate.now());
@@ -214,7 +203,6 @@ public class GroupService {
         if (status != null) {
             members = groupMemberRepository.findByGroupIdAndStatus(groupId, status);
         } else {
-            // Nếu không truyền status, lấy tất cả thành viên bất kể trạng thái
             members = groupMemberRepository.findByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
         }
 
@@ -223,6 +211,54 @@ public class GroupService {
                         member.getGroupMemberId(),
                         member.getUser().getName()))
                 .collect(Collectors.toList());
+    }
+    public GroupResponse transferLeaderRole(Long currentLeaderId, Long courseId, Long groupId, Long newLeaderId) {
+
+        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
+
+        if (!group.getLeader().getId().equals(currentLeaderId)) {
+            throw new RuntimeException(
+                    "Bạn không có quyền chuyển quyền Trưởng nhóm. Chỉ có Trưởng nhóm hiện tại mới có quyền này!");
+        }
+
+        if (currentLeaderId.equals(newLeaderId)) {
+            throw new RuntimeException("Không thể chuyển quyền Trưởng nhóm cho chính mình!");
+        }
+
+        GroupMember newLeaderMember = groupMemberRepository.findByGroupIdAndUserId(groupId, newLeaderId)
+                .orElseThrow(() -> new RuntimeException("Thành viên mới không tồn tại trong nhóm này!"));
+
+        if (newLeaderMember.getStatus() != GroupMemberStatus.ACTIVE) {
+            throw new RuntimeException("Chỉ có thành viên chính thức (ACTIVE) mới được chuyển thành Trưởng nhóm!");
+        }
+
+        User newLeader = newLeaderMember.getUser();
+
+        group.setLeader(newLeader);
+        Group updatedGroup = groupRepository.save(group);
+
+        return mapToResponse(updatedGroup);
+    }
+
+    public String removeGroupMember(Long leaderId, Long courseId, Long groupId, Long memberId) {
+
+        Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại trong môn học này!"));
+
+        if (!group.getLeader().getId().equals(leaderId)) {
+            throw new RuntimeException("Bạn không có quyền xóa thành viên. Chỉ có Trưởng nhóm mới có quyền này!");
+        }
+        if (leaderId.equals(memberId)) {
+            throw new RuntimeException("Trưởng nhóm không thể xóa chính mình khỏi nhóm!");
+        }
+
+        GroupMember memberToRemove = groupMemberRepository.findByGroupIdAndUserId(groupId, memberId)
+                .orElseThrow(() -> new RuntimeException("Thành viên không tồn tại trong nhóm này!"));
+
+        groupMemberRepository.delete(memberToRemove);
+
+        return "Đã xóa thành viên khỏi nhóm thành công!";
     }
 
     private GroupResponse mapToResponse(Group group) {

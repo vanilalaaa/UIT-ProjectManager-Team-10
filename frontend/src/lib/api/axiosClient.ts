@@ -1,28 +1,43 @@
-/**
- * axiosClient.ts
- *
- * Singleton Axios instance used by all real API calls.
- * - baseURL: Spring Boot backend running on port 8080
- * - Request interceptor: injects Bearer token from localStorage
- * - Response interceptor: on 401, clears localStorage and redirects to /login
- *   (avoids circular dependency with React Router by using window.location)
- */
-import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios'
+import { toast } from 'sonner'
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
 
-// Key used to persist the JWT in localStorage (must match auth.service.ts)
-const TOKEN_KEY = 'accessToken'
+export const TOKEN_KEY = 'accessToken'
+
+export interface ApiError {
+  status: number
+  code: string | null
+  message: string
+  fieldErrors?: Record<string, string>
+}
+
+// Các public auth endpoint — 401 ở đây có nghĩa "sai credentials", KHÔNG phải
+// "phiên hết hạn"; không được redirect/clear localStorage.
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+  '/api/auth/resend-verification',
+]
+
+const isPublicAuthRequest = (url?: string): boolean => {
+  if (!url) return false
+  return PUBLIC_AUTH_PATHS.some((p) => url.includes(p))
+}
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Request Interceptor ──────────────────────────────────────────────────────
-// Attach the stored JWT as a Bearer token on every outgoing request.
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -34,18 +49,46 @@ axiosClient.interceptors.request.use(
   (error: unknown) => Promise.reject(error),
 )
 
-// ── Response Interceptor ─────────────────────────────────────────────────────
-// On 401 Unauthorized: token is invalid/expired → clear session and redirect.
-// We use window.location.href to avoid importing React Router here, which
-// would create a circular dependency with services that import axiosClient.
+function normalizeError(error: AxiosError): ApiError {
+  if (!error.response) {
+    return { status: 0, code: 'NETWORK_ERROR', message: 'Không kết nối được server.' }
+  }
+  const { status, data } = error.response
+  const body = (data ?? {}) as {
+    message?: string
+    errorCode?: string | null
+    fieldErrors?: Record<string, string>
+  }
+  return {
+    status,
+    code: body.errorCode ?? null,
+    message: body.message ?? error.message ?? 'Có lỗi xảy ra.',
+    fieldErrors: body.fieldErrors,
+  }
+}
+
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (!axios.isAxiosError(error)) return Promise.reject(error)
+
+    const apiError = normalizeError(error)
+    const requestUrl = error.config?.url
+    const isPublicAuth = isPublicAuthRequest(requestUrl)
+
+    if (apiError.status === 401 && !isPublicAuth) {
       localStorage.clear()
-      window.location.href = '/login'
+      toast.error('Phiên đã hết hạn. Vui lòng đăng nhập lại.')
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    } else if (apiError.status === 403) {
+      toast.error('Bạn không có quyền thực hiện thao tác này.')
+    } else if (apiError.status === 0) {
+      toast.error(apiError.message)
     }
-    return Promise.reject(error)
+
+    return Promise.reject(apiError)
   },
 )
 

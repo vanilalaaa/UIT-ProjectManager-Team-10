@@ -153,6 +153,14 @@
       );
   }
 
+  .bg-danger-gradient {
+    background: linear-gradient(
+      to right, 
+      #ef4444, 
+      #ec4899
+      );
+  }
+
   .text-brand-gradient {
     background:
       linear-gradient(

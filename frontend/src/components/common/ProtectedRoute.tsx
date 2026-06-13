@@ -10,7 +10,7 @@
  * - Otherwise               → render the protected <Outlet />.
  */
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../../features/auth/AuthContext'
+import { useAuth } from '../../features/auth/useAuth'
 import type { Role } from '../../mocks/types'
 
 type ProtectedRouteProps = {

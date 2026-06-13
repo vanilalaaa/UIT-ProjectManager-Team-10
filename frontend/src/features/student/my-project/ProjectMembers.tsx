@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import MemberRow from '../../../components/ui/MemberRow'
-import UserProfilePopover from '../../../components/ui/UserProfilePopover'
+import MemberRow from '../../../components/ui/student/MemberRow'
+import UserProfilePopover from '../../../components/ui/student//UserProfilePopover'
 import type { User, Group } from '../../../mocks/types'
 
 import { mockProjects } from '../../../mocks/projects.mock'

@@ -1,74 +1,62 @@
-import { useEffect, useState } from 'react'
-import LoadingSpinner from '../../../components/ui/LoadingSpinner'
-import ProjectWorkspaceCard from '../../../components/ui/ProjectWorkspaceCard'
-import type { Project } from '../../../mocks/types'
+import { useState } from 'react'
+import ProjectWorkspaceCard from '../../../components/ui/student/ProjectWorkspaceCard'
 import { mockProjects } from '../../../mocks/projects.mock'
-import { useAuth } from '../../../features/auth/AuthContext' 
 
-export default function MyProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  
-  const { currentUser } = useAuth()
+export default function MyProjectPage() {
+  const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    if (!currentUser) return;
+  const filteredProjects = mockProjects.filter((project) => {
+    const query = searchQuery.toLowerCase().trim()
+    if (!query) return true 
 
-    const myOwnProjects = mockProjects.filter((project) => 
-      project.registrations?.some((reg) => {
-        const member = reg.groupMember;
-        return member?.uid === currentUser.uid || member?.email === currentUser.email;
-      })
-    );
+    const projectTitle = project.title?.toLowerCase() || ''
+    
+    const courseName = project.course?.name?.toLowerCase() || ''
+    
+    const courseId = project.course?.courseId?.toString() || ''
 
-    const timer = setTimeout(() => {
-      setProjects(myOwnProjects)
-      setLoading(false)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [currentUser]) 
-
-  if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
+    return (
+      projectTitle.includes(query) || 
+      courseName.includes(query) ||
+      courseId.includes(query)
+    )
+  })
 
   return (
-    <div className="space-y-8 p-8">
-      <div className="flex items-end justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text">My Projects</h1>
-          <p className="text-text-soft mt-1">Manage and track your active academic collaborations.</p>
+          <h2 className="text-2xl font-bold text-text">My Projects</h2>
+          <p className="text-sm text-text-soft mt-1">
+            Manage and track your active academic collaborations.
+          </p>
         </div>
 
-        <div className="flex gap-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="size-4 text-text-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-            </div>
-            <input
-              placeholder="Search projects..."
-              className="border border-border rounded-full pl-10 pr-4 py-2 w-64 bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <button className="border border-border rounded-full px-6 py-2 flex items-center gap-2 hover:bg-surface-soft">
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        <div className="relative w-full md:w-80">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-text-soft">
+            <svg className="size-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
             </svg>
-            Filter
-          </button>
+          </span>
+          <input
+            type="text"
+            placeholder="Search projects by title or course ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-surface border border-border rounded-button pl-10 pr-4 py-2 text-sm text-text placeholder:text-text-soft focus:outline-none focus:border-primary transition-colors shadow-soft"
+          />
         </div>
       </div>
 
-      {projects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+      {filteredProjects.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredProjects.map((project) => (
             <ProjectWorkspaceCard key={project.projectId} project={project} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 text-text-soft">
-          <p>Tài khoản <span className="font-bold text-primary">{currentUser?.name}</span> chưa tham gia đồ án nào.</p>
+        <div className="text-center py-20 bg-surface border border-border rounded-2xl shadow-soft">
+          <p className="text-text-soft font-medium">Không tìm thấy đồ án hoặc lớp học nào phù hợp.</p>
         </div>
       )}
     </div>
