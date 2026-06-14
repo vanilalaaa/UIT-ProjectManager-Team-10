@@ -72,6 +72,7 @@ public class HomeService {
         for (Project project : projects) {
 
             if (isStudent) for (Task task : taskRepository.findByProject_Id(project.getId())) {
+                User assignee = task.getAssignedTo();
                 items.add(FeedItemResponse.builder()
                         .type(FeedType.TASK)
                         .referenceId(task.getId())
@@ -81,7 +82,9 @@ public class HomeService {
                         .projectId(project.getId())
                         .courseId(project.getCourse() != null ? project.getCourse().getId() : null)
                         .projectTitle(project.getTitle())
-                        .actorName(task.getAssignedTo() != null ? task.getAssignedTo().getName() : "Hệ thống")
+                        .actorName(assignee != null ? assignee.getName() : "Hệ thống")
+                        .actorAvatar(assignee != null && assignee.getUserProfile() != null 
+                            ? assignee.getUserProfile().getAvatarUrl() : null)
                         .timestamp(task.getUpdatedAt() != null
                                 ? task.getUpdatedAt()
                                 : task.getCreatedAt())

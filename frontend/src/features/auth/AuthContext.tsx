@@ -49,8 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const updateSessionUser = useCallback((user: UserDto) => {
+    setCurrentUser(user)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ currentUser, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, isLoading, login, logout, updateSessionUser }}>
       {children}
     </AuthContext.Provider>
   )

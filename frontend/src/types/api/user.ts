@@ -1,6 +1,4 @@
-import type { Role, UserDto } from '../../mocks/types'
-
-export type { Role, UserDto }
+import type { Role, UserDto } from './auth'
 
 export type AdminUserListItem = UserDto & {
   createdAt?: string

@@ -64,6 +64,11 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        try {
+            jdbc.execute("ALTER TABLE user_profiles MODIFY COLUMN avatar_url LONGTEXT");
+        } catch (Exception e) {
+            System.out.println("Cột avatar_url chưa tồn tại hoặc đã được update.");
+        }
         ensureUser("admin@gmail.com", "Admin", Role.ADMIN);
         User teacher = ensureUser("teacher@gmail.com", "Teacher", Role.TEACHER);
         User studentA = ensureUser("student@gmail.com", "Student", Role.STUDENT);

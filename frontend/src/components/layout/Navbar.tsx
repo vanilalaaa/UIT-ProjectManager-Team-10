@@ -9,6 +9,7 @@ import {
   subscribeNotifPref,
 } from '../../lib/notificationPrefs'
 import GlobalSearch from './GlobalSearch'
+import Avatar from '../ui/Avatar'
 
 const HOUR = 60 * 60 * 1000
 
@@ -199,9 +200,12 @@ function Navbar() {
           className="flex items-center gap-3 rounded-lg border-l border-border pl-3 transition-colors hover:bg-surface-soft md:pl-4"
           to="/profile"
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
-            {isLoading ? '' : initials}
-          </div>
+          <Avatar 
+            name={displayName} 
+            avatarUrl={currentUser?.avatarUrl} 
+            sizeClass="size-10 shrink-0" 
+            textClass="text-sm font-semibold"
+          />
 
           <div className="hidden min-w-0 flex-col pr-3 sm:flex">
             {isLoading ? (

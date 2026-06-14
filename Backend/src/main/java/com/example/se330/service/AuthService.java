@@ -18,6 +18,7 @@ import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
 import com.example.se330.entity.User;
+import com.example.se330.entity.UserProfile;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
 
@@ -246,9 +247,23 @@ public class AuthService {
                         user.setEmail(request.getEmail());
                 }
 
+                // 1. Cập nhật bảng users
                 if (request.getName() != null && !request.getName().isBlank()) {
                         user.setName(request.getName());
                 }
+
+                // 2. Cập nhật bảng user_profiles
+                UserProfile profile = user.getUserProfile();
+                if (profile == null) {
+                        profile = new UserProfile();
+                        profile.setUser(user);
+                        user.setUserProfile(profile); 
+                }
+
+                if (request.getFirstName() != null) profile.setFirstName(request.getFirstName());
+                if (request.getLastName() != null) profile.setLastName(request.getLastName());
+                if (request.getSummary() != null) profile.setSummary(request.getSummary());
+                if (request.getAvatarUrl() != null) profile.setAvatarUrl(request.getAvatarUrl());
 
                 user.setUpdatedAt(LocalDateTime.now());
                 userRepository.save(user);
@@ -259,6 +274,7 @@ public class AuthService {
                                 .email(user.getEmail())
                                 .name(user.getName())
                                 .role(user.getRole().name())
+                                .avatarUrl(user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
                                 .build();
         }
 
@@ -276,6 +292,7 @@ public class AuthService {
                                 .name(user.getName())
                                 .role(user.getRole().name())
                                 .isActive(user.getIsActive())
+                                .avatarUrl(user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
                                 .build();
         }
 }
