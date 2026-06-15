@@ -4,14 +4,8 @@ import DueDateCard from '../../../components/ui/student/DueDateCard'
 import UploadFilesCard from '../../../components/ui/student/UploadFilesCard'
 import ProjectStatusCard from '../../../components/ui/student/ProjectStatusCard'
 import PreviousVersionsCard, { type Version } from '../../../components/ui/student/PreviousVersionsCard'
-import type { Project } from '../../../mocks/types'
-
-import { mockProjects } from '../../../mocks/projects.mock'
-
-const fetchProjectData = async (projectId: string | undefined): Promise<Project | null> => {
-  const project = mockProjects.find(p => p.projectId.toString() === projectId)
-  return new Promise(resolve => setTimeout(() => resolve(project || null), 500))
-}
+import type { Project } from '../../../types/api/project'
+import { getProjectById } from '../../../services/project.service'
 
 export default function ProjectSubmit() {
   const { projectId } = useParams()
@@ -21,7 +15,7 @@ export default function ProjectSubmit() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    fetchProjectData(projectId).then(data => {
+    getProjectById(projectId ?? '').then(data => {
       if (isMounted) {
         setProject(data)
         setLoading(false)
@@ -49,8 +43,8 @@ export default function ProjectSubmit() {
   const versions: Version[] = project.submissions?.map((sub, idx) => ({
     id: sub.submissionId,
     title: `Lần nộp ${idx + 1} (${sub.status})`,
-    date: new Date(sub.submittedAt).toLocaleString('vi-VN'),
-    file: sub.filePath.split('/').pop() || 'document.pdf',
+    date: sub.submittedAt ? new Date(sub.submittedAt).toLocaleString('vi-VN') : '',
+    file: sub.filePath?.split('/').pop() || 'document.pdf',
     isDraft: sub.status === 'DRAFT'
   })) || []
 
@@ -79,9 +73,9 @@ export default function ProjectSubmit() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 space-y-6">
-          <DueDateCard 
-            dueDate={project.endDate} 
-            timeRemaining={calculateTimeRemaining(project.endDate)} 
+          <DueDateCard
+            dueDate={project.endDate ?? ''}
+            timeRemaining={calculateTimeRemaining(project.endDate ?? '')}
           />
           <UploadFilesCard onSubmit={handleSubmit} />
         </div>

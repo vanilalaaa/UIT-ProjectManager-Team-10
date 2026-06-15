@@ -8,19 +8,24 @@ import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalRequestSidebar'
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
-import { mockProjects, mockProjectRequests } from '../../../mocks/projects.mock'
-import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
-import { mockCourseRequirements } from '../../../mocks/tasks.mock'
+import type { Project } from '../../../types/api/project'
+import type { PendingRegistration } from '../../../types/api/registration'
+import { getCourseProjects } from '../../../services/project.service'
+import {
+  approveRegistration,
+  getPendingRegistrations,
+  rejectRegistration,
+} from '../../../services/registration.service'
 
 export default function TeacherProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
   const id = Number(courseId)
   const [loading, setLoading] = useState(true)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [projectToDelete, setProjectToDelete] = useState<any>(null)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   
-  const [requests, setRequests] = useState<ProjectApprovalRequest[]>([])
-  const [selectedRequest, setSelectedRequest] = useState<ProjectApprovalRequest | null>(null)
+  const [requests, setRequests] = useState<PendingRegistration[]>([])
+  const [selectedRequest, setSelectedRequest] = useState<PendingRegistration | null>(null)
   
   const [notification, setNotification] = useState({
     isOpen: false,
@@ -28,36 +33,46 @@ export default function TeacherProjectList() {
     message: ''
   })
 
-  const courseProjects = mockProjects.filter(p => p.course.courseId === id)
-  const courseInfo = courseProjects.length > 0 ? courseProjects[0].course : null
-  const courseCategory = courseProjects.length > 0 ? courseProjects[0].category : null
-  const courseRequirements = mockCourseRequirements[id] || null
+  const [courseProjects, setCourseProjects] = useState<Project[]>([])
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    setRequests(mockProjectRequests)
-
-    setTimeout(() => {
-      if (isMounted) setLoading(false)
-    }, 500)
+    Promise.all([getCourseProjects(id), getPendingRegistrations(id)]).then(([projects, reqs]) => {
+      if (!isMounted) return
+      setCourseProjects(projects)
+      setRequests(reqs)
+      setLoading(false)
+    })
     return () => { isMounted = false }
-  }, [courseId])
+  }, [courseId, id])
 
   const triggerNotification = (title: string, message: string) => {
     setNotification({ isOpen: true, title, message })
   }
 
-  const handleAcceptRequest = (requestId: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation() 
-    triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}`)
-    setRequests(prev => prev.filter(r => r.requestId !== requestId))
+  const handleAcceptRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
+    e.stopPropagation()
+    setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
+    approveRegistration(registrationId, note)
+      .then(() => {
+        const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+        triggerNotification('Thành công', `Đã phê duyệt thành công đề tài: ${title}${noteSuffix}`)
+        // Đề tài vừa duyệt giờ đã có nhóm → tải lại danh sách để hiển thị.
+        return getCourseProjects(id).then(setCourseProjects)
+      })
+      .catch(() => triggerNotification('Lỗi', 'Không duyệt được yêu cầu đăng ký.'))
   }
 
-  const handleDeclineRequest = (requestId: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation() 
-    triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}`)
-    setRequests(prev => prev.filter(r => r.requestId !== requestId))
+  const handleDeclineRequest = (registrationId: number, title: string, e: React.MouseEvent, note?: string) => {
+    e.stopPropagation()
+    setRequests((prev) => prev.filter((r) => r.registrationId !== registrationId))
+    rejectRegistration(registrationId, note)
+      .then(() => {
+        const noteSuffix = note?.trim() ? `\nNhận xét: "${note.trim()}"` : ''
+        triggerNotification('Thông báo', `Đã từ chối yêu cầu đăng ký: ${title}${noteSuffix}`)
+      })
+      .catch(() => triggerNotification('Lỗi', 'Không từ chối được yêu cầu đăng ký.'))
   }
 
   const handleDeleteConfirm = () => {
@@ -66,7 +81,6 @@ export default function TeacherProjectList() {
   }
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
-  if (!courseInfo) return <div className="p-8 text-center text-text-soft font-medium">Không tìm thấy thông tin lớp học.</div>
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20 px-4 relative">
@@ -78,11 +92,7 @@ export default function TeacherProjectList() {
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />
 
-      <CourseRequirementCard 
-        course={courseInfo} 
-        category={courseCategory} 
-        requirements={courseRequirements} 
-      />
+      <CourseRequirementCard courseId={id} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
@@ -92,8 +102,7 @@ export default function TeacherProjectList() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {courseProjects.map((project) => {
-              const firstRegistration = project.registrations?.[0]
-              const groupNameDisplay = firstRegistration ? `Nhóm ${firstRegistration.groupId}` : undefined
+              const groupNameDisplay = project.groupName ?? undefined
 
               return (
                 <ProjectCard 
@@ -103,7 +112,7 @@ export default function TeacherProjectList() {
                   isTeacherView={true}
                   groupName={groupNameDisplay}
                   onDelete={() => {
-                    if (new Date(project.endDate) < new Date()) {
+                    if (project.endDate && new Date(project.endDate) < new Date()) {
                       triggerNotification('Lỗi hệ thống', "Đề tài đã quá hạn, không được phép xóa!")
                     } else {
                       setProjectToDelete(project)

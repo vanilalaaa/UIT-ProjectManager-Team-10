@@ -1,22 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockProjects } from '../../../mocks/projects.mock';
-import * as MockData from '../../../mocks/tasks.mock';
+import { getProjectById } from '../../../services/project.service';
 import StatusBadge from '../../../components/ui/student/StatusBadge';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import type { Project } from '../../../types/api/project';
 
 export default function TeamSubmit() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  
-  const project = mockProjects.find((p) => p.projectId.toString() === projectId);
-  
-  const getGroupName = (groupId: number) => {
-    const groups = [MockData.groupPhoenix, MockData.groupAster, MockData.groupNimbus, MockData.groupOrion];
-    const foundGroup = groups.find(g => g.groupId === groupId);
-    return foundGroup ? foundGroup.name : `Nhóm ${groupId}`;
-  };
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    getProjectById(projectId ?? '').then((p) => {
+      if (!isMounted) return;
+      setProject(p);
+      setLoading(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [projectId]);
+
+  if (loading) return <LoadingSpinner message="Đang tải bài nộp..." />;
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy dự án.</div>;
 
   return (
@@ -26,17 +35,17 @@ export default function TeamSubmit() {
         <div key={sub.submissionId} className="bg-surface border border-border rounded-xl shadow-soft overflow-hidden transition-all">
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <a 
-                href={sub.filePath} 
-                download 
+              <a
+                href={sub.filePath ?? '#'}
+                download
                 className="font-bold text-sm text-primary hover:underline cursor-pointer"
               >
-                {sub.filePath.split('/').pop()}
+                {sub.filePath?.split('/').pop()}
               </a>
             </div>
             <div className="flex items-center gap-4">
               <StatusBadge status={sub.status} />
-              <button 
+              <button
                 onClick={() => setExpandedId(expandedId === sub.submissionId ? null : sub.submissionId)}
                 className="text-xs font-bold text-primary hover:underline"
               >
@@ -51,7 +60,7 @@ export default function TeamSubmit() {
                 <div>
                   <p className="text-text-soft">Nhóm thực hiện:</p>
                   <p className="font-bold text-text truncate">
-                    {project.registrations?.[0] ? getGroupName(project.registrations[0].groupId) : "Nhóm sinh viên"}
+                    {project.groupName ?? 'Nhóm sinh viên'}
                   </p>
                 </div>
                 <div>
@@ -59,7 +68,7 @@ export default function TeamSubmit() {
                   <p className="font-bold text-text">{sub.submittedAt}</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => navigate(`/teacher/my-course/1/project-list/${projectId}/grades`)}
                 className="w-full py-2 bg-primary text-white rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
               >

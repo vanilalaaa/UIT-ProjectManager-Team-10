@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import TaskCard from '../../../components/ui/student/TaskCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CreateTaskModal from '../../../components/ui/student/CreateTaskModal'
-import type { Task, User, Group } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { mockTasks, mockMyGroupMap, mockCourseMembersMap } from '../../../mocks/tasks.mock'
+import type { Task, UserLite, BoardGroup, NewTaskInput } from '../../../types/api/task'
+import {
+  getProjectBoard,
+  createTask,
+  updateTaskStatus,
+  deleteTask,
+} from '../../../services/task.service'
 
 const COLUMNS = [
   { id: 'TODO', title: 'To Do', dot: 'bg-text-soft', text: 'text-text-soft' },
@@ -14,28 +19,11 @@ const COLUMNS = [
   { id: 'DONE', title: 'Done', dot: 'bg-secondary', text: 'text-secondary' }
 ]
 
-const fetchBoardData = async (projectId: string | undefined) => {
-  return new Promise<{ tasks: Task[], currentUser: User | null, currentGroup: Group | null }>(resolve => {
-    setTimeout(() => {
-      const project = mockProjects.find(p => p.projectId.toString() === projectId)
-      const courseId = project?.course?.courseId || 1
-      
-      const group = mockMyGroupMap[courseId] || null
-      const members = mockCourseMembersMap[courseId] || []
-      
-      const currentUser = members.length > 0 ? members[0] : null
-      const groupTasks = group ? mockTasks.filter(t => t.group.groupId === group.groupId) : []
-
-      resolve({ tasks: groupTasks, currentUser, currentGroup: group })
-    }, 500)
-  })
-}
-
 export default function ProjectKanban() {
   const { projectId } = useParams<{ projectId: string }>()
   const [tasks, setTasks] = useState<Task[]>([])
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentUser, setCurrentUser] = useState<UserLite | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<BoardGroup | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -44,23 +32,30 @@ export default function ProjectKanban() {
     let isMounted = true
     setLoading(true)
 
-    fetchBoardData(projectId).then(data => {
-      if (isMounted) {
+    getProjectBoard(projectId ?? '')
+      .then(data => {
+        if (!isMounted) return
         setTasks(data.tasks)
         setCurrentUser(data.currentUser)
-        setCurrentGroup(data.currentGroup)
-        setLoading(false)
-      }
-    })
+        setCurrentGroup(data.group)
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setTasks([])
+        setCurrentGroup(null)
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
 
     return () => { isMounted = false }
   }, [projectId])
 
-  const isLeader = Boolean(currentGroup && currentUser && currentGroup.leader.userId === currentUser.userId)
+  const isLeader = Boolean(currentGroup && currentUser && currentGroup.leaderId === currentUser.id)
 
-  const filteredTasks = tasks.filter(t => 
+  const filteredTasks = tasks.filter(t =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.assignedTo.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (t.assignee?.name ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const onDragStart = (e: React.DragEvent, taskId: number) => {
@@ -74,36 +69,48 @@ export default function ProjectKanban() {
 
     if (!taskToMove || !currentUser) return
 
-    if (!isLeader && taskToMove.assignedTo.userId !== currentUser.userId) {
-      alert("Cảnh báo: Bạn chỉ được quyền cập nhật trạng thái Task do chính bạn phụ trách!")
+    if (!isLeader && taskToMove.assignee?.id !== currentUser.id) {
+      toast.error('Bạn chỉ được cập nhật trạng thái Task do chính bạn phụ trách!')
       return
     }
 
-    setTasks(prev => prev.map(t => 
-      t.taskId === taskId ? { ...t, status: newStatus } : t
-    ))
+    if (taskToMove.status === newStatus) return
+    const prevStatus = taskToMove.status
+
+    setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: newStatus } : t))
+
+    updateTaskStatus(taskId, { status: newStatus }).catch(() => {
+      setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: prevStatus } : t))
+      toast.error('Không cập nhật được trạng thái Task.')
+    })
   }
 
   const handleDeleteTask = (taskId: number) => {
-    if (confirm("Xác nhận xóa Task này khỏi hệ thống?")) {
-      setTasks(prev => prev.filter(t => t.taskId !== taskId))
-    }
+    if (!confirm('Xác nhận xóa Task này khỏi hệ thống?')) return
+    const snapshot = tasks
+    setTasks(prev => prev.filter(t => t.taskId !== taskId))
+    deleteTask(taskId)
+      .then(() => toast.success('Đã xóa Task.'))
+      .catch(() => {
+        setTasks(snapshot)
+        toast.error('Không xóa được Task.')
+      })
   }
 
-  const handleCreateTask = (newTask: Partial<Task>) => {
-    if (!currentUser || !currentGroup) return
-    
-    const task: Task = {
-      ...newTask,
-      taskId: Math.floor(Math.random() * 10000),
-      createdBy: currentUser,
-      status: 'TODO',
-      group: currentGroup,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as Task
-
-    setTasks(prev => [task, ...prev])
+  const handleCreateTask = (form: NewTaskInput) => {
+    if (!currentGroup) return
+    createTask(projectId ?? '', {
+      title: form.title,
+      description: form.description,
+      assignedToId: form.assignedToId,
+      groupId: currentGroup.groupId,
+      deadline: form.deadline,
+    })
+      .then(res => {
+        setTasks(prev => [{ ...res.data, priority: form.priority }, ...prev])
+        toast.success('Đã tạo Task.')
+      })
+      .catch(() => toast.error('Không tạo được Task.'))
   }
 
   if (loading) return <LoadingSpinner message="Đang tải bảng công việc..." />
@@ -125,7 +132,7 @@ export default function ProjectKanban() {
           />
         </div>
 
-        <button 
+        <button
           onClick={() => setIsCreateModalOpen(true)}
           className="bg-primary hover:bg-primary/95 text-surface px-5 py-2.5 rounded-button font-semibold text-sm shadow-soft transition-colors flex items-center justify-center gap-2"
         >
@@ -139,9 +146,9 @@ export default function ProjectKanban() {
       <div className="flex gap-6 items-start h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto pb-6 pr-2">
         {COLUMNS.map(col => {
           const colTasks = filteredTasks.filter(t => t.status === col.id)
-          
+
           return (
-            <div 
+            <div
               key={col.id}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => onDrop(e, col.id)}
@@ -159,12 +166,12 @@ export default function ProjectKanban() {
 
               {colTasks.map(task => (
                 <div key={task.taskId} className="relative group">
-                  <TaskCard 
-                    task={task} 
+                  <TaskCard
+                    task={task}
                     onDragStart={(e) => onDragStart(e, task.taskId)}
                   />
                   {isLeader && (
-                    <button 
+                    <button
                       onClick={() => handleDeleteTask(task.taskId)}
                       className="absolute -top-2 -right-2 size-6 bg-warning text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
                       title="Xóa Task"
@@ -187,11 +194,11 @@ export default function ProjectKanban() {
         })}
       </div>
 
-      <CreateTaskModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+      <CreateTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateTask}
-        members={currentGroup.members as User[]}
+        members={currentGroup.members}
       />
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getStatDetailMock as getStatDetail } from '../../../mocks/home.mock';
+import { getStatDetail } from '../../../services/home.service';
 import type { StatDetailItem, StatDetailType } from '../../../types/api/home';
 
 type StatItem = {

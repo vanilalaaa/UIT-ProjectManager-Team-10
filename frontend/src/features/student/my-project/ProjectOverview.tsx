@@ -1,72 +1,62 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Project, Group, User } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import type { Team } from '../../../types/api/team'
+import type { Project } from '../../../types/api/project'
+import {
+  getProjectById,
+  getProjectActivities,
+  getProjectResources,
+  type ProjectActivity,
+} from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 import ProjectDetailCard from '../../../components/ui/student/ProjectDetailCard'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import Avatar from '../../../components/ui/Avatar'
-
-const MOCK_ACTIVITIES = [
-  {
-    id: 1,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã nộp tệp đính kèm',
-    target: 'srs-v1.pdf',
-    time: '2 giờ trước'
-  },
-  {
-    id: 2,
-    user: { name: 'Nguyễn Minh An', avatarUrl: null },
-    action: 'đã chuyển trạng thái đồ án task',
-    target: 'IN_PROGRESS',
-    time: '1 ngày trước'
-  },
-  {
-    id: 3,
-    user: { name: 'Lê Hoàng Vy', avatarUrl: null },
-    action: 'đã chuyển trạng thái Task ',
-    target: 'Website quản lý đồ án môn SE330',
-    time: '3 ngày trước'
-  },
-  {
-    id: 4,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã tạo task cho Lê Hoàng Vy ',
-    target: 'Thiết kế API danh sách đồ án',
-    time: '2 giờ trước'
-  },
-];
+import ProjectResourcesCard, { type ProjectResource } from '../../../components/ui/student/ProjectResourcesCard'
+import { useAuth } from '../../auth/useAuth'
 
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>()
-  
+
+  const { currentUser } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
+  const [resources, setResources] = useState<ProjectResource[]>([])
+  const [activities, setActivities] = useState<ProjectActivity[]>([])
+
+  const handleAddResource = (resource: Omit<ProjectResource, 'id'>) => {
+    setResources(prev => [{ ...resource, id: `r${Date.now()}` }, ...prev])
+  }
+
+  const handleRemoveResource = (id: string) => {
+    setResources(prev => prev.filter(r => r.id !== id))
+  }
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
-        setProject(foundProject || null)
+    const pid = projectId ?? ''
 
-        const registration = foundProject?.registrations?.[0]
-        if (registration) {
-          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-          const group = allGroups.find(g => g.groupId === registration.groupId)
-          setCurrentGroup(group || null)
+    Promise.all([getProjectById(pid), getProjectActivities(pid), getProjectResources(pid)]).then(
+      async ([foundProject, acts, res]) => {
+        if (!isMounted) return
+        setProject(foundProject)
+        setActivities(acts)
+        setResources(res)
+
+        const groupId = foundProject?.groupId
+        if (groupId) {
+          const group = await getGroupById(groupId)
+          if (isMounted) setCurrentGroup(group)
         }
         setLoading(false)
-      }
-    }, 500)
+      },
+    )
 
     return () => { isMounted = false }
   }, [projectId])
@@ -74,12 +64,23 @@ export default function ProjectOverview() {
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
 
-  const registration = project.registrations?.[0]
-  const isRegistered = !!registration
+  const isRegistered = project.groupId != null
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 
-  const displayedActivities = MOCK_ACTIVITIES.slice(0, 4)
+  const groupLeader = currentGroup?.members.find((m) => m.isLeader) ?? null
+  const isGroupLeader = !!(
+    groupLeader &&
+    currentUser &&
+    (currentUser.uid === groupLeader.uid || currentUser.email === groupLeader.email)
+  )
+  const isMemberOfGroup =
+    currentGroup?.members?.some(m => m.uid === currentUser?.uid || m.email === currentUser?.email) ?? false
+  // Mock: user đăng nhập (BE seed) chưa chắc khớp nhóm mock → cho quản lý ở chế độ xem thử.
+  // Khi nối nhóm thật, đổi thành: const canManageResources = isGroupLeader
+  const canManageResources = isGroupLeader || !isMemberOfGroup
+
+  const displayedActivities = activities.slice(0, 4)
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -125,8 +126,9 @@ export default function ProjectOverview() {
       </div>
 
       {isRegistered && currentGroup && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          
+
           <div className="lg:col-span-1 rounded-[28px] border border-border bg-surface p-6 shadow-xl flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-text flex items-center gap-2">
@@ -166,8 +168,8 @@ export default function ProjectOverview() {
             </div>
 
             <div className="flex flex-col">
-              {((currentGroup.members as User[]) || []).map((member: User) => {
-                const isLeader = member.userId === currentGroup.leader?.userId
+              {(currentGroup.members || []).map((member) => {
+                const isLeader = member.isLeader
                 return (
                   <MemberRow 
                     key={member.userId}
@@ -188,8 +190,16 @@ export default function ProjectOverview() {
               })}
             </div>
           </div>
-          
+
         </div>
+
+        <ProjectResourcesCard
+          resources={resources}
+          canManage={canManageResources}
+          onAdd={handleAddResource}
+          onRemove={handleRemoveResource}
+        />
+        </>
       )}
     </div>
   )

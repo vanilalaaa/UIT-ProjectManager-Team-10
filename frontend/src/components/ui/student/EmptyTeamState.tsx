@@ -1,49 +1,76 @@
-import { useState } from 'react';
-import { mockCourseGroupsMap, mockClassMembers } from '../../../mocks/tasks.mock';
+import { useEffect, useState } from 'react';
 import Avatar from '../Avatar';
 import NotificationModal from './NotificationModal';
-
-const MOCK_AVAILABLE_TEAMS = (mockCourseGroupsMap[1] || []).map(group => ({
-  id: group.groupId,
-  name: group.name,
-  slotsLeft: Math.max(0, 5 - (group.members?.length || 0)),
-  desc: group.description,
-  members: group.members || [] 
-}));
-
-const MOCK_INVITATIONS = mockClassMembers.slice(4, 12).map(user => ({
-  id: user.userId,
-  name: user.name,
-  info: user.userProfile?.summary || 'Sinh viên',
-  avatarUrl: user.userProfile?.avatarUrl || null
-}));
+import {
+  getCourseGroups,
+  getMyInvitations,
+  requestJoinTeam,
+  acceptInvitation,
+  declineInvitation,
+  type Invitation,
+} from '../../../services/team.service';
+import type { Team } from '../../../types/api/team';
 
 interface EmptyTeamStateProps {
   onCreateTeamClick: () => void;
-  onAcceptInvitation: (invite: any) => void;
+  onAcceptInvitation: () => void;
+  courseId?: string;
 }
 
-export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }: EmptyTeamStateProps) {
-  const [invitations, setInvitations] = useState(MOCK_INVITATIONS);
+export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation, courseId }: EmptyTeamStateProps) {
+  const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
-  
+
   const [showAllTeams, setShowAllTeams] = useState(false);
   const [showAllInvites, setShowAllInvites] = useState(false);
 
-  const displayedTeams = showAllTeams ? MOCK_AVAILABLE_TEAMS : MOCK_AVAILABLE_TEAMS.slice(0, 6);
+  useEffect(() => {
+    let alive = true;
+    Promise.all([getCourseGroups(courseId ?? '1'), getMyInvitations()]).then(([teams, invites]) => {
+      if (!alive) return;
+      setAvailableTeams(teams);
+      setInvitations(invites);
+    });
+    return () => { alive = false; };
+  }, [courseId]);
+
+  const displayedTeams = showAllTeams ? availableTeams : availableTeams.slice(0, 6);
   const displayedInvites = showAllInvites ? invitations : invitations.slice(0, 3);
 
-  const handleAccept = (invite: any) => {
-    setInvitations(prev => prev.filter(item => item.id !== invite.id));
-    onAcceptInvitation(invite);
+  const handleRequestJoin = (team: Team) => {
+    requestJoinTeam(courseId ?? '', team.groupId)
+      .then(() =>
+        setNotification({
+          title: 'Gửi yêu cầu thành công',
+          message: `Yêu cầu tham gia nhóm "${team.name}" của bạn đã được gửi!`,
+        }),
+      )
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không gửi được yêu cầu tham gia.' }),
+      );
   };
 
-  const handleDecline = (invite: any) => {
-    setNotification({ 
-      title: 'Đã từ chối', 
-      message: `Bạn đã từ chối lời mời từ ${invite.name}.` 
-    });
-    setInvitations(prev => prev.filter(item => item.id !== invite.id));
+  const handleAccept = (invite: Invitation) => {
+    acceptInvitation(invite.groupMemberId)
+      .then(() => {
+        setInvitations(prev => prev.filter(item => item.groupMemberId !== invite.groupMemberId));
+        onAcceptInvitation();
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không tham gia được nhóm.' }),
+      );
+  };
+
+  const handleDecline = (invite: Invitation) => {
+    declineInvitation(invite.groupMemberId)
+      .then(() => {
+        setNotification({ title: 'Đã từ chối', message: `Bạn đã từ chối lời mời từ nhóm ${invite.groupName}.` });
+        setInvitations(prev => prev.filter(item => item.groupMemberId !== invite.groupMemberId));
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ title: 'Lỗi', message: err?.message || 'Không từ chối được lời mời.' }),
+      );
   };
 
   return (
@@ -57,7 +84,7 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }
             </svg>
             Available Teams
           </h2>
-          {MOCK_AVAILABLE_TEAMS.length > 6 && (
+          {availableTeams.length > 6 && (
             <button 
               onClick={() => setShowAllTeams(!showAllTeams)} 
               className="text-indigo-600 text-sm font-medium hover:underline"
@@ -68,44 +95,44 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {displayedTeams.map((team) => (
-            <div key={team.id} className="border border-border rounded-xl p-5 flex flex-col h-full hover:border-indigo-300 transition-colors bg-white">
+          {displayedTeams.map((team) => {
+            const slotsLeft = Math.max(0, 5 - team.memberCount)
+            return (
+            <div key={team.groupId} className="border border-border rounded-xl p-5 flex flex-col h-full hover:border-indigo-300 transition-colors bg-white">
               <div className="mb-3">
                 <h3 className="font-bold text-text truncate text-sm">{team.name}</h3>
                 <span className="bg-orange-50 text-orange-600 text-[8px] font-extrabold px-1.5 py-0.5 rounded border border-blue-200/60 whitespace-nowrap uppercase tracking-wider">
-                  {team.slotsLeft} {team.slotsLeft === 1 ? 'SLOT LEFT' : 'SLOTS LEFT'}
+                  {slotsLeft} {slotsLeft === 1 ? 'SLOT LEFT' : 'SLOTS LEFT'}
                 </span>
               </div>
 
               <p className="text-xs text-text-soft line-clamp-2 mb-4 flex-grow leading-relaxed">
-                {team.desc}
+                {team.description}
               </p>
-              
+
               <div className="flex items-center justify-between gap-4 mt-auto">
                 <div className="flex -space-x-2 items-center">
                   {team.members.map((member) => (
-                    <Avatar 
+                    <Avatar
                       key={member.userId}
                       name={member.name}
-                      avatarUrl={member.userProfile?.avatarUrl}
+                      avatarUrl={member.avatar}
                       sizeClass="size-8"
                       className="border-2 border-white"
                     />
                   ))}
                 </div>
-                
-                <button 
-                  onClick={() => setNotification({
-                      title: 'Gửi yêu cầu thành công',
-                      message: `Yêu cầu tham gia nhóm "${team.name}" của bạn đã được gửi!`
-                  })}
+
+                <button
+                  onClick={() => handleRequestJoin(team)}
                   className="bg-brand-gradient text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0 w-[80px] h-10 flex items-center justify-center text-center"
                 >
                   Request to Join
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -142,18 +169,17 @@ export default function EmptyTeamState({ onCreateTeamClick, onAcceptInvitation }
 
           <div className="space-y-3">
             {displayedInvites.map((invite) => (
-              <div key={invite.id} className="bg-white border border-border/80 rounded-xl p-3 flex flex-col gap-3 shadow-sm hover:border-primary/20 transition-colors">
+              <div key={invite.groupMemberId} className="bg-white border border-border/80 rounded-xl p-3 flex flex-col gap-3 shadow-sm hover:border-primary/20 transition-colors">
                 <div className="flex items-center gap-3">
-                  <Avatar 
-                    name={invite.name}
-                    avatarUrl={invite.avatarUrl}
+                  <Avatar
+                    name={invite.groupName}
                     sizeClass="size-9"
                     className="border border-border shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-text truncate">{invite.name}</h4>
+                    <h4 className="text-xs font-bold text-text truncate">{invite.groupName}</h4>
                     <p className="text-[10px] text-text-soft truncate mt-0.5">
-                      {invite.info}
+                      Trưởng nhóm {invite.leaderName} · {invite.memberCount} thành viên
                     </p>
                   </div>
                 </div>

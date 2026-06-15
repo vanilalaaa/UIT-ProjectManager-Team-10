@@ -86,10 +86,6 @@ public class SubmissionService {
         return submission;
     }
 
-    /**
-     * Bài nộp bị khóa khi project đã được scheduled job đánh dấu khóa,
-     * hoặc đã qua thời hạn nộp (hết ngày endDate) — phòng trường hợp job chưa kịp chạy.
-     */
     public boolean isSubmissionLocked(Project project) {
         if (project.isSubmissionLocked()) {
             return true;

@@ -1,24 +1,27 @@
-/**
- * Navbar.tsx
- *
- * Top navigation bar. Reads currentUser from AuthContext — no local fetch.
- * This eliminates the duplicate API call that the old implementation made.
- */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useAuth } from '../../features/auth/useAuth'
+import {
+  enableNotifications as enablePref,
+  isNotificationsEnabled,
+  muteNotifications as mutePref,
+  subscribeNotifPref,
+} from '../../lib/notificationPrefs'
 import GlobalSearch from './GlobalSearch'
+
+const HOUR = 60 * 60 * 1000
 
 type NotificationOption = {
   label: string
-  value: string
+  durationMs: number | null
 }
 
 const notificationOptions: NotificationOption[] = [
-  { label: 'Trong 1 giờ', value: '1h' },
-  { label: 'Trong 12 giờ', value: '12h' },
-  { label: 'Trong 24 giờ', value: '24h' },
-  { label: 'Cho đến khi tôi bật lại', value: 'forever' },
+  { label: 'Trong 1 giờ', durationMs: HOUR },
+  { label: 'Trong 12 giờ', durationMs: 12 * HOUR },
+  { label: 'Trong 24 giờ', durationMs: 24 * HOUR },
+  { label: 'Cho đến khi tôi bật lại', durationMs: null },
 ]
 
 function getPageTitle(pathname: string): string {
@@ -32,7 +35,7 @@ function getPageTitle(pathname: string): string {
   return 'EduCollaborate'
 }
 
-function BellIcon() {
+function BellIcon({ muted = false }: { muted?: boolean }) {
   return (
     <svg
       aria-hidden="true"
@@ -45,6 +48,7 @@ function BellIcon() {
       viewBox="0 0 24 24"
     >
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+      {muted ? <path d="M3 3l18 18" /> : null}
     </svg>
   )
 }
@@ -61,19 +65,44 @@ function getInitials(name = '') {
 
 function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [enabled, setEnabled] = useState<boolean>(() => isNotificationsEnabled())
+  const [mutedLabel, setMutedLabel] = useState<string | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => subscribeNotifPref(setEnabled), [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [isOpen])
+
+  const enableNotifications = () => {
+    setMutedLabel(null)
+    enablePref()
+    toast.success('Đã bật lại thông báo.')
+  }
+
+  const muteNotifications = (label: string, durationMs: number | null) => {
+    setMutedLabel(label)
+    mutePref(durationMs)
+    toast.success(`Đã tắt cập nhật hoạt động (${label.toLowerCase()}).`)
+  }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       <button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label="Thông báo"
+        aria-label={enabled ? 'Thông báo đang bật' : 'Thông báo đang tắt'}
         className="flex size-10 items-center justify-center rounded-lg text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
         onClick={() => setIsOpen((c) => !c)}
         type="button"
       >
-        <BellIcon />
+        <BellIcon muted={!enabled} />
       </button>
 
       {isOpen ? (
@@ -81,28 +110,64 @@ function NotificationDropdown() {
           className="absolute right-0 top-12 z-20 w-64 rounded-card border border-border bg-surface p-2 shadow-card"
           role="menu"
         >
-          <p className="px-3 py-2 text-sm font-semibold text-text">Tắt thông báo đẩy</p>
-          <div className="space-y-1">
-            {notificationOptions.map((option) => (
-              <button
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-sm font-semibold text-text">Thông báo đẩy</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              onClick={() => (enabled ? muteNotifications('Cho đến khi tôi bật lại', null) : enableNotifications())}
+              className={[
+                'relative h-5 w-9 rounded-full transition-colors',
+                enabled ? 'bg-primary' : 'bg-border',
+              ].join(' ')}
+            >
+              <span
                 className={[
-                  'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                  selectedOption === option.value
-                    ? 'bg-primary-soft text-primary'
-                    : 'text-text-soft hover:bg-surface-soft hover:text-text',
+                  'absolute top-0.5 size-4 rounded-full bg-surface shadow transition-all',
+                  enabled ? 'left-[18px]' : 'left-0.5',
                 ].join(' ')}
-                key={option.value}
+              />
+            </button>
+          </div>
+
+          <div className="h-px bg-border" />
+
+          {enabled ? (
+            <div className="mt-1 space-y-1">
+              <p className="px-3 py-1 text-xs font-medium text-text-soft">Tạm tắt thông báo trong</p>
+              {notificationOptions.map((option) => (
+                <button
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
+                  key={option.label}
+                  onClick={() => {
+                    muteNotifications(option.label, option.durationMs)
+                    setIsOpen(false)
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-1 space-y-2 px-3 py-2">
+              <p className="text-sm text-text-soft">
+                Đang tắt thông báo{mutedLabel ? ` · ${mutedLabel.toLowerCase()}` : ''}.
+              </p>
+              <button
+                type="button"
                 onClick={() => {
-                  setSelectedOption(option.value)
+                  enableNotifications()
                   setIsOpen(false)
                 }}
-                role="menuitem"
-                type="button"
+                className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-surface transition-opacity hover:opacity-90"
               >
-                {option.label}
+                Bật lại thông báo
               </button>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>

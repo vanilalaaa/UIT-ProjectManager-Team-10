@@ -2,114 +2,52 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CourseCard, { type CourseCardData } from '../../../components/ui/student/CourseCard'
-import JoinCourseModal from '../../../components/ui/student/JoinCourseModal' 
-import type { User, Project } from '../../../mocks/types'
-
-import { mockProjects } from '../../../mocks/projects.mock'
-import { mockCourseMembersMap } from '../../../mocks/tasks.mock'
-
-const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
-  const uniqueCoursesMap = new Map<number, CourseCardData>()
-
-  projects.forEach((project) => {
-    const course = project.course
-    if (course && !uniqueCoursesMap.has(course.courseId)) {
-      const nameParts = course.name.split(' - ')
-      const courseCode = nameParts[0] || 'COURSE'
-      const courseName = nameParts[1] || course.name
-
-      const allCourseUsers: User[] = []
-      const courseGroups = course.groups || []
-      
-      courseGroups.forEach((group) => {
-        if (group.members) {
-          group.members.forEach((m) => {
-            const member = m as User
-            if (member && !allCourseUsers.some(u => u.userId === member.userId)) {
-              allCourseUsers.push(member)
-            }
-          })
-        }
-      })
-
-      const totalActualMembers = mockCourseMembersMap[course.courseId]?.length || allCourseUsers.length
-      
-      const memberAvatars = (mockCourseMembersMap[course.courseId] || allCourseUsers)
-        .map(user => ({
-          name: user.name,
-          avatarUrl: user.userProfile?.avatarUrl || null 
-        }))
-        .slice(0, 3)
-
-      uniqueCoursesMap.set(course.courseId, {
-        id: course.courseId,
-        code: courseCode,
-        name: courseName,
-        lecturer: course.lecturer?.name || 'Chưa phân công',
-        semester: 'Fall Semester 2026',
-        projectsCount: projects.filter((p) => p.course.courseId === course.courseId).length,
-        membersCount: totalActualMembers,
-        memberAvatars: memberAvatars, 
-        extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
-        _maxStudents: course.maxStudents || 120 
-      } as CourseCardData & { _maxStudents: number })
-    }
-  })
-  
-  return Array.from(uniqueCoursesMap.values())
-}
+import JoinCourseModal from '../../../components/ui/student/JoinCourseModal'
+import { listStudentCourseCards, requestJoinCourse } from '../../../services/course.service'
+import type { ApiError } from '../../../lib/api/axiosClient'
 
 export default function MyCoursePage() {
   const [courses, setCourses] = useState<CourseCardData[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [joinError, setJoinError] = useState('')
 
-  useEffect(() => {
-    let isMounted = true
+  const fetchCourses = () => {
     setLoading(true)
+    setError(null)
+    listStudentCourseCards()
+      .then(setCourses)
+      .catch((err) => {
+        const apiErr = err as ApiError
+        setError(apiErr?.message ?? 'Không tải được danh sách lớp.')
+      })
+      .finally(() => setLoading(false))
+  }
 
-    setTimeout(() => {
-      if (isMounted) {
-        setCourses(transformProjectsToCourses(mockProjects))
-        setLoading(false)
-      }
-    }, 500)
-    
-    return () => { isMounted = false }
+  useEffect(() => {
+    fetchCourses()
   }, [])
 
-  const handleJoinCourseSubmit = (code: string) => {
+  const handleJoinCourseSubmit = async (code: string) => {
     setJoinError('')
-    const codeToJoin = code.trim().toUpperCase()
-
+    const codeToJoin = code.trim()
     if (!codeToJoin) {
       setJoinError('Chưa nhập mã lớp!')
       return
     }
-
-    const allDatabaseCourses = transformProjectsToCourses(mockProjects) as Array<CourseCardData & { _maxStudents: number }>
-    const targetCourse = allDatabaseCourses.find(c => c.code.toUpperCase() === codeToJoin || c.id.toString() === codeToJoin)
-
-    if (!targetCourse) {
-      setJoinError('Mã lớp không tồn tại!')
-      return
+    try {
+      await requestJoinCourse({ code: codeToJoin })
+      toast.success('Đã tham gia lớp thành công!')
+      setIsJoinModalOpen(false)
+      fetchCourses()
+    } catch (err) {
+      const apiErr = err as ApiError
+      if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
+        setJoinError(apiErr?.message || 'Tham gia lớp thất bại.')
+      }
     }
-
-    if (courses.some(c => c.id === targetCourse.id)) {
-      setJoinError('Bạn đã tham gia lớp học này rồi!')
-      return
-    }
-
-    if (targetCourse.membersCount >= targetCourse._maxStudents) {
-      setJoinError(`Lớp này đã đạt sĩ số tối đa (${targetCourse._maxStudents} SV). Rất tiếc!`)
-      return
-    }
-
-    toast.success(`Đã vào lớp ${targetCourse.code} thành công!`)
-    setCourses(prev => [...prev, targetCourse])
-    setIsJoinModalOpen(false)
   }
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách khóa học..." />
@@ -130,11 +68,29 @@ export default function MyCoursePage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <CourseCard key={course.id} course={course} />
-        ))}
-      </div>
+      {error ? (
+        <div className="text-center py-16 bg-surface border border-border rounded-2xl shadow-sm space-y-3">
+          <p className="text-red-500 font-medium">{error}</p>
+          <button
+            onClick={fetchCourses}
+            className="rounded-md border border-border px-4 py-1.5 text-sm hover:bg-surface-soft"
+            type="button"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center py-16 bg-surface border border-border rounded-2xl shadow-sm">
+          <p className="text-text font-semibold">Bạn chưa tham gia lớp học nào</p>
+          <p className="text-sm text-text-soft mt-1">Nhấn “Tham gia lớp mới” và nhập mã lớp từ giảng viên.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => (
+            <CourseCard key={course.id} course={course} />
+          ))}
+        </div>
+      )}
 
       <JoinCourseModal
         isOpen={isJoinModalOpen}

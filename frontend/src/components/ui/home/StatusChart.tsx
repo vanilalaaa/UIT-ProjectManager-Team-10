@@ -1,6 +1,14 @@
 import { Link } from 'react-router-dom';
+import type { ChartStats } from '../../../services/home.service';
 
-export default function StatusChart({ role, chartStats, selectedStatus, onToggle }: any) {
+interface StatusChartProps {
+  role: string;
+  chartStats: ChartStats;
+  selectedStatus: string | null;
+  onToggle: (status: string | null) => void;
+}
+
+export default function StatusChart({ role, chartStats, selectedStatus, onToggle }: StatusChartProps) {
   const isTeacher = role === 'TEACHER';
   const labels = isTeacher 
     ? { todo: 'Chưa nộp', inProgress: 'Đã nộp', readyForTest: 'Đã chấm' }

@@ -1,19 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProjectWorkspaceCard from '../../../components/ui/student/ProjectWorkspaceCard'
-import { mockProjects } from '../../../mocks/projects.mock'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import { getMyProjects } from '../../../services/project.service'
+import type { Project } from '../../../types/api/project'
 
 export default function MyProjectPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredProjects = mockProjects.filter((project) => {
+  useEffect(() => {
+    let alive = true
+    getMyProjects().then((data) => {
+      if (!alive) return
+      setProjects(data)
+      setLoading(false)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const filteredProjects = projects.filter((project) => {
     const query = searchQuery.toLowerCase().trim()
     if (!query) return true 
 
     const projectTitle = project.title?.toLowerCase() || ''
-    
-    const courseName = project.course?.name?.toLowerCase() || ''
-    
-    const courseId = project.course?.courseId?.toString() || ''
+
+    const courseName = project.courseName?.toLowerCase() || ''
+
+    const courseId = project.courseId?.toString() || ''
 
     return (
       projectTitle.includes(query) || 
@@ -21,6 +37,8 @@ export default function MyProjectPage() {
       courseId.includes(query)
     )
   })
+
+  if (loading) return <LoadingSpinner message="Đang tải đồ án..." />
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

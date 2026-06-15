@@ -11,6 +11,8 @@ public interface TaskRepository
 
     List<Task> findByProject_Id(Long projectId);
 
+    List<Task> findByProject_IdAndGroup_Id(Long projectId, Long groupId);
+
     List<Task> findByProject_IdAndStatus(
             Long projectId,
             TaskStatus status

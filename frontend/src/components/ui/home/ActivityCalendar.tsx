@@ -1,29 +1,17 @@
-import { useMemo } from 'react';
-import { getHeatmapData, mockTeacherActivities } from '../../../mocks/home.mock';
+interface ActivityCalendarProps {
+  role: string;
+  selectedMonth: number;
+  onMonthChange: (month: number) => void;
+  selectedDate: number | null;
+  onDateSelect: (date: number | null) => void;
+  heatmap: Record<number, number>;
+}
 
-export default function ActivityCalendar({ role, selectedMonth, onMonthChange, selectedDate, onDateSelect }: any) {
+export default function ActivityCalendar({ role, selectedMonth, onMonthChange, selectedDate, onDateSelect, heatmap }: ActivityCalendarProps) {
   const monthsList = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  
-  const heatmapData = useMemo(() => {
-    const counts: Record<number, number> = {};
-    const activities = role === 'TEACHER' ? mockTeacherActivities : getHeatmapData(selectedMonth);
-    
-    if (role === 'TEACHER') {
-        mockTeacherActivities.forEach(act => {
-            const d = new Date(act.createdAt);
-            if (d.getMonth() + 1 === selectedMonth) {
-                const day = d.getDate();
-                counts[day] = (counts[day] || 0) + 1;
-            }
-        });
-    } else {
-        return getHeatmapData(selectedMonth);
-    }
-    return counts;
-  }, [selectedMonth, role]);
 
   const getHeatmapClass = (day: number) => {
-    const count = heatmapData[day] || 0;
+    const count = heatmap[day] || 0;
     if (count === 0) return 'bg-surface-soft';
     if (count <= 1) return 'bg-[#dff5ff]';
     if (count <= 2) return 'bg-[#8cd3ff]';

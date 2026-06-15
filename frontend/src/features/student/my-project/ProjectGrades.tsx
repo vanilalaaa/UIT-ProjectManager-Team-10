@@ -1,94 +1,87 @@
-/**
- * ProjectGrades.tsx  (Student)
- *
- * Read-only view of the grade a student's project received.
- * Students can see the overall grade, the scorecard breakdown and the
- * lecturer's notes — but they cannot edit anything (grading is done by
- * the teacher in features/teacher/my-course/TeamGrades.tsx).
- */
-import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { mockProjects } from '../../../mocks/projects.mock';
-import type { Project } from '../../../mocks/types';
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import OverallGradeCard from '../../../components/ui/OverallGradeCard'
+import ScorecardBreakdown, { type ScoreCriteria } from '../../../components/ui/student/ScorecardBreakdown'
+import LecturerFeedbackCard from '../../../components/ui/student/LecturerFeedbackCard'
+import { getProjectById } from '../../../services/project.service'
+import { getRequirement } from '../../../services/requirement.service'
 
-const CRITERIA = ['UI/UX Design', 'Backend Architecture', 'Documentation & Testing'];
+const MAX_GRADE = 10
+
+type GradeLecturer = { name: string; avatar: string; department: string }
+
+type GradeData = {
+  grade: number | null
+  criteria: ScoreCriteria[]
+  lecturer: GradeLecturer | null
+  feedback: string
+}
+
+// Hiển thị barem (tiêu chí + thang điểm) giảng viên đã thiết lập cho lớp.
+// Điểm thực tế chờ BE chấm điểm; hiện show trạng thái "chưa chấm".
+const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
+  const project = await getProjectById(projectId ?? '')
+  const courseId = project?.courseId
+  const req = courseId != null ? await getRequirement(courseId).catch(() => null) : null
+  const criteria: ScoreCriteria[] = (req?.criteria ?? []).map((c) => ({
+    label: c.name,
+    score: 0,
+    maxScore: c.maxScore,
+    colorClass: 'text-primary',
+    bgFillClass: 'bg-brand-gradient',
+  }))
+  return { grade: null, criteria, lecturer: null, feedback: '' }
+}
 
 export default function ProjectGrades() {
-  const { projectId } = useParams();
-  const [project, setProject] = useState<Project | null>(null);
-  const [isGraded, setIsGraded] = useState(false);
-  const [scores, setScores] = useState<Record<string, number>>({
-    'UI/UX Design': 0, 'Backend Architecture': 0, 'Documentation & Testing': 0,
-  });
-  const [notes, setNotes] = useState<Record<string, string>>({
-    'UI/UX Design': '', 'Backend Architecture': '', 'Documentation & Testing': '',
-  });
+  const { projectId } = useParams<{ projectId: string }>()
+  const [data, setData] = useState<GradeData | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const found = mockProjects.find((p) => p.projectId.toString() === projectId);
-    if (found) {
-      setProject(found);
-      const sub = found.submissions?.[0] as any;
-      if (sub?.rubricScores) {
-        setScores(sub.rubricScores);
-        setIsGraded(true);
-      }
-      if (sub?.rubricNotes) setNotes(sub.rubricNotes);
+    let mounted = true
+    setLoading(true)
+    fetchStudentGrade(projectId).then(result => {
+      if (!mounted) return
+      setData(result)
+      setLoading(false)
+    })
+    return () => {
+      mounted = false
     }
-  }, [projectId]);
+  }, [projectId])
 
-  if (!project) return <div className="text-text-soft">Project not found</div>;
+  if (loading) return <LoadingSpinner message="Đang tải kết quả đánh giá..." />
+  if (!data) return null
 
-  const average = Object.values(scores).reduce((a, b) => a + b, 0) / CRITERIA.length;
+  const isGraded = data.grade !== null
+  const status = isGraded ? 'Đã chấm' : 'Chưa chấm'
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-fade-in">
-      {/* Overall grade */}
-      <div className="xl:col-span-1 glass-panel rounded-[var(--radius-card)] p-8 flex flex-col items-center justify-center space-y-4 h-fit">
-        <h3 className="text-text font-bold">Overall Grade</h3>
-        {isGraded ? (
-          <>
-            <div className="relative size-40 flex items-center justify-center">
-              <svg className="size-full -rotate-90">
-                <circle cx="80" cy="80" r="72" className="stroke-surface-soft" strokeWidth="12" fill="none" />
-                <circle cx="80" cy="80" r="72" className="stroke-primary" strokeWidth="12" fill="none" strokeDasharray={452} strokeDashoffset={452 - (452 * average) / 10} strokeLinecap="round" />
-              </svg>
-              <span className="absolute text-4xl font-extrabold text-brand-gradient">{average.toFixed(1)}</span>
-            </div>
-            <span className="px-4 py-1 rounded-full bg-secondary-soft text-secondary font-bold text-sm">Graded</span>
-          </>
-        ) : (
-          <div className="size-40 flex items-center justify-center border-4 border-dashed border-surface-soft rounded-full text-text-soft text-center">
-            Chưa chấm
-          </div>
-        )}
-      </div>
-
-      {/* Scorecard breakdown (read-only) */}
-      <div className="xl:col-span-2 glass-panel rounded-[var(--radius-card)] p-8">
-        <h3 className="text-xl font-bold mb-8">Scorecard Breakdown</h3>
-
-        <div className="space-y-6">
-          {CRITERIA.map((item) => (
-            <div key={item} className="space-y-2">
-              <div className="flex justify-between font-bold text-sm">
-                <span>{item}</span>
-                <span className="text-primary">{isGraded ? `${scores[item] || 0} / 10` : '- / 10'}</span>
-              </div>
-
-              {isGraded && (
-                <div className="h-3 w-full bg-surface-soft rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-gradient rounded-full" style={{ width: `${Math.min(scores[item] || 0, 10) * 10}%` }} />
-                </div>
-              )}
-
-              <div className="p-3 bg-surface-soft/50 rounded-xl text-sm italic text-text-soft border border-border-soft">
-                “{notes[item] || 'Không có nhận xét'}”
-              </div>
-            </div>
-          ))}
+    <div className="space-y-6 animate-fade-in">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+        <div className="xl:col-span-1">
+          <OverallGradeCard grade={data.grade} maxGrade={MAX_GRADE} status={status} />
+        </div>
+        <div className="xl:col-span-2">
+          <ScorecardBreakdown criteria={data.criteria} />
         </div>
       </div>
+
+      <LecturerFeedbackCard lecturer={data.lecturer}>
+        {data.feedback ? (
+          <p className="whitespace-pre-line">{data.feedback}</p>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <svg className="size-10 text-text-soft/40 mb-3" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p className="font-medium text-text">Chưa có nhận xét</p>
+            <p className="text-sm mt-1">Giảng viên chưa cập nhật nhận xét cho đồ án này.</p>
+          </div>
+        )}
+      </LecturerFeedbackCard>
     </div>
-  );
+  )
 }

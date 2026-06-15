@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// Thành viên nhóm dạng phẳng cho FE (member + profile + vai trò + trạng thái).
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,5 +14,12 @@ import lombok.Setter;
 @Builder
 public class GroupMemberResponse {
     private Long groupMemberId;
-    private String username;
+    private Long userId;
+    private String name;
+    private String avatar;
+    private String summary;
+    private String uid;
+    private String email;
+    private Boolean isLeader;
+    private String status;
 }

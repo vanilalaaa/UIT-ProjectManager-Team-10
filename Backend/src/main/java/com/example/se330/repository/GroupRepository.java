@@ -15,4 +15,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     // Tìm tất cả Group theo Course ID
     List<Group> findByCourseId(Long courseId);
+
+    // Các nhóm mà user đang là Trưởng nhóm (để gom thông báo "xin vào nhóm").
+    List<Group> findByLeader_Id(Long leaderId);
 }

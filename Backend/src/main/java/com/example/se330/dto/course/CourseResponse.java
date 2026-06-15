@@ -18,6 +18,7 @@ public class CourseResponse {
     private String code;
     private String name;
     private Long lecturer;
+    private String lecturerName;
     private Integer maxStudents;
     private LocalDate startDate;
     private LocalDate endDate;

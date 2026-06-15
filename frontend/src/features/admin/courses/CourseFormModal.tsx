@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 
 import Modal from '../../../components/ui/Modal'
+import LecturerSelect from './LecturerSelect'
+import { useTeachers } from '../hooks/useTeachers'
 import type { ApiError } from '../../../lib/api/axiosClient'
 import type {
   AdminCourseCreateRequest,
@@ -15,6 +17,7 @@ import type {
 const schema = z
   .object({
     name: z.string().min(2, 'Tối thiểu 2 ký tự'),
+    lecturerId: z.number().int().positive('Vui lòng chọn giảng viên'),
     maxStudents: z.number().int().min(1, 'Tối thiểu 1').max(500, 'Tối đa 500'),
     startDate: z.string().min(1, 'Chọn ngày bắt đầu'),
     endDate: z.string().min(1, 'Chọn ngày kết thúc'),
@@ -36,25 +39,33 @@ type Props = {
 
 export default function CourseFormModal({ open, initial, onClose, onCreate, onUpdate }: Props) {
   const isEdit = !!initial
+  const { teachers, isLoading: loadingTeachers } = useTeachers(open)
+  const [lecturerName, setLecturerName] = useState('')
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', maxStudents: 40, startDate: '', endDate: '' },
+    defaultValues: { name: '', lecturerId: 0, maxStudents: 40, startDate: '', endDate: '' },
   })
+
+  const lecturerId = useWatch({ control, name: 'lecturerId' })
 
   useEffect(() => {
     if (!open) return
     reset({
       name: initial?.name ?? '',
+      lecturerId: initial?.lecturer ?? 0,
       maxStudents: initial?.maxStudents ?? 40,
       startDate: initial?.startDate ?? '',
       endDate: initial?.endDate ?? '',
     })
+    setLecturerName(initial?.lecturerName ?? '')
   }, [open, initial, reset])
 
   const onSubmit = async (values: FormValues) => {
@@ -84,6 +95,23 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
             type="text"
           />
           {errors.name ? <p className="mt-1 text-xs text-red-500">{errors.name.message}</p> : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text">Giảng viên phụ trách</label>
+          <LecturerSelect
+            teachers={teachers}
+            loading={loadingTeachers}
+            value={lecturerId ?? 0}
+            selectedName={lecturerName}
+            onSelect={(id, name) => {
+              setValue('lecturerId', id, { shouldValidate: true })
+              setLecturerName(name)
+            }}
+          />
+          {errors.lecturerId ? (
+            <p className="mt-1 text-xs text-red-500">{errors.lecturerId.message}</p>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

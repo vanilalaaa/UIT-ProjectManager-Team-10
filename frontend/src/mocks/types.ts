@@ -126,6 +126,8 @@ export type Project = {
   submissions: Submission[]
 }
 
+export type TaskPriority = 'Low' | 'Medium' | 'High'
+
 export type Task = {
   taskId: number
   title: string
@@ -133,6 +135,8 @@ export type Task = {
   assignedTo: User
   createdBy: User
   status: string
+  // UI-only: BE Task entity chưa có cột priority, mới dùng để hiển thị/sắp xếp.
+  priority?: TaskPriority
   group: Group
   deadline: DateTimeString
   createdAt: DateTimeString

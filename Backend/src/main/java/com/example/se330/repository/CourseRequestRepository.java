@@ -16,6 +16,8 @@ public interface CourseRequestRepository extends JpaRepository<CourseRequest, Lo
 
     List<CourseRequest> findAllByCourseId(Long courseId);
 
+    List<CourseRequest> findAllByStudent_IdAndStatus(Long studentId, JoinStatus status);
+
     boolean existsByStudent_IdAndCourse_Id(Long student, Long course);
 
     Optional<CourseRequest> findByCourse_IdAndStudent_Id(Long courseId, Long studentId);

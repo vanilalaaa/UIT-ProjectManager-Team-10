@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
 public class GradeController {
 
     private final GradeService gradeService;

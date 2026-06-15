@@ -2,32 +2,21 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student//UserProfilePopover'
-import type { User, Group } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
+import { getProjectById } from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
-
-const fetchGroupData = async (projectId: string | undefined): Promise<Group | null> => {
-  // --- BẮT ĐẦU VÙNG MOCK (Xóa khi có API) ---
-  const project = mockProjects.find((p) => p.projectId.toString() === projectId)
-  const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-  const registration = project?.registrations?.[0]
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(registration ? allGroups.find(g => g.groupId === registration.groupId) || null : null)
-    }, 500)
-  })
-
-  /* KHI CÓ API THẬT:
-  const response = await axios.get(`/api/projects/${projectId}/group`)
-  return response.data
-  */
+const fetchGroupData = async (projectId: string | undefined): Promise<Team | null> => {
+  if (!projectId) return null
+  const project = await getProjectById(projectId)
+  const groupId = project?.groupId
+  if (!groupId) return null
+  return getGroupById(groupId)
 }
 
 export default function ProjectMembers() {
   const { projectId } = useParams()
-  const [group, setGroup] = useState<Group | null>(null)
+  const [group, setGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
@@ -69,8 +58,8 @@ export default function ProjectMembers() {
     )
   }
 
-  const leader = group.leader
-  const regularMembers = group.members.filter((m: User) => m.userId !== leader.userId)
+  const leader = group.members.find((m) => m.isLeader) ?? null
+  const regularMembers = group.members.filter((m) => !m.isLeader)
 
   return (
     <div className="max-w-4xl">
@@ -84,6 +73,7 @@ export default function ProjectMembers() {
 
         <hr className="border-border mb-6" />
 
+        {leader && (
         <div className="mb-8 border border-primary/30 rounded-xl bg-primary-soft/10">
           <MemberRow
             member={leader}
@@ -97,6 +87,7 @@ export default function ProjectMembers() {
             )}
           </MemberRow>
         </div>
+        )}
 
         {regularMembers.length > 0 && (
           <div>
@@ -105,7 +96,7 @@ export default function ProjectMembers() {
             </h3>
 
             <div className="border border-border rounded-xl bg-surface divide-y divide-border shadow-sm">
-              {regularMembers.map((member: User) => (
+              {regularMembers.map((member) => (
                 <MemberRow
                   key={member.userId}
                   member={member}

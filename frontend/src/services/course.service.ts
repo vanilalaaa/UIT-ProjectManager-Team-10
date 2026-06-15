@@ -1,17 +1,41 @@
 import axiosClient from '../lib/api/axiosClient'
+import type { CourseCardData } from '../components/ui/student/CourseCard'
 import type { ApiResponse } from '../types/api/common'
 import type {
   AdminCourseCreateRequest,
   AdminCourseListItem,
   AdminCourseUpdateRequest,
+  CourseCardResponse,
   CourseResponse,
   JoinCourseRequest,
 } from '../types/api/course'
 
 const BASE = '/courses'
 
-// BE chưa expose GET /courses list — hook list dùng tạm getCourseById theo id
-// đã biết, hoặc đợi BE bổ sung endpoint list.
+const toCourseCard = (c: CourseCardResponse): CourseCardData => ({
+  id: c.courseId,
+  code: c.code,
+  name: c.name,
+  lecturer: c.lecturerName,
+  semester: '',
+  projectsCount: c.projectsCount,
+  membersCount: c.membersCount,
+  memberAvatars: [],
+  extraMembers: 0,
+  maxStudents: c.maxStudents,
+  startDate: c.startDate,
+  endDate: c.endDate,
+})
+
+export const listStudentCourseCards = (): Promise<CourseCardData[]> =>
+  axiosClient
+    .get<ApiResponse<CourseCardResponse[]>>('/students/me/courses')
+    .then((r) => r.data.data.map(toCourseCard))
+
+export const listTeacherCourseCards = (): Promise<CourseCardData[]> =>
+  axiosClient
+    .get<ApiResponse<CourseCardResponse[]>>(`${BASE}/teaching`)
+    .then((r) => r.data.data.map(toCourseCard))
 export const listCourses = (): Promise<ApiResponse<AdminCourseListItem[]>> =>
   axiosClient.get<ApiResponse<AdminCourseListItem[]>>(BASE).then((r) => r.data)
 

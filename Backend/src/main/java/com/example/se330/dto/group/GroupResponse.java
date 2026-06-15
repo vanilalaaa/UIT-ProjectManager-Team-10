@@ -19,5 +19,10 @@ public class GroupResponse {
     private String description;
     private Long courseId;
     private Long leaderId;
+    private String leaderName;
     private List<GroupMemberResponse> members;
+    private Integer memberCount;
+    // Trạng thái đề tài của nhóm: "PENDING" (chờ duyệt) / "APPROVED" (đã có đồ án) / null.
+    private String projectStatus;
+    private String projectTitle;
 }

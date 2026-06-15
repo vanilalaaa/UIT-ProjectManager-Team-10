@@ -1,25 +1,74 @@
 package com.example.se330.service;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.example.se330.dto.course.CourseCardResponse;
 import com.example.se330.dto.course.CourseResponse;
 import com.example.se330.dto.course.CreateCourseRequest;
 import com.example.se330.dto.course.UpdateCourseRequest;
 import com.example.se330.entity.Course;
+import com.example.se330.entity.User;
+import com.example.se330.enums.JoinStatus;
+import com.example.se330.enums.Role;
 import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.CourseRequestRepository;
+import com.example.se330.repository.UserRepository;
 import com.example.se330.security.CustomUserDetails;
 
 @Service
 public class CourseService {
     private final CourseRepository courseRepository;
+    private final CourseRequestRepository courseRequestRepository;
+    private final UserRepository userRepository;
 
     public CourseService(
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository,
+            CourseRequestRepository courseRequestRepository,
+            UserRepository userRepository) {
         this.courseRepository = courseRepository;
+        this.courseRequestRepository = courseRequestRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseCardResponse> getTeacherCourses(Long lecturerId) {
+        return this.courseRepository.findByLecturer_Id(lecturerId)
+                .stream()
+                .map(this::mapToCard)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseCardResponse> getStudentCourses(Long studentId) {
+        return this.courseRequestRepository.findAllByStudent_IdAndStatus(studentId, JoinStatus.ACTIVE)
+                .stream()
+                .map(cr -> mapToCard(cr.getCourse()))
+                .toList();
+    }
+
+    private CourseCardResponse mapToCard(Course course) {
+        long members = course.getCourseRequests() == null
+                ? 0
+                : course.getCourseRequests().stream().filter(r -> r.getStatus() == JoinStatus.ACTIVE).count();
+        int projects = course.getProjects() == null ? 0 : course.getProjects().size();
+
+        return CourseCardResponse.builder()
+                .courseId(course.getId())
+                .code(course.getCode())
+                .name(course.getName())
+                .lecturerName(course.getLecturer() != null ? course.getLecturer().getName() : "Chưa phân công")
+                .membersCount((int) members)
+                .projectsCount(projects)
+                .maxStudents(course.getMaxStudents())
+                .startDate(course.getStartDate())
+                .endDate(course.getEndDate())
+                .build();
     }
 
     public CourseResponse createCourse(CreateCourseRequest req) {
@@ -32,7 +81,7 @@ public class CourseService {
         Course course = new Course();
         course.setName(req.getName());
         course.setCode(generateCode());
-        course.setLecturer(currentUser.getUser());
+        course.setLecturer(resolveLecturer(req.getLecturerId(), currentUser.getUser()));
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
         course.setEndDate(req.getEndDate());
@@ -44,6 +93,13 @@ public class CourseService {
 
     public CourseResponse getCourseResponse(Long id) {
         return mapToResponse(this.getCourseById(id));
+    }
+
+    public List<CourseResponse> getAllCourses() {
+        return this.courseRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public Course getCourseById(Long id) {
@@ -59,7 +115,7 @@ public class CourseService {
 
     public Course getCourseByCode(String code) {
         Course course = this.courseRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new RuntimeException("Mã lớp không tồn tại."));
 
         return course;
     }
@@ -68,12 +124,27 @@ public class CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
         course.setName(req.getName());
+        if (req.getLecturerId() != null) {
+            course.setLecturer(resolveLecturer(req.getLecturerId(), course.getLecturer()));
+        }
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
         course.setEndDate(req.getEndDate());
         this.courseRepository.save(course);
 
         return mapToResponse(course);
+    }
+
+    private User resolveLecturer(Long lecturerId, User fallback) {
+        if (lecturerId == null) {
+            return fallback;
+        }
+        User lecturer = userRepository.findById(lecturerId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên được chọn."));
+        if (lecturer.getRole() != Role.TEACHER) {
+            throw new RuntimeException("Người được chọn không phải là giảng viên.");
+        }
+        return lecturer;
     }
 
     public void deleteCourse(Long id) {
@@ -85,7 +156,8 @@ public class CourseService {
                 .courseId(course.getId())
                 .name(course.getName())
                 .code(course.getCode())
-                .lecturer(course.getLecturer().getId())
+                .lecturer(course.getLecturer() != null ? course.getLecturer().getId() : null)
+                .lecturerName(course.getLecturer() != null ? course.getLecturer().getName() : null)
                 .maxStudents(course.getMaxStudents())
                 .startDate(course.getStartDate())
                 .endDate(course.getEndDate())

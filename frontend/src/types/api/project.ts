@@ -1,6 +1,37 @@
-import type { Project } from '../../mocks/types'
+// Project phẳng theo BE ProjectResponse: course/category/lecturer là tên,
+// nhóm nhận đề tài thành groupId/groupName + members, kèm submissions.
+export type ProjectMember = {
+  id: number
+  name: string
+  avatar: string | null
+}
 
-export type { Project }
+export type ProjectSubmissionLite = {
+  submissionId: number
+  status: string
+  submittedAt: string | null
+  filePath: string | null
+}
+
+export type Project = {
+  projectId: number
+  title: string
+  description: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  courseId: number | null
+  courseName: string | null
+  lecturerName: string | null
+  categoryId: number | null
+  categoryName: string | null
+  groupId: number | null
+  groupName: string | null
+  members: ProjectMember[]
+  submissions: ProjectSubmissionLite[]
+  memberCount: number
+  submissionCount: number
+}
 
 export type ProjectCreateRequest = {
   title: string

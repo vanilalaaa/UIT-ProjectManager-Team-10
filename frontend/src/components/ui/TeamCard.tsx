@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
-import type { User } from '../../mocks/types'
+import type { TeamMember } from '../../types/api/team'
 
 interface TeamCardProps {
   courseId: number
   groupId: number
   groupName: string
-  members: User[]
+  members: TeamMember[]
   projectTitle: string | null
 }
 
@@ -26,7 +26,7 @@ export default function TeamCard({ courseId, groupId, groupName, members, projec
             {displayAvatars.map((member, idx) => (
               <img
                 key={member.userId}
-                src={member.userProfile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`}
+                src={member.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`}
                 alt={member.name}
                 title={member.name}
                 className="size-11 rounded-full border-2 border-surface object-cover shadow-sm group-hover:scale-105 transition-transform"
