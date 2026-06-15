@@ -3,7 +3,6 @@ package com.example.se330.config;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +39,7 @@ import com.example.se330.repository.RequirementRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
+import com.example.se330.util.StudentCodeGenerator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,6 +60,7 @@ public class DataInitializer implements CommandLineRunner {
     private final RequirementRepository requirementRepository;
     private final RegistrationRepository registrationRepository;
     private final SubmissionRepository submissionRepository;
+    private final StudentCodeGenerator studentCodeGenerator;
     private final JdbcTemplate jdbc;
 
     @Override
@@ -246,7 +247,7 @@ public class DataInitializer implements CommandLineRunner {
             u.setName(name);
             u.setEmail(email);
             u.setPassword(passwordEncoder.encode("123123"));
-            u.setUid(UUID.randomUUID().toString());
+            u.setUid(studentCodeGenerator.generate());
             u.setRole(role);
             u.setCreatedAt(LocalDateTime.now());
             u.setUpdatedAt(LocalDateTime.now());

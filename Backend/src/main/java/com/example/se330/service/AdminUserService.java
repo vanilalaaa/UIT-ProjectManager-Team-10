@@ -1,7 +1,6 @@
 package com.example.se330.service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,16 +16,20 @@ import com.example.se330.dto.auth.AdminUpdateUserStatusRequest;
 import com.example.se330.entity.User;
 import com.example.se330.enums.Role;
 import com.example.se330.repository.UserRepository;
+import com.example.se330.util.StudentCodeGenerator;
 
 @Service
 public class AdminUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StudentCodeGenerator studentCodeGenerator;
 
     public AdminUserService(UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            StudentCodeGenerator studentCodeGenerator) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.studentCodeGenerator = studentCodeGenerator;
     }
 
     public Page<UserDto> listUsers(int page, int size, String search, String role) {
@@ -53,7 +56,7 @@ public class AdminUserService {
         }
 
         User user = User.builder()
-                .uid(UUID.randomUUID().toString())
+                .uid(studentCodeGenerator.generate())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
