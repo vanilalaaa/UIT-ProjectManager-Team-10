@@ -1,4 +1,16 @@
-import { userSinhVienTran, userLeHoangVy, mockTasks } from './tasks.mock';
+import {
+  userSinhVienTran,
+  userLeHoangVy,
+  userNguyenMinhAn,
+  userDoanKhanhLinh,
+  userPhanThiMai,
+  userHuynhTanPhat,
+  userTranThanhTung,
+  userDangThuyTrang,
+  userNgoQuangHuy,
+  userHoangPhuQuy,
+  mockTasks,
+} from './tasks.mock';
 import { mockProjects } from './projects.mock';
 import type { Project, User, DateTimeString } from './types';
 import type { ApiResponse } from '../types/api/common';
@@ -107,23 +119,95 @@ export const mockStudentActivities: Activity[] = [
     project: mockProjects[0], 
     createdAt: '2026-06-05T10:00:00'
   },
-  { 
-    activityId: 11, 
-    action: 'UPDATE_TASK', 
-    content: 'cập nhật database schema', 
-    actor: userLeHoangVy, 
-    targetName: 'Thiết kế API', 
-    project: mockProjects[0], 
-    createdAt: '2026-06-06T14:00:00' 
+  {
+    activityId: 11,
+    action: 'UPDATE_TASK',
+    content: 'cập nhật database schema',
+    actor: userLeHoangVy,
+    targetName: 'Thiết kế API',
+    project: mockProjects[0],
+    createdAt: '2026-06-06T14:00:00'
     },
+  {
+    activityId: 12,
+    action: 'UPDATE_TASK',
+    content: 'đã đổi trạng thái sang IN PROGRESS',
+    actor: userDoanKhanhLinh,
+    targetName: 'Thiết kế giao diện trang sản phẩm',
+    project: mockProjects[4],
+    createdAt: '2026-06-11T09:30:00'
+  },
+  {
+    activityId: 13,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp bản demo giữa kỳ',
+    actor: userHuynhTanPhat,
+    targetName: 'Sàn thương mại điện tử mini',
+    project: mockProjects[4],
+    createdAt: '2026-06-12T20:00:00'
+  },
+  {
+    activityId: 14,
+    action: 'MENTION',
+    content: 'đã nhắc bạn kiểm tra API giỏ hàng',
+    actor: userPhanThiMai,
+    targetName: 'Xây dựng API giỏ hàng và thanh toán',
+    project: mockProjects[4],
+    createdAt: '2026-06-12T15:10:00'
+  },
+  {
+    activityId: 15,
+    action: 'UPDATE_TASK',
+    content: 'hoàn thành đồng bộ ghi chú',
+    actor: userTranThanhTung,
+    targetName: 'Đồng bộ ghi chú với Firebase',
+    project: mockProjects[6],
+    createdAt: '2026-06-13T11:00:00'
+  },
+  {
+    activityId: 16,
+    action: 'UPDATE_TASK',
+    content: 'chuyển task sang DONE',
+    actor: userDangThuyTrang,
+    targetName: 'Thiết kế màn hình danh sách ghi chú',
+    project: mockProjects[6],
+    createdAt: '2026-06-13T17:25:00'
+  },
+  {
+    activityId: 17,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp tập dữ liệu đã gán nhãn',
+    actor: userNgoQuangHuy,
+    targetName: 'Nhận diện biển báo giao thông',
+    project: mockProjects[7],
+    createdAt: '2026-06-14T10:00:00'
+  },
+  {
+    activityId: 18,
+    action: 'UPDATE_TASK',
+    content: 'cập nhật kết quả huấn luyện mô hình',
+    actor: userHoangPhuQuy,
+    targetName: 'Huấn luyện mô hình CNN nhận diện biển báo',
+    project: mockProjects[7],
+    createdAt: '2026-06-15T14:00:00'
+  },
+  {
+    activityId: 19,
+    action: 'APPROVE_TOPIC',
+    content: 'đề tài đã được giảng viên duyệt',
+    actor: userNguyenMinhAn,
+    targetName: 'Ứng dụng ghi chú đồng bộ đám mây',
+    project: mockProjects[6],
+    createdAt: '2026-06-10T08:30:00'
+  },
 ];
 
 export const getTeacherQuickStats = () => {
   return {
-    pendingGrades: 12,    
-    totalProjects: 24,    
-    pendingRequests: 5,   
-    upcomingDeadlines: 3  
+    pendingGrades: 18,
+    totalProjects: 32,
+    pendingRequests: 5,
+    upcomingDeadlines: 6
   };
 };
 
@@ -137,14 +221,50 @@ export const mockTeacherActivities: Activity[] = [
     project: mockProjects[0], 
     createdAt: '2026-06-06T10:00:00' 
   },
-  { 
-    activityId: 102, 
-    action: 'SUBMIT_FILE', 
-    content: 'đã nộp báo cáo tuần 2', 
-    actor: userLeHoangVy, 
-    targetName: 'Đồ án SE330', 
-    project: mockProjects[0], 
+  {
+    activityId: 102,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp báo cáo tuần 2',
+    actor: userLeHoangVy,
+    targetName: 'Đồ án SE330',
+    project: mockProjects[0],
     createdAt: '2026-06-06T14:30:00'
+  },
+  {
+    activityId: 103,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp bản demo giữa kỳ',
+    actor: userDoanKhanhLinh,
+    targetName: 'Sàn thương mại điện tử mini',
+    project: mockProjects[4],
+    createdAt: '2026-06-12T20:05:00'
+  },
+  {
+    activityId: 104,
+    action: 'APPROVE_TOPIC',
+    content: 'đã gửi yêu cầu duyệt đề tài',
+    actor: userTranThanhTung,
+    targetName: 'Ứng dụng học từ vựng theo lịch lặp lại',
+    project: mockProjects[6],
+    createdAt: '2026-06-11T08:50:00'
+  },
+  {
+    activityId: 105,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp tập dữ liệu đã gán nhãn',
+    actor: userNgoQuangHuy,
+    targetName: 'Nhận diện biển báo giao thông',
+    project: mockProjects[7],
+    createdAt: '2026-06-14T10:10:00'
+  },
+  {
+    activityId: 106,
+    action: 'SUBMIT_FILE',
+    content: 'đã nộp bản build APK v1',
+    actor: userDangThuyTrang,
+    targetName: 'Ứng dụng ghi chú đồng bộ đám mây',
+    project: mockProjects[6],
+    createdAt: '2026-06-13T09:20:00'
   },
 ];
 
@@ -177,19 +297,29 @@ const mockStatDetails: Record<StatDetailType, StatDetailItem[]> = {
     { id: 1, type: 'SUBMISSION', title: 'Báo cáo cuối kỳ - Nhóm 10', subtitle: 'Đồ án quản lý đồ án SE330', status: 'SUBMITTED', timestamp: '2026-06-12T09:30:00' },
     { id: 2, type: 'SUBMISSION', title: 'SRS - Nhóm 03', subtitle: 'Website thương mại điện tử', status: 'LATE', timestamp: '2026-06-13T23:50:00' },
     { id: 3, type: 'SUBMISSION', title: 'Bản thiết kế DB - Nhóm 07', subtitle: 'Ứng dụng đặt lịch khám', status: 'SUBMITTED', timestamp: '2026-06-14T08:10:00' },
+    { id: 4, type: 'SUBMISSION', title: 'Demo giữa kỳ - Nhóm Titan', subtitle: 'Sàn thương mại điện tử mini (IS207)', status: 'SUBMITTED', timestamp: '2026-06-12T20:00:00' },
+    { id: 5, type: 'SUBMISSION', title: 'Build APK v1 - Nhóm Luna', subtitle: 'Ứng dụng ghi chú đồng bộ (NT118)', status: 'SUBMITTED', timestamp: '2026-06-13T09:20:00' },
+    { id: 6, type: 'SUBMISSION', title: 'Tập dữ liệu gán nhãn - Nhóm Vega', subtitle: 'Nhận diện biển báo giao thông (CS117)', status: 'LATE', timestamp: '2026-06-14T10:00:00' },
   ],
   totalProjects: [
     { id: 11, type: 'PROJECT', title: 'Website quản lý đồ án môn SE330', subtitle: 'Nhóm 10 · 4 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-01T08:00:00' },
     { id: 12, type: 'PROJECT', title: 'Website thương mại điện tử', subtitle: 'Nhóm 03 · 5 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-02T08:00:00' },
     { id: 13, type: 'PROJECT', title: 'Ứng dụng đặt lịch khám', subtitle: 'Nhóm 07 · 3 thành viên', status: 'COMPLETED', timestamp: '2026-04-20T08:00:00' },
+    { id: 14, type: 'PROJECT', title: 'Sàn thương mại điện tử mini', subtitle: 'Nhóm Titan · 3 thành viên (IS207)', status: 'IN_PROGRESS', timestamp: '2026-03-10T08:00:00' },
+    { id: 15, type: 'PROJECT', title: 'Ứng dụng ghi chú đồng bộ đám mây', subtitle: 'Nhóm Luna · 3 thành viên (NT118)', status: 'IN_PROGRESS', timestamp: '2026-03-15T08:00:00' },
+    { id: 16, type: 'PROJECT', title: 'Nhận diện biển báo giao thông', subtitle: 'Nhóm Vega · 3 thành viên (CS117)', status: 'IN_PROGRESS', timestamp: '2026-03-20T08:00:00' },
   ],
   pendingRequests: [
     { id: 21, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống chấm công', subtitle: 'Nhóm 12 gửi', status: 'PENDING', timestamp: '2026-06-14T16:00:00' },
     { id: 22, type: 'REQUEST', title: 'Yêu cầu gia hạn nộp báo cáo', subtitle: 'Nhóm 05 gửi', status: 'PENDING', timestamp: '2026-06-15T07:30:00' },
+    { id: 23, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống đặt món ăn', subtitle: 'Nhóm Titan gửi', status: 'PENDING', timestamp: '2026-06-10T10:30:00' },
+    { id: 24, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Chatbot tư vấn tuyển sinh', subtitle: 'Nhóm Vega gửi', status: 'PENDING', timestamp: '2026-06-12T14:00:00' },
   ],
   upcomingDeadlines: [
     { id: 31, type: 'TASK', title: 'Hạn nộp báo cáo tiến độ tuần 3', subtitle: 'Áp dụng cho tất cả các nhóm', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
     { id: 32, type: 'TASK', title: 'Hạn phản biện đồ án', subtitle: 'Nhóm 03, 07, 10', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
+    { id: 33, type: 'TASK', title: 'Hạn nộp sản phẩm web IS207', subtitle: 'Nhóm Titan, Comet', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
+    { id: 34, type: 'TASK', title: 'Hạn nộp APK và video demo NT118', subtitle: 'Nhóm Luna', status: 'TODO', timestamp: '2026-06-25T23:59:00' },
   ],
 
   // ===== Sinh viên =====

@@ -51,6 +51,56 @@
     },
   }
 
+  export const lecturerNguyenVanDuc: User = {
+    userId: 103,
+    uid: 'GV000103',
+    email: 'duc.nguyen@uit.edu.vn',
+    password: null,
+    name: 'TS. Nguyễn Văn Đức',
+    role: 'ADMIN',
+    createdAt: '2025-08-22T08:00:00',
+    updatedAt: '2026-02-05T10:00:00',
+    isActive: true,
+    verificationToken: null,
+    verificationTokenExpiry: null,
+    resetPasswordToken: null,
+    resetPasswordTokenExpiry: null,
+    userProfile: {
+      userId: 103,
+      summary: 'Giảng viên phụ trách học phần Phát triển ứng dụng web.',
+      firstName: 'Đức',
+      lastName: 'Nguyễn Văn',
+      avatarUrl: '/avatars/lecturer-nguyen-van-duc.png',
+      phoneNumber: '0901000103',
+      birthday: '1985-11-03',
+    },
+  }
+
+  export const lecturerLeThiBichNgoc: User = {
+    userId: 104,
+    uid: 'GV000104',
+    email: 'ngoc.le@uit.edu.vn',
+    password: null,
+    name: 'ThS. Lê Thị Bích Ngọc',
+    role: 'ADMIN',
+    createdAt: '2025-08-25T08:00:00',
+    updatedAt: '2026-02-07T11:00:00',
+    isActive: true,
+    verificationToken: null,
+    verificationTokenExpiry: null,
+    resetPasswordToken: null,
+    resetPasswordTokenExpiry: null,
+    userProfile: {
+      userId: 104,
+      summary: 'Giảng viên phụ trách Phát triển ứng dụng di động và Thị giác máy tính.',
+      firstName: 'Ngọc',
+      lastName: 'Lê Thị Bích',
+      avatarUrl: '/avatars/lecturer-le-thi-bich-ngoc.png',
+      phoneNumber: '0901000104',
+      birthday: '1988-06-17',
+    },
+  }
+
   export const softwareEngineeringCourse: Course = {
     courseId: 1,
     name: 'SE330 - Công nghệ phần mềm',
@@ -73,6 +123,39 @@
     projects: [],
   }
 
+  export const webDevCourse: Course = {
+    courseId: 3,
+    name: 'IS207 - Phát triển ứng dụng web',
+    lecturer: lecturerNguyenVanDuc,
+    maxStudents: 100,
+    startDate: '2026-02-15',
+    endDate: '2026-06-20',
+    groups: [MockData.groupTitan, MockData.groupComet],
+    projects: [],
+  }
+
+  export const mobileDevCourse: Course = {
+    courseId: 4,
+    name: 'NT118 - Phát triển ứng dụng di động',
+    lecturer: lecturerLeThiBichNgoc,
+    maxStudents: 80,
+    startDate: '2026-02-20',
+    endDate: '2026-06-25',
+    groups: [MockData.groupLuna],
+    projects: [],
+  }
+
+  export const machineLearningCourse: Course = {
+    courseId: 5,
+    name: 'CS117 - Thị giác máy tính',
+    lecturer: lecturerLeThiBichNgoc,
+    maxStudents: 70,
+    startDate: '2026-03-05',
+    endDate: '2026-07-10',
+    groups: [MockData.groupVega],
+    projects: [],
+  }
+
   export const webCategory: Category = {
     categoryId: 1,
     name: 'Ứng dụng Web',
@@ -84,6 +167,20 @@
     categoryId: 2,
     name: 'Ứng dụng di động',
     description: 'Đồ án xây dựng trải nghiệm trên thiết bị di động.',
+    isActive: true,
+  }
+
+  export const aiCategory: Category = {
+    categoryId: 3,
+    name: 'Trí tuệ nhân tạo',
+    description: 'Đồ án ứng dụng máy học, thị giác máy tính và xử lý ngôn ngữ.',
+    isActive: true,
+  }
+
+  export const dataCategory: Category = {
+    categoryId: 4,
+    name: 'Dữ liệu lớn',
+    description: 'Đồ án xử lý, phân tích và trực quan hóa dữ liệu quy mô lớn.',
     isActive: true,
   }
 
@@ -237,6 +334,204 @@
       ],
       submissions: [],
     },
+    {
+      projectId: 5,
+      title: 'Sàn thương mại điện tử mini',
+      description:
+        'Xây dựng website bán hàng với danh mục sản phẩm, giỏ hàng, thanh toán giả lập và trang quản trị đơn hàng.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-10',
+      endDate: '2026-06-18',
+      course: webDevCourse,
+      category: webCategory,
+      registrations: [
+        {
+          groupId: 5,
+          project: null,
+          groupMember: MockData.userDoanKhanhLinh,
+          registeredAt: '2026-03-11',
+          approvedAt: '2026-03-13',
+          status: 'APPROVED',
+          note: 'Nhóm đã chốt danh sách tính năng cho MVP.',
+        },
+        {
+          groupId: 5,
+          project: null,
+          groupMember: MockData.userPhanThiMai,
+          registeredAt: '2026-03-11',
+          approvedAt: '2026-03-13',
+          status: 'APPROVED',
+          note: 'Phụ trách giao diện người dùng.',
+        },
+        {
+          groupId: 5,
+          project: null,
+          groupMember: MockData.userHuynhTanPhat,
+          registeredAt: '2026-03-11',
+          approvedAt: '2026-03-13',
+          status: 'APPROVED',
+          note: 'Phụ trách backend và API.',
+        },
+      ],
+      submissions: [
+        {
+          submissionId: 5,
+          submittedAt: '2026-05-15T21:00:00',
+          status: 'SUBMITTED',
+          filePath: '/submissions/is207-titan/midterm-demo.zip',
+          project: null,
+          group: null,
+          grade: null,
+        },
+      ],
+    },
+    {
+      projectId: 6,
+      title: 'Blog cá nhân hỗ trợ Markdown',
+      description:
+        'Trang blog cho phép viết bài bằng Markdown, quản lý chuyên mục, bình luận và tối ưu SEO.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-12',
+      endDate: '2026-06-18',
+      course: webDevCourse,
+      category: webCategory,
+      registrations: [
+        {
+          groupId: 6,
+          project: null,
+          groupMember: MockData.userVuMinhHieu,
+          registeredAt: '2026-03-13',
+          approvedAt: '2026-03-15',
+          status: 'APPROVED',
+          note: 'Nhóm 2 người, tập trung trải nghiệm viết bài.',
+        },
+        {
+          groupId: 6,
+          project: null,
+          groupMember: MockData.userLyGiaHan,
+          registeredAt: '2026-03-13',
+          approvedAt: '2026-03-15',
+          status: 'APPROVED',
+          note: 'Phụ trách nội dung và trực quan hóa.',
+        },
+      ],
+      submissions: [],
+    },
+    {
+      projectId: 7,
+      title: 'Ứng dụng ghi chú đồng bộ đám mây',
+      description:
+        'Ứng dụng di động ghi chú với phân loại theo nhãn, tìm kiếm và đồng bộ thời gian thực qua Firebase.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-15',
+      endDate: '2026-06-22',
+      course: mobileDevCourse,
+      category: mobileCategory,
+      registrations: [
+        {
+          groupId: 7,
+          project: null,
+          groupMember: MockData.userTranThanhTung,
+          registeredAt: '2026-03-16',
+          approvedAt: '2026-03-18',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách đồng bộ dữ liệu.',
+        },
+        {
+          groupId: 7,
+          project: null,
+          groupMember: MockData.userDangThuyTrang,
+          registeredAt: '2026-03-16',
+          approvedAt: '2026-03-18',
+          status: 'APPROVED',
+          note: 'Phụ trách giao diện và tài liệu.',
+        },
+        {
+          groupId: 7,
+          project: null,
+          groupMember: MockData.userNguyenMinhAn,
+          registeredAt: '2026-03-16',
+          approvedAt: '2026-03-18',
+          status: 'APPROVED',
+          note: 'Hỗ trợ kiểm thử trên nhiều thiết bị.',
+        },
+      ],
+      submissions: [
+        {
+          submissionId: 7,
+          submittedAt: '2026-05-20T19:30:00',
+          status: 'REVIEWED',
+          filePath: '/submissions/nt118-luna/build-v1.apk',
+          project: null,
+          group: null,
+          grade: null,
+        },
+      ],
+    },
+    {
+      projectId: 8,
+      title: 'Nhận diện biển báo giao thông',
+      description:
+        'Huấn luyện mô hình CNN nhận diện biển báo giao thông từ ảnh, đánh giá độ chính xác và xây dựng demo dự đoán.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-20',
+      endDate: '2026-07-05',
+      course: machineLearningCourse,
+      category: aiCategory,
+      registrations: [
+        {
+          groupId: 8,
+          project: null,
+          groupMember: MockData.userNgoQuangHuy,
+          registeredAt: '2026-03-21',
+          approvedAt: '2026-03-23',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách kiến trúc mô hình.',
+        },
+        {
+          groupId: 8,
+          project: null,
+          groupMember: MockData.userHoangPhuQuy,
+          registeredAt: '2026-03-21',
+          approvedAt: '2026-03-23',
+          status: 'APPROVED',
+          note: 'Phụ trách tiền xử lý và huấn luyện.',
+        },
+        {
+          groupId: 8,
+          project: null,
+          groupMember: MockData.userLyGiaHan,
+          registeredAt: '2026-03-21',
+          approvedAt: '2026-03-23',
+          status: 'APPROVED',
+          note: 'Phụ trách đánh giá và trực quan hóa kết quả.',
+        },
+      ],
+      submissions: [],
+    },
+    {
+      projectId: 9,
+      title: 'Hệ thống phân tích log thương mại điện tử',
+      description:
+        'Đường ống dữ liệu thu thập log người dùng, xử lý theo thời gian thực và dựng dashboard phân tích hành vi.',
+      status: 'PLANNING',
+      startDate: '2026-06-05',
+      endDate: '2026-08-20',
+      course: machineLearningCourse,
+      category: dataCategory,
+      registrations: [
+        {
+          groupId: 8,
+          project: null,
+          groupMember: MockData.userHoangPhuQuy,
+          registeredAt: '2026-05-30',
+          approvedAt: null,
+          status: 'PENDING',
+          note: 'Đề tài mở rộng, đang chờ giảng viên duyệt phạm vi.',
+        },
+      ],
+      submissions: [],
+    },
   ]
 
   export interface ProjectApprovalRequest {
@@ -266,9 +561,39 @@ export const mockProjectRequests: ProjectApprovalRequest[] = [
     title: 'Ứng dụng Portfolio tương tác 3D',
     description: 'Thiết kế website cá nhân và giới thiệu sản phẩm nghệ thuật chất lượng cao sử dụng Three.js để tăng tính tương tác sinh động, tối ưu hiệu năng render trên các thiết bị di động.',
     groupName: 'Nhóm 08 - Creative',
-    leader: MockData.userLeViSa, 
-    members: [MockData.userLeViSa, MockData.userTranGiaBao], 
+    leader: MockData.userLeViSa,
+    members: [MockData.userLeViSa, MockData.userTranGiaBao],
     maxMembers: 4,
     submittedAt: '2026-06-09T09:15:00',
+  },
+  {
+    requestId: 3,
+    title: 'Hệ thống đặt món ăn trực tuyến',
+    description: 'Xây dựng nền tảng đặt món với giỏ hàng, theo dõi đơn hàng theo thời gian thực và tích hợp bản đồ giao hàng cho các quán ăn quanh khu vực trường.',
+    groupName: 'Nhóm 03 - Titan',
+    leader: MockData.userDoanKhanhLinh,
+    members: [MockData.userDoanKhanhLinh, MockData.userPhanThiMai, MockData.userHuynhTanPhat],
+    maxMembers: 5,
+    submittedAt: '2026-06-10T10:30:00',
+  },
+  {
+    requestId: 4,
+    title: 'Ứng dụng học từ vựng theo lịch lặp lại',
+    description: 'Ứng dụng di động giúp học từ vựng tiếng Anh theo thuật toán spaced repetition, có thống kê tiến độ và nhắc nhở ôn tập hằng ngày.',
+    groupName: 'Nhóm 04 - Luna',
+    leader: MockData.userTranThanhTung,
+    members: [MockData.userTranThanhTung, MockData.userDangThuyTrang],
+    maxMembers: 4,
+    submittedAt: '2026-06-11T08:45:00',
+  },
+  {
+    requestId: 5,
+    title: 'Chatbot tư vấn tuyển sinh',
+    description: 'Xây dựng chatbot trả lời câu hỏi tuyển sinh dựa trên kho dữ liệu của trường, sử dụng mô hình ngôn ngữ và tìm kiếm ngữ nghĩa.',
+    groupName: 'Nhóm 05 - Vega',
+    leader: MockData.userNgoQuangHuy,
+    members: [MockData.userNgoQuangHuy, MockData.userHoangPhuQuy, MockData.userLyGiaHan],
+    maxMembers: 5,
+    submittedAt: '2026-06-12T14:00:00',
   }
 ]
