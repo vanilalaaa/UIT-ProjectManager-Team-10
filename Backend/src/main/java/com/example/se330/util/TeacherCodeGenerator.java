@@ -7,16 +7,17 @@ import org.springframework.stereotype.Component;
 
 import com.example.se330.repository.UserRepository;
 
+
 @Component
-public class StudentCodeGenerator {
+public class TeacherCodeGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final String FACULTY_PREFIX = "52";
+    private static final String PREFIX = "GV";
     private static final int MAX_ATTEMPTS = 100;
 
     private final UserRepository userRepository;
 
-    public StudentCodeGenerator(UserRepository userRepository) {
+    public TeacherCodeGenerator(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -25,11 +26,11 @@ public class StudentCodeGenerator {
 
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             String suffix = String.format("%04d", RANDOM.nextInt(10000));
-            String code = yearPrefix + FACULTY_PREFIX + suffix;
+            String code = PREFIX + yearPrefix + suffix;
             if (!userRepository.existsByUid(code)) {
                 return code;
             }
         }
-        throw new IllegalStateException("Không thể sinh mã sinh viên duy nhất sau " + MAX_ATTEMPTS + " lần thử");
+        throw new IllegalStateException("Không thể sinh mã giảng viên duy nhất sau " + MAX_ATTEMPTS + " lần thử");
     }
 }
