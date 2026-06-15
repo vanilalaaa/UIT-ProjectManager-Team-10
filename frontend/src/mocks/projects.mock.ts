@@ -101,6 +101,56 @@
     },
   }
 
+  export const lecturerVoMinhTriet: User = {
+    userId: 105,
+    uid: 'GV000105',
+    email: 'triet.vo@uit.edu.vn',
+    password: null,
+    name: 'TS. Võ Minh Triết',
+    role: 'ADMIN',
+    createdAt: '2025-08-28T08:00:00',
+    updatedAt: '2026-02-09T09:00:00',
+    isActive: true,
+    verificationToken: null,
+    verificationTokenExpiry: null,
+    resetPasswordToken: null,
+    resetPasswordTokenExpiry: null,
+    userProfile: {
+      userId: 105,
+      summary: 'Giảng viên phụ trách học phần Cấu trúc dữ liệu và giải thuật.',
+      firstName: 'Triết',
+      lastName: 'Võ Minh',
+      avatarUrl: '/avatars/lecturer-vo-minh-triet.png',
+      phoneNumber: '0901000105',
+      birthday: '1986-02-08',
+    },
+  }
+
+  export const lecturerDoThiKimChi: User = {
+    userId: 106,
+    uid: 'GV000106',
+    email: 'chi.do@uit.edu.vn',
+    password: null,
+    name: 'ThS. Đỗ Thị Kim Chi',
+    role: 'ADMIN',
+    createdAt: '2025-09-02T08:00:00',
+    updatedAt: '2026-02-11T10:00:00',
+    isActive: true,
+    verificationToken: null,
+    verificationTokenExpiry: null,
+    resetPasswordToken: null,
+    resetPasswordTokenExpiry: null,
+    userProfile: {
+      userId: 106,
+      summary: 'Giảng viên phụ trách học phần Hệ quản trị cơ sở dữ liệu.',
+      firstName: 'Chi',
+      lastName: 'Đỗ Thị Kim',
+      avatarUrl: '/avatars/lecturer-do-thi-kim-chi.png',
+      phoneNumber: '0901000106',
+      birthday: '1989-07-19',
+    },
+  }
+
   export const softwareEngineeringCourse: Course = {
     courseId: 1,
     name: 'SE330 - Công nghệ phần mềm',
@@ -119,7 +169,7 @@
     maxStudents: 90,
     startDate: '2026-03-01',
     endDate: '2026-07-15',
-    groups: [MockData.groupNimbus, MockData.groupOrion],
+    groups: [MockData.groupNimbus, MockData.groupOrion, MockData.groupRigel],
     projects: [],
   }
 
@@ -141,7 +191,7 @@
     maxStudents: 80,
     startDate: '2026-02-20',
     endDate: '2026-06-25',
-    groups: [MockData.groupLuna],
+    groups: [MockData.groupLuna, MockData.groupAtlas],
     projects: [],
   }
 
@@ -152,7 +202,29 @@
     maxStudents: 70,
     startDate: '2026-03-05',
     endDate: '2026-07-10',
-    groups: [MockData.groupVega],
+    groups: [MockData.groupVega, MockData.groupDraco],
+    projects: [],
+  }
+
+  export const dataStructureCourse: Course = {
+    courseId: 6,
+    name: 'DS102 - Cấu trúc dữ liệu và giải thuật',
+    lecturer: lecturerVoMinhTriet,
+    maxStudents: 110,
+    startDate: '2026-02-18',
+    endDate: '2026-06-28',
+    groups: [MockData.groupZephyr],
+    projects: [],
+  }
+
+  export const databaseCourse: Course = {
+    courseId: 7,
+    name: 'IS201 - Hệ quản trị cơ sở dữ liệu',
+    lecturer: lecturerDoThiKimChi,
+    maxStudents: 95,
+    startDate: '2026-02-22',
+    endDate: '2026-07-02',
+    groups: [MockData.groupHelios],
     projects: [],
   }
 
@@ -181,6 +253,13 @@
     categoryId: 4,
     name: 'Dữ liệu lớn',
     description: 'Đồ án xử lý, phân tích và trực quan hóa dữ liệu quy mô lớn.',
+    isActive: true,
+  }
+
+  export const toolCategory: Category = {
+    categoryId: 5,
+    name: 'Công cụ & Nền tảng',
+    description: 'Đồ án xây dựng thư viện, công cụ hỗ trợ lập trình và nền tảng nội bộ.',
     isActive: true,
   }
 
@@ -532,6 +611,221 @@
       ],
       submissions: [],
     },
+    {
+      projectId: 10,
+      title: 'Thư viện trực quan hóa cấu trúc dữ liệu',
+      description:
+        'Xây dựng thư viện web minh họa hoạt động của cây, đồ thị và các thuật toán sắp xếp phục vụ giảng dạy môn DS102.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-05',
+      endDate: '2026-06-25',
+      course: dataStructureCourse,
+      category: toolCategory,
+      registrations: [
+        {
+          groupId: 9,
+          project: null,
+          groupMember: MockData.userVoThanhDat,
+          registeredAt: '2026-03-06',
+          approvedAt: '2026-03-08',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách kiến trúc thư viện.',
+        },
+        {
+          groupId: 9,
+          project: null,
+          groupMember: MockData.userNguyenThiThuHa,
+          registeredAt: '2026-03-06',
+          approvedAt: '2026-03-08',
+          status: 'APPROVED',
+          note: 'Phụ trách giao diện minh họa.',
+        },
+        {
+          groupId: 9,
+          project: null,
+          groupMember: MockData.userTruongMinhKhoa,
+          registeredAt: '2026-03-06',
+          approvedAt: '2026-03-08',
+          status: 'APPROVED',
+          note: 'Phụ trách kiểm thử hiệu năng.',
+        },
+      ],
+      submissions: [
+        {
+          submissionId: 10,
+          submittedAt: '2026-05-18T20:00:00',
+          status: 'REVIEWED',
+          filePath: '/submissions/ds102-zephyr/demo-v1.zip',
+          project: null,
+          group: null,
+          grade: null,
+        },
+      ],
+    },
+    {
+      projectId: 11,
+      title: 'Hệ quản trị cơ sở dữ liệu thư viện',
+      description:
+        'Thiết kế và hiện thực cơ sở dữ liệu quản lý sách, độc giả và phiếu mượn kèm các truy vấn thống kê cho môn IS201.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-08',
+      endDate: '2026-06-28',
+      course: databaseCourse,
+      category: dataCategory,
+      registrations: [
+        {
+          groupId: 10,
+          project: null,
+          groupMember: MockData.userDinhBaoNgoc,
+          registeredAt: '2026-03-09',
+          approvedAt: '2026-03-11',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách thiết kế lược đồ.',
+        },
+        {
+          groupId: 10,
+          project: null,
+          groupMember: MockData.userPhungGiaKhanh,
+          registeredAt: '2026-03-09',
+          approvedAt: '2026-03-11',
+          status: 'APPROVED',
+          note: 'Phụ trách stored procedure và trigger.',
+        },
+        {
+          groupId: 10,
+          project: null,
+          groupMember: MockData.userMaiThiBichTram,
+          registeredAt: '2026-03-09',
+          approvedAt: '2026-03-11',
+          status: 'APPROVED',
+          note: 'Phụ trách tối ưu truy vấn và tài liệu.',
+        },
+      ],
+      submissions: [],
+    },
+    {
+      projectId: 12,
+      title: 'Ứng dụng đặt lịch phòng tập',
+      description:
+        'Ứng dụng di động cho phép đặt lịch lớp tập, nhắc giờ và theo dõi lịch sử luyện tập cho môn NT118.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-12',
+      endDate: '2026-06-22',
+      course: mobileDevCourse,
+      category: mobileCategory,
+      registrations: [
+        {
+          groupId: 11,
+          project: null,
+          groupMember: MockData.userLamQuocThai,
+          registeredAt: '2026-03-13',
+          approvedAt: '2026-03-15',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách giao diện đặt lịch.',
+        },
+        {
+          groupId: 11,
+          project: null,
+          groupMember: MockData.userCaoThiKimNgan,
+          registeredAt: '2026-03-13',
+          approvedAt: '2026-03-15',
+          status: 'APPROVED',
+          note: 'Phụ trách thông báo nhắc lịch.',
+        },
+        {
+          groupId: 11,
+          project: null,
+          groupMember: MockData.userVuongBaoLong,
+          registeredAt: '2026-03-13',
+          approvedAt: '2026-03-15',
+          status: 'APPROVED',
+          note: 'Phụ trách backend và API.',
+        },
+      ],
+      submissions: [],
+    },
+    {
+      projectId: 13,
+      title: 'Phân loại cảm xúc bình luận tiếng Việt',
+      description:
+        'Huấn luyện mô hình phân loại cảm xúc cho bình luận tiếng Việt và xây dựng dashboard trực quan kết quả cho môn CS117.',
+      status: 'IN_PROGRESS',
+      startDate: '2026-03-18',
+      endDate: '2026-07-08',
+      course: machineLearningCourse,
+      category: aiCategory,
+      registrations: [
+        {
+          groupId: 12,
+          project: null,
+          groupMember: MockData.userTaQuangVinh,
+          registeredAt: '2026-03-19',
+          approvedAt: '2026-03-21',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách mô hình.',
+        },
+        {
+          groupId: 12,
+          project: null,
+          groupMember: MockData.userDuongThiYenNhi,
+          registeredAt: '2026-03-19',
+          approvedAt: '2026-03-21',
+          status: 'APPROVED',
+          note: 'Phụ trách dashboard.',
+        },
+        {
+          groupId: 12,
+          project: null,
+          groupMember: MockData.userKieuMyDuyen,
+          registeredAt: '2026-03-19',
+          approvedAt: '2026-03-21',
+          status: 'APPROVED',
+          note: 'Phụ trách tiền xử lý dữ liệu.',
+        },
+      ],
+      submissions: [],
+    },
+    {
+      projectId: 14,
+      title: 'Công cụ lập kế hoạch Sprint',
+      description:
+        'Xây dựng công cụ hỗ trợ lập kế hoạch Sprint với bảng Kanban kéo thả và biểu đồ burndown cho môn PM301.',
+      status: 'PLANNING',
+      startDate: '2026-05-20',
+      endDate: '2026-08-10',
+      course: projectManagementCourse,
+      category: toolCategory,
+      registrations: [
+        {
+          groupId: 13,
+          project: null,
+          groupMember: MockData.userHaMinhTuan,
+          registeredAt: '2026-05-18',
+          approvedAt: '2026-05-20',
+          status: 'APPROVED',
+          note: 'Trưởng nhóm, phụ trách phân tích yêu cầu.',
+        },
+        {
+          groupId: 13,
+          project: null,
+          groupMember: MockData.userTrinhThiThanhThao,
+          registeredAt: '2026-05-18',
+          approvedAt: '2026-05-20',
+          status: 'APPROVED',
+          note: 'Phụ trách giao diện Kanban.',
+        },
+        {
+          groupId: 13,
+          project: null,
+          groupMember: MockData.userChauThanhPhong,
+          registeredAt: '2026-05-18',
+          approvedAt: null,
+          status: 'PENDING',
+          note: 'Đang chờ giảng viên duyệt vai trò bổ sung.',
+        },
+      ],
+      submissions: [],
+    },
   ]
 
   export interface ProjectApprovalRequest {
@@ -595,5 +889,35 @@ export const mockProjectRequests: ProjectApprovalRequest[] = [
     members: [MockData.userNgoQuangHuy, MockData.userHoangPhuQuy, MockData.userLyGiaHan],
     maxMembers: 5,
     submittedAt: '2026-06-12T14:00:00',
+  },
+  {
+    requestId: 6,
+    title: 'Thư viện trực quan hóa thuật toán đồ thị',
+    description: 'Xây dựng thư viện minh họa các thuật toán duyệt và tìm đường trên đồ thị (BFS, DFS, Dijkstra) với hoạt ảnh từng bước, phục vụ giảng dạy và tự học.',
+    groupName: 'Nhóm 03 - Zephyr',
+    leader: MockData.userVoThanhDat,
+    members: [MockData.userVoThanhDat, MockData.userNguyenThiThuHa, MockData.userTruongMinhKhoa],
+    maxMembers: 4,
+    submittedAt: '2026-06-08T09:30:00',
+  },
+  {
+    requestId: 7,
+    title: 'Hệ thống quản lý kho cơ sở dữ liệu',
+    description: 'Thiết kế cơ sở dữ liệu quản lý kho hàng với truy vấn tồn kho thời gian thực, cảnh báo hết hàng và báo cáo nhập xuất theo kỳ.',
+    groupName: 'Nhóm 01 - Helios',
+    leader: MockData.userDinhBaoNgoc,
+    members: [MockData.userDinhBaoNgoc, MockData.userPhungGiaKhanh, MockData.userMaiThiBichTram],
+    maxMembers: 5,
+    submittedAt: '2026-06-09T13:45:00',
+  },
+  {
+    requestId: 8,
+    title: 'Công cụ theo dõi tiến độ nhóm theo Sprint',
+    description: 'Xây dựng công cụ quản lý Sprint với bảng Kanban, biểu đồ burndown và thống kê khối lượng công việc của từng thành viên trong nhóm.',
+    groupName: 'Nhóm 05 - Rigel',
+    leader: MockData.userHaMinhTuan,
+    members: [MockData.userHaMinhTuan, MockData.userTrinhThiThanhThao, MockData.userChauThanhPhong],
+    maxMembers: 4,
+    submittedAt: '2026-06-11T15:20:00',
   }
 ]
