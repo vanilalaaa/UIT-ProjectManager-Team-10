@@ -1,6 +1,8 @@
 import { userSinhVienTran, userLeHoangVy, mockTasks } from './tasks.mock';
 import { mockProjects } from './projects.mock';
 import type { Project, User, DateTimeString } from './types';
+import type { ApiResponse } from '../types/api/common';
+import type { StatDetailItem, StatDetailType } from '../types/api/home';
 
 export type ActivityAction = 'UPDATE_TASK' | 'SUBMIT_FILE' | 'APPROVE_TOPIC' | 'MENTION';
 
@@ -166,6 +168,61 @@ export const getTeacherChartStats = (month: number, date: number | null) => {
   });
   return { todo: 0, inProgress: filteredActs.length, readyForTest: 0, total: filteredActs.length };
 };
+
+// Mock chi tiết cho từng ô thống kê ở QuickStats (sổ xuống khi click).
+// Khớp với type `StatDetailType` + shape `StatDetailItem` của backend.
+const mockStatDetails: Record<StatDetailType, StatDetailItem[]> = {
+  // ===== Giảng viên =====
+  pendingGrades: [
+    { id: 1, type: 'SUBMISSION', title: 'Báo cáo cuối kỳ - Nhóm 10', subtitle: 'Đồ án quản lý đồ án SE330', status: 'SUBMITTED', timestamp: '2026-06-12T09:30:00' },
+    { id: 2, type: 'SUBMISSION', title: 'SRS - Nhóm 03', subtitle: 'Website thương mại điện tử', status: 'LATE', timestamp: '2026-06-13T23:50:00' },
+    { id: 3, type: 'SUBMISSION', title: 'Bản thiết kế DB - Nhóm 07', subtitle: 'Ứng dụng đặt lịch khám', status: 'SUBMITTED', timestamp: '2026-06-14T08:10:00' },
+  ],
+  totalProjects: [
+    { id: 11, type: 'PROJECT', title: 'Website quản lý đồ án môn SE330', subtitle: 'Nhóm 10 · 4 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-01T08:00:00' },
+    { id: 12, type: 'PROJECT', title: 'Website thương mại điện tử', subtitle: 'Nhóm 03 · 5 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-02T08:00:00' },
+    { id: 13, type: 'PROJECT', title: 'Ứng dụng đặt lịch khám', subtitle: 'Nhóm 07 · 3 thành viên', status: 'COMPLETED', timestamp: '2026-04-20T08:00:00' },
+  ],
+  pendingRequests: [
+    { id: 21, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống chấm công', subtitle: 'Nhóm 12 gửi', status: 'PENDING', timestamp: '2026-06-14T16:00:00' },
+    { id: 22, type: 'REQUEST', title: 'Yêu cầu gia hạn nộp báo cáo', subtitle: 'Nhóm 05 gửi', status: 'PENDING', timestamp: '2026-06-15T07:30:00' },
+  ],
+  upcomingDeadlines: [
+    { id: 31, type: 'TASK', title: 'Hạn nộp báo cáo tiến độ tuần 3', subtitle: 'Áp dụng cho tất cả các nhóm', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
+    { id: 32, type: 'TASK', title: 'Hạn phản biện đồ án', subtitle: 'Nhóm 03, 07, 10', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
+  ],
+
+  // ===== Sinh viên =====
+  completed: [
+    { id: 41, type: 'TASK', title: 'Thiết kế API danh sách đồ án', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-08T10:30:00' },
+    { id: 42, type: 'TASK', title: 'Hoàn thiện luồng đăng nhập mock', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-09T09:15:00' },
+  ],
+  updated: [
+    { id: 51, type: 'TASK', title: 'Cập nhật task giao diện HomePage', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-10T09:00:00' },
+    { id: 52, type: 'TASK', title: 'Chuyển task sang REVIEW', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-04T10:00:00' },
+  ],
+  created: [
+    { id: 61, type: 'TASK', title: 'Viết test case quản lý task', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-05T10:00:00' },
+    { id: 62, type: 'TASK', title: 'Thiết kế database schema', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-06T14:00:00' },
+  ],
+  dueSoon: [
+    { id: 71, type: 'TASK', title: 'Nộp báo cáo tiến độ tuần 3', subtitle: 'Còn 3 ngày', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
+    { id: 72, type: 'TASK', title: 'Hoàn thiện module thống kê', subtitle: 'Còn 5 ngày', status: 'IN_PROGRESS', timestamp: '2026-06-20T23:59:00' },
+  ],
+};
+
+// Mock thay cho getStatDetail() trong home.service.ts (gọi backend /home/stats/detail).
+// Trả về cùng shape ApiResponse để component dùng y hệt như API thật.
+export const getStatDetailMock = (
+  type: StatDetailType,
+): Promise<ApiResponse<StatDetailItem[]>> =>
+  Promise.resolve({
+    status: 'success',
+    message: 'OK (mock)',
+    data: mockStatDetails[type] ?? [],
+    errorCode: null,
+    timestamp: '2026-06-15T12:00:00',
+  });
 
 export const getHeatmapData = (month: number, role: string = 'STUDENT') => {
   const counts: Record<number, number> = {};
