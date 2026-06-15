@@ -9,7 +9,6 @@ import {
   userDangThuyTrang,
   userNgoQuangHuy,
   userHoangPhuQuy,
-  mockTasks,
 } from './tasks.mock';
 import { mockProjects } from './projects.mock';
 import type { Project, User, DateTimeString } from './types';
@@ -202,12 +201,47 @@ export const mockStudentActivities: Activity[] = [
   },
 ];
 
+// ── Chi tiết QuickStats của giảng viên (nguồn dữ liệu duy nhất) ───────────────
+// Số trên thẻ QuickStats = độ dài của chính các mảng này, nên thẻ và danh sách
+// sổ xuống luôn khớp tổng số.
+const teacherPendingGradesDetails: StatDetailItem[] = [
+  { id: 1, type: 'SUBMISSION', title: 'Báo cáo cuối kỳ - Nhóm 10', subtitle: 'Đồ án quản lý đồ án SE330', status: 'SUBMITTED', timestamp: '2026-06-12T09:30:00' },
+  { id: 2, type: 'SUBMISSION', title: 'SRS - Nhóm 03', subtitle: 'Website thương mại điện tử', status: 'LATE', timestamp: '2026-06-13T23:50:00' },
+  { id: 3, type: 'SUBMISSION', title: 'Bản thiết kế DB - Nhóm 07', subtitle: 'Ứng dụng đặt lịch khám', status: 'SUBMITTED', timestamp: '2026-06-14T08:10:00' },
+  { id: 4, type: 'SUBMISSION', title: 'Demo giữa kỳ - Nhóm Titan', subtitle: 'Sàn thương mại điện tử mini (IS207)', status: 'SUBMITTED', timestamp: '2026-06-12T20:00:00' },
+  { id: 5, type: 'SUBMISSION', title: 'Build APK v1 - Nhóm Luna', subtitle: 'Ứng dụng ghi chú đồng bộ (NT118)', status: 'SUBMITTED', timestamp: '2026-06-13T09:20:00' },
+  { id: 6, type: 'SUBMISSION', title: 'Tập dữ liệu gán nhãn - Nhóm Vega', subtitle: 'Nhận diện biển báo giao thông (CS117)', status: 'LATE', timestamp: '2026-06-14T10:00:00' },
+];
+
+const teacherTotalProjectsDetails: StatDetailItem[] = [
+  { id: 11, type: 'PROJECT', title: 'Website quản lý đồ án môn SE330', subtitle: 'Nhóm 10 · 4 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-01T08:00:00' },
+  { id: 12, type: 'PROJECT', title: 'Website thương mại điện tử', subtitle: 'Nhóm 03 · 5 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-02T08:00:00' },
+  { id: 13, type: 'PROJECT', title: 'Ứng dụng đặt lịch khám', subtitle: 'Nhóm 07 · 3 thành viên', status: 'COMPLETED', timestamp: '2026-04-20T08:00:00' },
+  { id: 14, type: 'PROJECT', title: 'Sàn thương mại điện tử mini', subtitle: 'Nhóm Titan · 3 thành viên (IS207)', status: 'IN_PROGRESS', timestamp: '2026-03-10T08:00:00' },
+  { id: 15, type: 'PROJECT', title: 'Ứng dụng ghi chú đồng bộ đám mây', subtitle: 'Nhóm Luna · 3 thành viên (NT118)', status: 'IN_PROGRESS', timestamp: '2026-03-15T08:00:00' },
+  { id: 16, type: 'PROJECT', title: 'Nhận diện biển báo giao thông', subtitle: 'Nhóm Vega · 3 thành viên (CS117)', status: 'IN_PROGRESS', timestamp: '2026-03-20T08:00:00' },
+];
+
+const teacherPendingRequestsDetails: StatDetailItem[] = [
+  { id: 21, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống chấm công', subtitle: 'Nhóm 12 gửi', status: 'PENDING', timestamp: '2026-06-14T16:00:00' },
+  { id: 22, type: 'REQUEST', title: 'Yêu cầu gia hạn nộp báo cáo', subtitle: 'Nhóm 05 gửi', status: 'PENDING', timestamp: '2026-06-15T07:30:00' },
+  { id: 23, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống đặt món ăn', subtitle: 'Nhóm Titan gửi', status: 'PENDING', timestamp: '2026-06-10T10:30:00' },
+  { id: 24, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Chatbot tư vấn tuyển sinh', subtitle: 'Nhóm Vega gửi', status: 'PENDING', timestamp: '2026-06-12T14:00:00' },
+];
+
+const teacherUpcomingDeadlinesDetails: StatDetailItem[] = [
+  { id: 31, type: 'TASK', title: 'Hạn nộp báo cáo tiến độ tuần 3', subtitle: 'Áp dụng cho tất cả các nhóm', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
+  { id: 32, type: 'TASK', title: 'Hạn phản biện đồ án', subtitle: 'Nhóm 03, 07, 10', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
+  { id: 33, type: 'TASK', title: 'Hạn nộp sản phẩm web IS207', subtitle: 'Nhóm Titan, Comet', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
+  { id: 34, type: 'TASK', title: 'Hạn nộp APK và video demo NT118', subtitle: 'Nhóm Luna', status: 'TODO', timestamp: '2026-06-25T23:59:00' },
+];
+
 export const getTeacherQuickStats = () => {
   return {
-    pendingGrades: 18,
-    totalProjects: 32,
-    pendingRequests: 5,
-    upcomingDeadlines: 6
+    pendingGrades: teacherPendingGradesDetails.length,
+    totalProjects: teacherTotalProjectsDetails.length,
+    pendingRequests: teacherPendingRequestsDetails.length,
+    upcomingDeadlines: teacherUpcomingDeadlinesDetails.length,
   };
 };
 
@@ -268,9 +302,45 @@ export const mockTeacherActivities: Activity[] = [
   },
 ];
 
-export const getStudentQuickStats = (userId: number) => {
-  const myTasks = mockTasks.filter(t => t.assignedTo.userId === userId);
-  return { completed: myTasks.filter(t => t.status === 'DONE').length, updated: myTasks.filter(t => t.updatedAt !== t.createdAt).length, created: myTasks.filter(t => t.createdBy.userId === userId).length, dueSoon: myTasks.filter(t => t.status !== 'DONE').length, total: myTasks.length };
+// ── Chi tiết QuickStats của sinh viên (nguồn dữ liệu duy nhất) ────────────────
+// Số trên thẻ QuickStats = độ dài của chính các mảng này, nên thẻ và danh sách
+// sổ xuống luôn khớp tổng số.
+const studentCompletedDetails: StatDetailItem[] = [
+  { id: 41, type: 'TASK', title: 'Thiết kế API danh sách đồ án', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-08T10:30:00' },
+  { id: 42, type: 'TASK', title: 'Hoàn thiện luồng đăng nhập mock', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-09T09:15:00' },
+  { id: 43, type: 'TASK', title: 'Dựng cấu trúc thư mục frontend', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-02T16:40:00' },
+  { id: 44, type: 'TASK', title: 'Viết tài liệu SRS phần tổng quan', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-05T14:00:00' },
+  { id: 45, type: 'TASK', title: 'Tích hợp ESLint và Prettier', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-07T11:20:00' },
+];
+
+const studentUpdatedDetails: StatDetailItem[] = [
+  { id: 51, type: 'TASK', title: 'Cập nhật task giao diện HomePage', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-10T09:00:00' },
+  { id: 52, type: 'TASK', title: 'Chuyển task sang REVIEW', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-04T10:00:00' },
+  { id: 53, type: 'TASK', title: 'Refactor component QuickStats', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-11T15:30:00' },
+  { id: 54, type: 'TASK', title: 'Đồng bộ mock data với DTO backend', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-12T08:45:00' },
+];
+
+const studentCreatedDetails: StatDetailItem[] = [
+  { id: 61, type: 'TASK', title: 'Viết test case quản lý task', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-05T10:00:00' },
+  { id: 62, type: 'TASK', title: 'Thiết kế database schema', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-06T14:00:00' },
+  { id: 63, type: 'TASK', title: 'Lên kế hoạch sprint 2', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-09T13:10:00' },
+  { id: 64, type: 'TASK', title: 'Tạo checklist nghiệm thu', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-10T17:25:00' },
+];
+
+const studentDueSoonDetails: StatDetailItem[] = [
+  { id: 71, type: 'TASK', title: 'Nộp báo cáo tiến độ tuần 3', subtitle: 'Còn 3 ngày', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
+  { id: 72, type: 'TASK', title: 'Hoàn thiện module thống kê', subtitle: 'Còn 5 ngày', status: 'IN_PROGRESS', timestamp: '2026-06-20T23:59:00' },
+  { id: 73, type: 'TASK', title: 'Chuẩn bị slide demo giữa kỳ', subtitle: 'Còn 6 ngày', status: 'TODO', timestamp: '2026-06-21T23:59:00' },
+];
+
+export const getStudentQuickStats = (_userId: number) => {
+  return {
+    completed: studentCompletedDetails.length,
+    updated: studentUpdatedDetails.length,
+    created: studentCreatedDetails.length,
+    dueSoon: studentDueSoonDetails.length,
+    total: studentCompletedDetails.length + studentDueSoonDetails.length,
+  };
 };
 
 export const getStudentChartStats = (month: number, date: number | null) => {
@@ -292,53 +362,17 @@ export const getTeacherChartStats = (month: number, date: number | null) => {
 // Mock chi tiết cho từng ô thống kê ở QuickStats (sổ xuống khi click).
 // Khớp với type `StatDetailType` + shape `StatDetailItem` của backend.
 const mockStatDetails: Record<StatDetailType, StatDetailItem[]> = {
-  // ===== Giảng viên =====
-  pendingGrades: [
-    { id: 1, type: 'SUBMISSION', title: 'Báo cáo cuối kỳ - Nhóm 10', subtitle: 'Đồ án quản lý đồ án SE330', status: 'SUBMITTED', timestamp: '2026-06-12T09:30:00' },
-    { id: 2, type: 'SUBMISSION', title: 'SRS - Nhóm 03', subtitle: 'Website thương mại điện tử', status: 'LATE', timestamp: '2026-06-13T23:50:00' },
-    { id: 3, type: 'SUBMISSION', title: 'Bản thiết kế DB - Nhóm 07', subtitle: 'Ứng dụng đặt lịch khám', status: 'SUBMITTED', timestamp: '2026-06-14T08:10:00' },
-    { id: 4, type: 'SUBMISSION', title: 'Demo giữa kỳ - Nhóm Titan', subtitle: 'Sàn thương mại điện tử mini (IS207)', status: 'SUBMITTED', timestamp: '2026-06-12T20:00:00' },
-    { id: 5, type: 'SUBMISSION', title: 'Build APK v1 - Nhóm Luna', subtitle: 'Ứng dụng ghi chú đồng bộ (NT118)', status: 'SUBMITTED', timestamp: '2026-06-13T09:20:00' },
-    { id: 6, type: 'SUBMISSION', title: 'Tập dữ liệu gán nhãn - Nhóm Vega', subtitle: 'Nhận diện biển báo giao thông (CS117)', status: 'LATE', timestamp: '2026-06-14T10:00:00' },
-  ],
-  totalProjects: [
-    { id: 11, type: 'PROJECT', title: 'Website quản lý đồ án môn SE330', subtitle: 'Nhóm 10 · 4 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-01T08:00:00' },
-    { id: 12, type: 'PROJECT', title: 'Website thương mại điện tử', subtitle: 'Nhóm 03 · 5 thành viên', status: 'IN_PROGRESS', timestamp: '2026-05-02T08:00:00' },
-    { id: 13, type: 'PROJECT', title: 'Ứng dụng đặt lịch khám', subtitle: 'Nhóm 07 · 3 thành viên', status: 'COMPLETED', timestamp: '2026-04-20T08:00:00' },
-    { id: 14, type: 'PROJECT', title: 'Sàn thương mại điện tử mini', subtitle: 'Nhóm Titan · 3 thành viên (IS207)', status: 'IN_PROGRESS', timestamp: '2026-03-10T08:00:00' },
-    { id: 15, type: 'PROJECT', title: 'Ứng dụng ghi chú đồng bộ đám mây', subtitle: 'Nhóm Luna · 3 thành viên (NT118)', status: 'IN_PROGRESS', timestamp: '2026-03-15T08:00:00' },
-    { id: 16, type: 'PROJECT', title: 'Nhận diện biển báo giao thông', subtitle: 'Nhóm Vega · 3 thành viên (CS117)', status: 'IN_PROGRESS', timestamp: '2026-03-20T08:00:00' },
-  ],
-  pendingRequests: [
-    { id: 21, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống chấm công', subtitle: 'Nhóm 12 gửi', status: 'PENDING', timestamp: '2026-06-14T16:00:00' },
-    { id: 22, type: 'REQUEST', title: 'Yêu cầu gia hạn nộp báo cáo', subtitle: 'Nhóm 05 gửi', status: 'PENDING', timestamp: '2026-06-15T07:30:00' },
-    { id: 23, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Hệ thống đặt món ăn', subtitle: 'Nhóm Titan gửi', status: 'PENDING', timestamp: '2026-06-10T10:30:00' },
-    { id: 24, type: 'REQUEST', title: 'Yêu cầu duyệt đề tài: Chatbot tư vấn tuyển sinh', subtitle: 'Nhóm Vega gửi', status: 'PENDING', timestamp: '2026-06-12T14:00:00' },
-  ],
-  upcomingDeadlines: [
-    { id: 31, type: 'TASK', title: 'Hạn nộp báo cáo tiến độ tuần 3', subtitle: 'Áp dụng cho tất cả các nhóm', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
-    { id: 32, type: 'TASK', title: 'Hạn phản biện đồ án', subtitle: 'Nhóm 03, 07, 10', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
-    { id: 33, type: 'TASK', title: 'Hạn nộp sản phẩm web IS207', subtitle: 'Nhóm Titan, Comet', status: 'TODO', timestamp: '2026-06-20T23:59:00' },
-    { id: 34, type: 'TASK', title: 'Hạn nộp APK và video demo NT118', subtitle: 'Nhóm Luna', status: 'TODO', timestamp: '2026-06-25T23:59:00' },
-  ],
+  // ===== Giảng viên ===== (dùng chung nguồn với getTeacherQuickStats để khớp tổng số)
+  pendingGrades: teacherPendingGradesDetails,
+  totalProjects: teacherTotalProjectsDetails,
+  pendingRequests: teacherPendingRequestsDetails,
+  upcomingDeadlines: teacherUpcomingDeadlinesDetails,
 
-  // ===== Sinh viên =====
-  completed: [
-    { id: 41, type: 'TASK', title: 'Thiết kế API danh sách đồ án', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-08T10:30:00' },
-    { id: 42, type: 'TASK', title: 'Hoàn thiện luồng đăng nhập mock', subtitle: 'Website quản lý đồ án môn SE330', status: 'DONE', timestamp: '2026-06-09T09:15:00' },
-  ],
-  updated: [
-    { id: 51, type: 'TASK', title: 'Cập nhật task giao diện HomePage', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-10T09:00:00' },
-    { id: 52, type: 'TASK', title: 'Chuyển task sang REVIEW', subtitle: 'Website quản lý đồ án môn SE330', status: 'IN_PROGRESS', timestamp: '2026-06-04T10:00:00' },
-  ],
-  created: [
-    { id: 61, type: 'TASK', title: 'Viết test case quản lý task', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-05T10:00:00' },
-    { id: 62, type: 'TASK', title: 'Thiết kế database schema', subtitle: 'Website quản lý đồ án môn SE330', status: 'TODO', timestamp: '2026-06-06T14:00:00' },
-  ],
-  dueSoon: [
-    { id: 71, type: 'TASK', title: 'Nộp báo cáo tiến độ tuần 3', subtitle: 'Còn 3 ngày', status: 'TODO', timestamp: '2026-06-18T23:59:00' },
-    { id: 72, type: 'TASK', title: 'Hoàn thiện module thống kê', subtitle: 'Còn 5 ngày', status: 'IN_PROGRESS', timestamp: '2026-06-20T23:59:00' },
-  ],
+  // ===== Sinh viên ===== (dùng chung nguồn với getStudentQuickStats để khớp tổng số)
+  completed: studentCompletedDetails,
+  updated: studentUpdatedDetails,
+  created: studentCreatedDetails,
+  dueSoon: studentDueSoonDetails,
 };
 
 // Mock thay cho getStatDetail() trong home.service.ts (gọi backend /home/stats/detail).
