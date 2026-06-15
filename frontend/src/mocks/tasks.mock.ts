@@ -750,6 +750,156 @@ export const userDangXuanLoc: User = {
   },
 }
 
+export const userVuongBaoLong: User = {
+  userId: 31,
+  uid: 'SV22520031',
+  email: '22520031@gm.uit.edu.vn',
+  password: null,
+  name: 'Vương Bảo Long',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T08:00:00',
+  updatedAt: '2026-05-21T09:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 31,
+    summary: 'Mobile developer, chuyên Swift và phát triển ứng dụng iOS.',
+    firstName: 'Long',
+    lastName: 'Vương Bảo',
+    avatarUrl: '',
+    phoneNumber: '0902000031',
+    birthday: '2004-05-19',
+  },
+}
+
+export const userKieuMyDuyen: User = {
+  userId: 32,
+  uid: 'SV22520032',
+  email: '22520032@gm.uit.edu.vn',
+  password: null,
+  name: 'Kiều Mỹ Duyên',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T08:30:00',
+  updatedAt: '2026-05-21T10:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 32,
+    summary: 'ML engineer, quan tâm tăng cường dữ liệu và đánh giá mô hình.',
+    firstName: 'Duyên',
+    lastName: 'Kiều Mỹ',
+    avatarUrl: '',
+    phoneNumber: '0902000032',
+    birthday: '2004-07-26',
+  },
+}
+
+export const userChauThanhPhong: User = {
+  userId: 33,
+  uid: 'SV22520033',
+  email: '22520033@gm.uit.edu.vn',
+  password: null,
+  name: 'Châu Thành Phong',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T09:00:00',
+  updatedAt: '2026-05-21T11:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 33,
+    summary: 'Project manager tập sự, theo dõi tiến độ và quản lý rủi ro.',
+    firstName: 'Phong',
+    lastName: 'Châu Thành',
+    avatarUrl: '',
+    phoneNumber: '0902000033',
+    birthday: '2004-03-08',
+  },
+}
+
+export const userTongHoangPhuc: User = {
+  userId: 34,
+  uid: 'SV22520034',
+  email: '22520034@gm.uit.edu.vn',
+  password: null,
+  name: 'Tống Hoàng Phúc',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T09:30:00',
+  updatedAt: '2026-05-21T12:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 34,
+    summary: 'Backend developer, thành thạo Node.js và thiết kế REST API.',
+    firstName: 'Phúc',
+    lastName: 'Tống Hoàng',
+    avatarUrl: '',
+    phoneNumber: '0902000034',
+    birthday: '2004-10-04',
+  },
+}
+
+export const userBachThiNgocAnh: User = {
+  userId: 35,
+  uid: 'SV22520035',
+  email: '22520035@gm.uit.edu.vn',
+  password: null,
+  name: 'Bạch Thị Ngọc Anh',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T10:00:00',
+  updatedAt: '2026-05-21T13:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 35,
+    summary: 'Frontend developer, yêu thích thiết kế giao diện tối giản.',
+    firstName: 'Anh',
+    lastName: 'Bạch Thị Ngọc',
+    avatarUrl: '',
+    phoneNumber: '0902000035',
+    birthday: '2004-12-22',
+  },
+}
+
+export const userDoanMinhQuan: User = {
+  userId: 36,
+  uid: 'SV22520036',
+  email: '22520036@gm.uit.edu.vn',
+  password: null,
+  name: 'Đoàn Minh Quân',
+  role: 'STUDENT',
+  createdAt: '2026-02-15T10:30:00',
+  updatedAt: '2026-05-21T14:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 36,
+    summary: 'Data engineer, quan tâm ETL và kho dữ liệu phân tích.',
+    firstName: 'Quân',
+    lastName: 'Đoàn Minh',
+    avatarUrl: '',
+    phoneNumber: '0902000036',
+    birthday: '2004-06-11',
+  },
+}
+
 export const softwareEngineeringCourse: Course = {
   courseId: 1,
   name: 'SE330 - Công nghệ phần mềm',
@@ -801,6 +951,28 @@ export const machineLearningCourse: Course = {
   maxStudents: 70,
   startDate: '2026-03-05',
   endDate: '2026-07-10',
+  groups: [],
+  projects: [],
+}
+
+export const dataStructureCourse: Course = {
+  courseId: 6,
+  name: 'DS102 - Cấu trúc dữ liệu và giải thuật',
+  lecturer: null,
+  maxStudents: 110,
+  startDate: '2026-02-18',
+  endDate: '2026-06-28',
+  groups: [],
+  projects: [],
+}
+
+export const databaseCourse: Course = {
+  courseId: 7,
+  name: 'IS201 - Hệ quản trị cơ sở dữ liệu',
+  lecturer: null,
+  maxStudents: 95,
+  startDate: '2026-02-22',
+  endDate: '2026-07-02',
   groups: [],
   projects: [],
 }
@@ -885,6 +1057,56 @@ export const groupVega: Group = {
   tasks: [],
 }
 
+export const groupZephyr: Group = {
+  groupId: 9,
+  name: 'Nhóm 03 - Zephyr',
+  description: 'Nhóm xây dựng thư viện trực quan hóa cấu trúc dữ liệu cho môn DS102.',
+  course: dataStructureCourse,
+  leader: userVoThanhDat,
+  members: [userVoThanhDat, userNguyenThiThuHa, userTruongMinhKhoa],
+  tasks: [],
+}
+
+export const groupHelios: Group = {
+  groupId: 10,
+  name: 'Nhóm 01 - Helios',
+  description: 'Nhóm thiết kế hệ quản trị cơ sở dữ liệu thư viện cho môn IS201.',
+  course: databaseCourse,
+  leader: userDinhBaoNgoc,
+  members: [userDinhBaoNgoc, userPhungGiaKhanh, userMaiThiBichTram],
+  tasks: [],
+}
+
+export const groupAtlas: Group = {
+  groupId: 11,
+  name: 'Nhóm 02 - Atlas',
+  description: 'Nhóm phát triển ứng dụng đặt lịch phòng tập cho môn NT118.',
+  course: mobileDevCourse,
+  leader: userLamQuocThai,
+  members: [userLamQuocThai, userCaoThiKimNgan, userVuongBaoLong],
+  tasks: [],
+}
+
+export const groupDraco: Group = {
+  groupId: 12,
+  name: 'Nhóm 02 - Draco',
+  description: 'Nhóm xây dựng mô hình phân loại cảm xúc bình luận cho môn CS117.',
+  course: machineLearningCourse,
+  leader: userTaQuangVinh,
+  members: [userTaQuangVinh, userDuongThiYenNhi, userKieuMyDuyen],
+  tasks: [],
+}
+
+export const groupRigel: Group = {
+  groupId: 13,
+  name: 'Nhóm 05 - Rigel',
+  description: 'Nhóm xây dựng công cụ lập kế hoạch Sprint cho môn PM301.',
+  course: projectManagementCourse,
+  leader: userHaMinhTuan,
+  members: [userHaMinhTuan, userTrinhThiThanhThao, userChauThanhPhong],
+  tasks: [],
+}
+
 export const mockClassMembers: User[] = [
   userSinhVienTran,
   userLeHoangVy,
@@ -935,6 +1157,12 @@ export const mockAllStudents: User[] = [
   userHaMinhTuan,
   userTrinhThiThanhThao,
   userDangXuanLoc,
+  userVuongBaoLong,
+  userKieuMyDuyen,
+  userChauThanhPhong,
+  userTongHoangPhuc,
+  userBachThiNgocAnh,
+  userDoanMinhQuan,
 ]
 
 export const mockTasks: Task[] = [
@@ -1118,6 +1346,186 @@ export const mockTasks: Task[] = [
     createdAt: '2026-05-02T10:00:00',
     updatedAt: '2026-05-25T11:30:00',
   },
+  {
+    taskId: 16,
+    title: 'Trực quan hóa cây nhị phân tìm kiếm',
+    description: 'Dựng module minh họa các thao tác thêm, xóa và cân bằng trên cây BST.',
+    assignedTo: userVoThanhDat,
+    createdBy: userVoThanhDat,
+    status: 'IN_PROGRESS',
+    group: groupZephyr,
+    deadline: '2026-06-12T18:00:00',
+    createdAt: '2026-05-14T09:00:00',
+    updatedAt: '2026-05-26T10:15:00',
+  },
+  {
+    taskId: 17,
+    title: 'Viết tài liệu thuật toán sắp xếp',
+    description: 'Tổng hợp độ phức tạp và ví dụ minh họa cho các thuật toán sắp xếp phổ biến.',
+    assignedTo: userNguyenThiThuHa,
+    createdBy: userVoThanhDat,
+    status: 'TODO',
+    group: groupZephyr,
+    deadline: '2026-06-18T20:00:00',
+    createdAt: '2026-05-15T10:00:00',
+    updatedAt: '2026-05-15T10:00:00',
+  },
+  {
+    taskId: 18,
+    title: 'Kiểm thử hiệu năng cấu trúc dữ liệu',
+    description: 'So sánh thời gian chạy của danh sách liên kết, mảng động và bảng băm.',
+    assignedTo: userTruongMinhKhoa,
+    createdBy: userVoThanhDat,
+    status: 'TODO',
+    group: groupZephyr,
+    deadline: '2026-06-22T18:00:00',
+    createdAt: '2026-05-16T14:00:00',
+    updatedAt: '2026-05-16T14:00:00',
+  },
+  {
+    taskId: 19,
+    title: 'Thiết kế lược đồ quan hệ thư viện',
+    description: 'Vẽ ERD và chuẩn hóa các bảng sách, độc giả, phiếu mượn về dạng chuẩn 3NF.',
+    assignedTo: userDinhBaoNgoc,
+    createdBy: userDinhBaoNgoc,
+    status: 'DONE',
+    group: groupHelios,
+    deadline: '2026-05-22T18:00:00',
+    createdAt: '2026-05-06T09:00:00',
+    updatedAt: '2026-05-21T16:30:00',
+  },
+  {
+    taskId: 20,
+    title: 'Viết stored procedure thống kê mượn trả',
+    description: 'Xây dựng các thủ tục tổng hợp số lượt mượn theo tháng và sách quá hạn.',
+    assignedTo: userPhungGiaKhanh,
+    createdBy: userDinhBaoNgoc,
+    status: 'IN_PROGRESS',
+    group: groupHelios,
+    deadline: '2026-06-05T18:00:00',
+    createdAt: '2026-05-10T10:30:00',
+    updatedAt: '2026-05-26T09:00:00',
+  },
+  {
+    taskId: 21,
+    title: 'Tối ưu chỉ mục cho truy vấn tìm sách',
+    description: 'Phân tích query plan và thêm index phù hợp cho các truy vấn tìm kiếm thường dùng.',
+    assignedTo: userMaiThiBichTram,
+    createdBy: userDinhBaoNgoc,
+    status: 'REVIEW',
+    group: groupHelios,
+    deadline: '2026-06-10T20:00:00',
+    createdAt: '2026-05-12T13:30:00',
+    updatedAt: '2026-05-27T11:00:00',
+  },
+  {
+    taskId: 22,
+    title: 'Thiết kế màn hình đặt lịch phòng tập',
+    description: 'Dựng giao diện chọn khung giờ, lớp tập và xác nhận đặt chỗ.',
+    assignedTo: userLamQuocThai,
+    createdBy: userLamQuocThai,
+    status: 'IN_PROGRESS',
+    group: groupAtlas,
+    deadline: '2026-06-14T18:00:00',
+    createdAt: '2026-05-13T09:30:00',
+    updatedAt: '2026-05-26T15:00:00',
+  },
+  {
+    taskId: 23,
+    title: 'Tích hợp thông báo nhắc lịch tập',
+    description: 'Gửi push notification nhắc người dùng trước giờ tập đã đặt.',
+    assignedTo: userCaoThiKimNgan,
+    createdBy: userLamQuocThai,
+    status: 'TODO',
+    group: groupAtlas,
+    deadline: '2026-06-20T18:00:00',
+    createdAt: '2026-05-15T11:00:00',
+    updatedAt: '2026-05-15T11:00:00',
+  },
+  {
+    taskId: 24,
+    title: 'Xây dựng API quản lý lịch đặt',
+    description: 'Thiết kế endpoint tạo, hủy và liệt kê lịch đặt phòng tập theo người dùng.',
+    assignedTo: userVuongBaoLong,
+    createdBy: userLamQuocThai,
+    status: 'IN_PROGRESS',
+    group: groupAtlas,
+    deadline: '2026-06-16T18:00:00',
+    createdAt: '2026-05-16T08:30:00',
+    updatedAt: '2026-05-27T09:45:00',
+  },
+  {
+    taskId: 25,
+    title: 'Tiền xử lý dữ liệu bình luận',
+    description: 'Làm sạch văn bản, tách từ tiếng Việt và gán nhãn cảm xúc cho tập huấn luyện.',
+    assignedTo: userTaQuangVinh,
+    createdBy: userTaQuangVinh,
+    status: 'DONE',
+    group: groupDraco,
+    deadline: '2026-05-20T18:00:00',
+    createdAt: '2026-05-04T09:00:00',
+    updatedAt: '2026-05-19T17:00:00',
+  },
+  {
+    taskId: 26,
+    title: 'Huấn luyện mô hình phân loại cảm xúc',
+    description: 'Thử nghiệm các mô hình LSTM và PhoBERT, so sánh độ chính xác trên tập kiểm thử.',
+    assignedTo: userKieuMyDuyen,
+    createdBy: userTaQuangVinh,
+    status: 'IN_PROGRESS',
+    group: groupDraco,
+    deadline: '2026-06-12T18:00:00',
+    createdAt: '2026-05-10T10:00:00',
+    updatedAt: '2026-05-27T14:30:00',
+  },
+  {
+    taskId: 27,
+    title: 'Dựng dashboard trực quan kết quả',
+    description: 'Hiển thị phân bố cảm xúc và các chỉ số đánh giá mô hình trên giao diện web.',
+    assignedTo: userDuongThiYenNhi,
+    createdBy: userTaQuangVinh,
+    status: 'TODO',
+    group: groupDraco,
+    deadline: '2026-06-18T20:00:00',
+    createdAt: '2026-05-14T13:00:00',
+    updatedAt: '2026-05-14T13:00:00',
+  },
+  {
+    taskId: 28,
+    title: 'Phân tích yêu cầu công cụ lập kế hoạch Sprint',
+    description: 'Khảo sát quy trình Scrum và xác định các tính năng cốt lõi cần hỗ trợ.',
+    assignedTo: userHaMinhTuan,
+    createdBy: userHaMinhTuan,
+    status: 'DONE',
+    group: groupRigel,
+    deadline: '2026-05-24T18:00:00',
+    createdAt: '2026-05-08T09:00:00',
+    updatedAt: '2026-05-23T16:00:00',
+  },
+  {
+    taskId: 29,
+    title: 'Thiết kế bảng Kanban kéo thả',
+    description: 'Dựng giao diện bảng công việc với các cột trạng thái và thao tác kéo thả thẻ.',
+    assignedTo: userTrinhThiThanhThao,
+    createdBy: userHaMinhTuan,
+    status: 'IN_PROGRESS',
+    group: groupRigel,
+    deadline: '2026-06-08T18:00:00',
+    createdAt: '2026-05-12T10:00:00',
+    updatedAt: '2026-05-27T10:30:00',
+  },
+  {
+    taskId: 30,
+    title: 'Xây dựng báo cáo burndown chart',
+    description: 'Tính toán và vẽ biểu đồ burndown theo tiến độ hoàn thành task trong Sprint.',
+    assignedTo: userChauThanhPhong,
+    createdBy: userHaMinhTuan,
+    status: 'TODO',
+    group: groupRigel,
+    deadline: '2026-06-15T20:00:00',
+    createdAt: '2026-05-15T14:30:00',
+    updatedAt: '2026-05-15T14:30:00',
+  },
 ]
 
 export const mockTeamRequests: User[] = [
@@ -1139,18 +1547,22 @@ export const mockTeamRequests: User[] = [
 
 export const mockCourseMembersMap: Record<number, User[]> = {
   1: mockClassMembers,
-  2: [userSinhVienTran, userTranGiaBao, userBuiNhatTruong, userPhamQuynhNhu, userLamQuocThai, userCaoThiKimNgan],
+  2: [userSinhVienTran, userTranGiaBao, userBuiNhatTruong, userPhamQuynhNhu, userLamQuocThai, userCaoThiKimNgan, userHaMinhTuan, userTrinhThiThanhThao, userChauThanhPhong],
   3: [userDoanKhanhLinh, userPhanThiMai, userHuynhTanPhat, userVuMinhHieu, userLyGiaHan, userTaQuangVinh, userDuongThiYenNhi],
-  4: [userTranThanhTung, userDangThuyTrang, userNguyenMinhAn, userSinhVienTran, userHaMinhTuan, userTrinhThiThanhThao],
-  5: [userNgoQuangHuy, userHoangPhuQuy, userLyGiaHan, userNguyenThuyDuong, userVoThanhDat, userDangXuanLoc],
+  4: [userTranThanhTung, userDangThuyTrang, userNguyenMinhAn, userSinhVienTran, userHaMinhTuan, userTrinhThiThanhThao, userLamQuocThai, userCaoThiKimNgan, userVuongBaoLong],
+  5: [userNgoQuangHuy, userHoangPhuQuy, userLyGiaHan, userNguyenThuyDuong, userVoThanhDat, userDangXuanLoc, userTaQuangVinh, userDuongThiYenNhi, userKieuMyDuyen],
+  6: [userVoThanhDat, userNguyenThiThuHa, userTruongMinhKhoa, userTongHoangPhuc, userBachThiNgocAnh, userDoanMinhQuan],
+  7: [userDinhBaoNgoc, userPhungGiaKhanh, userMaiThiBichTram, userTongHoangPhuc, userBachThiNgocAnh, userDoanMinhQuan],
 }
 
 export const mockMyGroupMap: Record<number, Group | null> = {
   1: groupPhoenix,
-  2: null,
+  2: groupRigel,
   3: groupTitan,
   4: groupLuna,
   5: null,
+  6: groupZephyr,
+  7: groupHelios,
 }
 
 export const mockTeamRequestsMap: Record<number, User[]> = {
@@ -1159,6 +1571,8 @@ export const mockTeamRequestsMap: Record<number, User[]> = {
   3: [userNguyenMinhAn],
   4: [userLeViSa],
   5: [],
+  6: [userTongHoangPhuc, userDoanMinhQuan],
+  7: [userBachThiNgocAnh],
 }
 
 export interface CourseRequirement {
@@ -1187,12 +1601,22 @@ export const mockCourseRequirements: Record<number, CourseRequirement> = {
     description: 'Nộp notebook huấn luyện, mô hình đã lưu, tập dữ liệu và báo cáo đánh giá độ chính xác.',
     deadline: '2026-07-10'
   },
+  6: {
+    description: 'Nộp source code thư viện trực quan hóa, tài liệu phân tích độ phức tạp và báo cáo kiểm thử hiệu năng.',
+    deadline: '2026-06-28'
+  },
+  7: {
+    description: 'Nộp script tạo cơ sở dữ liệu (.sql), tài liệu thiết kế ERD và báo cáo tối ưu truy vấn.',
+    deadline: '2026-07-02'
+  },
 };
 
 export const mockCourseGroupsMap: Record<number, Group[]> = {
   1: [groupPhoenix, groupAster],
-  2: [groupNimbus, groupOrion],
+  2: [groupNimbus, groupOrion, groupRigel],
   3: [groupTitan, groupComet],
-  4: [groupLuna],
-  5: [groupVega],
+  4: [groupLuna, groupAtlas],
+  5: [groupVega, groupDraco],
+  6: [groupZephyr],
+  7: [groupHelios],
 }

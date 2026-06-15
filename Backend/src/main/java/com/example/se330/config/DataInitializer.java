@@ -3,7 +3,6 @@ package com.example.se330.config;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +39,8 @@ import com.example.se330.repository.RequirementRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
+import com.example.se330.util.StudentCodeGenerator;
+import com.example.se330.util.TeacherCodeGenerator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,6 +61,8 @@ public class DataInitializer implements CommandLineRunner {
     private final RequirementRepository requirementRepository;
     private final RegistrationRepository registrationRepository;
     private final SubmissionRepository submissionRepository;
+    private final StudentCodeGenerator studentCodeGenerator;
+    private final TeacherCodeGenerator teacherCodeGenerator;
     private final JdbcTemplate jdbc;
 
     @Override
@@ -83,6 +86,32 @@ public class DataInitializer implements CommandLineRunner {
         // (KHÔNG đụng các lớp thật khác trong DB).
         wipeDemoCourse();
         seedDemo(teacher, studentA);
+
+        // Các user tạo trước đây giữ uid theo cách sinh cũ (UUID, hoặc mã 8 số
+        // dùng chung cho cả GV). Sinh lại uid cho những ai không khớp format mới
+        // theo role để "general detail" hiển thị đúng mã.
+        backfillUids();
+    }
+
+    private void backfillUids() {
+        for (User u : userRepository.findAll()) {
+            String uid = u.getUid();
+            String newUid = null;
+            if (u.getRole() == Role.TEACHER) {
+                if (uid == null || !uid.matches("^GV\\d{6}$")) {
+                    newUid = teacherCodeGenerator.generate();
+                }
+            } else if (u.getRole() == Role.STUDENT) {
+                if (uid == null || !uid.matches("^\\d{2}52\\d{4}$")) {
+                    newUid = studentCodeGenerator.generate();
+                }
+            }
+            if (newUid != null) {
+                u.setUid(newUid);
+                u.setUpdatedAt(LocalDateTime.now());
+                userRepository.save(u);
+            }
+        }
     }
 
     private void widenStatusColumns() {
@@ -246,7 +275,7 @@ public class DataInitializer implements CommandLineRunner {
             u.setName(name);
             u.setEmail(email);
             u.setPassword(passwordEncoder.encode("123123"));
-            u.setUid(UUID.randomUUID().toString());
+            u.setUid(role == Role.TEACHER ? teacherCodeGenerator.generate() : studentCodeGenerator.generate());
             u.setRole(role);
             u.setCreatedAt(LocalDateTime.now());
             u.setUpdatedAt(LocalDateTime.now());

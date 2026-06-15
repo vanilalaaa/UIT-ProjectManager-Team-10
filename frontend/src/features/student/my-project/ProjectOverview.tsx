@@ -18,6 +18,19 @@ import Avatar from '../../../components/ui/Avatar'
 import ProjectResourcesCard, { type ProjectResource } from '../../../components/ui/student/ProjectResourcesCard'
 import { useAuth } from '../../auth/useAuth'
 
+const getRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  if (diffMinutes < 1) return 'Vừa xong'
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours} giờ trước`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays} ngày trước`
+  return date.toLocaleDateString('vi-VN')
+}
+
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>()
 
@@ -42,21 +55,26 @@ export default function ProjectOverview() {
     setLoading(true)
     const pid = projectId ?? ''
 
-    Promise.all([getProjectById(pid), getProjectActivities(pid), getProjectResources(pid)]).then(
-      async ([foundProject, acts, res]) => {
-        if (!isMounted) return
-        setProject(foundProject)
-        setActivities(acts)
-        setResources(res)
+    getProjectById(pid).then(async (foundProject) => {
+      if (!isMounted) return
+      setProject(foundProject)
 
-        const groupId = foundProject?.groupId
-        if (groupId) {
-          const group = await getGroupById(groupId)
-          if (isMounted) setCurrentGroup(group)
-        }
-        setLoading(false)
-      },
-    )
+      const courseId = foundProject?.courseId
+      const [acts, res] = await Promise.all([
+        courseId != null ? getProjectActivities(courseId, pid) : Promise.resolve([]),
+        getProjectResources(pid),
+      ])
+      if (!isMounted) return
+      setActivities(acts)
+      setResources(res)
+
+      const groupId = foundProject?.groupId
+      if (groupId) {
+        const group = await getGroupById(groupId)
+        if (isMounted) setCurrentGroup(group)
+      }
+      setLoading(false)
+    })
 
     return () => { isMounted = false }
   }, [projectId])
@@ -100,26 +118,29 @@ export default function ProjectOverview() {
             </div>
             
             <div className="space-y-5">
-              {displayedActivities.map((activity) => (
-                <div key={activity.id} className="flex gap-3">
-                  <Avatar 
-                    name={activity.user.name}
-                    avatarUrl={activity.user.avatarUrl}
-                    sizeClass="size-9"
-                    className="border border-border shrink-0 mt-0.5"
-                  />
-                  <div className="flex-1 text-sm leading-relaxed">
-                    <p className="text-text">
-                      <span className="font-bold">{activity.user.name}</span>{' '}
-                      <span className="text-text-soft">{activity.action}</span>{' '}
-                      <span className="font-semibold text-text">{activity.target}</span>
-                    </p>
-                    <p className="text-[11px] font-medium text-text-soft mt-1">
-                      {activity.time}
-                    </p>
+              {displayedActivities.length === 0 ? (
+                <p className="text-sm text-text-soft">Chưa có hoạt động nào.</p>
+              ) : (
+                displayedActivities.map((activity) => (
+                  <div key={`${activity.type}-${activity.referenceId}`} className="flex gap-3">
+                    <Avatar
+                      name={activity.actorName}
+                      avatarUrl={activity.actorAvatar ?? null}
+                      sizeClass="size-9"
+                      className="border border-border shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 text-sm leading-relaxed">
+                      <p className="text-text">
+                        <span className="font-bold">{activity.actorName}</span>{' '}
+                        <span className="text-text-soft">{activity.title}</span>
+                      </p>
+                      <p className="text-[11px] font-medium text-text-soft mt-1">
+                        {getRelativeTime(activity.timestamp)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

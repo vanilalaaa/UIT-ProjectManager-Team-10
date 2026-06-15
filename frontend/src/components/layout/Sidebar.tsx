@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
 import { useAuth } from '../../features/auth/useAuth'
 import { NAV_ITEMS } from '../../lib/constants/menu'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 const navLinkClass = ({ isActive }: NavLinkRenderProps) =>
   [
@@ -67,6 +68,7 @@ function Sidebar() {
   const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   if (!currentUser) return null
 
@@ -130,13 +132,24 @@ function Sidebar() {
 
         <button
           className="mt-4 flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
-          onClick={handleLogout}
+          onClick={() => setConfirmLogout(true)}
           type="button"
         >
           <LogoutIcon />
           <span>Đăng xuất</span>
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Đăng xuất"
+        description="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?"
+        confirmLabel="Đăng xuất"
+        cancelLabel="Huỷ"
+        destructive
+        onConfirm={handleLogout}
+        onClose={() => setConfirmLogout(false)}
+      />
     </aside>
   )
 }

@@ -6,21 +6,10 @@ import type {
   ProjectUpdateRequest,
 } from '../types/api/project'
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
+import type { HomeFeedItem } from './home.service'
 
-export type ProjectActivity = {
-  id: number
-  user: { name: string; avatarUrl: string | null }
-  action: string
-  target: string
-  time: string
-}
-
-const MOCK_ACTIVITIES: ProjectActivity[] = [
-  { id: 1, user: { name: 'Sinh viên Trần', avatarUrl: null }, action: 'đã nộp tệp đính kèm', target: 'srs-v1.pdf', time: '2 giờ trước' },
-  { id: 2, user: { name: 'Nguyễn Minh An', avatarUrl: null }, action: 'đã chuyển trạng thái đồ án task', target: 'IN_PROGRESS', time: '1 ngày trước' },
-  { id: 3, user: { name: 'Lê Hoàng Vy', avatarUrl: null }, action: 'đã chuyển trạng thái Task', target: 'Website quản lý đồ án môn SE330', time: '3 ngày trước' },
-  { id: 4, user: { name: 'Sinh viên Trần', avatarUrl: null }, action: 'đã tạo task cho Lê Hoàng Vy', target: 'Thiết kế API danh sách đồ án', time: '2 giờ trước' },
-]
+// Hoạt động gần đây của đồ án dùng chung shape FeedItemResponse với home feed.
+export type ProjectActivity = HomeFeedItem
 
 const MOCK_RESOURCES: ProjectResource[] = [
   { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
@@ -92,12 +81,19 @@ export const getProjectById = (projectId: number | string): Promise<Project | nu
     .then((r) => r.data.data)
     .catch(() => null)
 
-// ----- Mock — activity/resources chưa có BE, giữ tới slice sau -----
+export const getProjectActivities = (
+  courseId: number | string,
+  projectId: number | string,
+  limit = 10,
+): Promise<ProjectActivity[]> =>
+  axiosClient
+    .get<ApiResponse<ProjectActivity[]>>(
+      `/courses/${courseId}/projects/${projectId}/activities`,
+      { params: { limit } },
+    )
+    .then((r) => r.data.data ?? [])
 
-export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
-  void _projectId
-  return resolveMock(MOCK_ACTIVITIES)
-}
+// ----- Mock — resources chưa có BE, giữ tới slice sau -----
 
 export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
   void _projectId

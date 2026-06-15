@@ -5,6 +5,8 @@ import axios, {
 } from 'axios'
 import { toast } from 'sonner'
 
+import { mockAdapter } from '../../mocks/adapter'
+
 const BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080/api'
 
@@ -37,6 +39,13 @@ const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
+
+// Mock mode: chặn mọi request và trả dữ liệu mock (mocks/adapter.ts) khi chưa
+// có backend. Bật mặc định; đặt VITE_USE_MOCK='false' để gọi backend thật.
+const USE_MOCK = (import.meta.env.VITE_USE_MOCK as string | undefined) !== 'false'
+if (USE_MOCK) {
+  axiosClient.defaults.adapter = mockAdapter
+}
 
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
