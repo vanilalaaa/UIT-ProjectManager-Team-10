@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.se330.dto.ApiResponse;
+import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.project.CreateProjectRequest;
 import com.example.se330.dto.project.ProjectResponse;
 import com.example.se330.dto.project.UpdateProjectRequest;
 import com.example.se330.service.ProjectService;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.validation.Valid;
 
@@ -54,6 +56,17 @@ public class ProjectController {
 
         ProjectResponse resp = this.projectService.getProjectDetail(courseId, projectId);
         return ApiResponse.success(resp, "Get project detail successfully");
+    }
+
+    // 3.1 READ ACTIVITIES: Lấy hoạt động gần đây của đồ án
+    @GetMapping("/{projectId}/activities")
+    public ResponseEntity<ApiResponse<List<FeedItemResponse>>> getProjectRecentActivity(
+            @PathVariable Long courseId,
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "10") int limit) {
+        
+        List<FeedItemResponse> resp = this.projectService.getProjectRecentActivity(courseId, projectId, limit);
+        return ApiResponse.success(resp, "Get project recent activities successfully");
     }
 
     // 4. UPDATE: Giáo viên cập nhật thông tin đồ án (Tên, mô tả, hạn chót, trạng
