@@ -225,6 +225,531 @@ export const userNguyenMinhAn: User = {
   },
 }
 
+export const userDoanKhanhLinh: User = {
+  userId: 10,
+  uid: 'SV22520010',
+  email: '22520010@gm.uit.edu.vn',
+  password: null,
+  name: 'Đoàn Khánh Linh',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T08:00:00',
+  updatedAt: '2026-05-18T20:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 10,
+    summary: 'Fullstack developer, yêu thích React và Spring Boot.',
+    firstName: 'Linh',
+    lastName: 'Đoàn Khánh',
+    avatarUrl: '',
+    phoneNumber: '0902000010',
+    birthday: '2004-02-19',
+  },
+}
+
+export const userVuMinhHieu: User = {
+  userId: 11,
+  uid: 'SV22520011',
+  email: '22520011@gm.uit.edu.vn',
+  password: null,
+  name: 'Vũ Minh Hiếu',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T08:30:00',
+  updatedAt: '2026-05-18T21:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 11,
+    summary: 'DevOps & hạ tầng, quan tâm CI/CD và Docker.',
+    firstName: 'Hiếu',
+    lastName: 'Vũ Minh',
+    avatarUrl: '',
+    phoneNumber: '0902000011',
+    birthday: '2004-06-08',
+  },
+}
+
+export const userTranThanhTung: User = {
+  userId: 12,
+  uid: 'SV22520012',
+  email: '22520012@gm.uit.edu.vn',
+  password: null,
+  name: 'Trần Thanh Tùng',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T09:00:00',
+  updatedAt: '2026-05-19T08:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 12,
+    summary: 'Mobile developer, chuyên Flutter và React Native.',
+    firstName: 'Tùng',
+    lastName: 'Trần Thanh',
+    avatarUrl: '',
+    phoneNumber: '0902000012',
+    birthday: '2004-07-23',
+  },
+}
+
+export const userLyGiaHan: User = {
+  userId: 13,
+  uid: 'SV22520013',
+  email: '22520013@gm.uit.edu.vn',
+  password: null,
+  name: 'Lý Gia Hân',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T09:30:00',
+  updatedAt: '2026-05-19T09:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 13,
+    summary: 'Data analyst, mạnh về trực quan hóa dữ liệu.',
+    firstName: 'Hân',
+    lastName: 'Lý Gia',
+    avatarUrl: '',
+    phoneNumber: '0902000013',
+    birthday: '2004-09-11',
+  },
+}
+
+export const userPhanThiMai: User = {
+  userId: 14,
+  uid: 'SV22520014',
+  email: '22520014@gm.uit.edu.vn',
+  password: null,
+  name: 'Phan Thị Mai',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T10:00:00',
+  updatedAt: '2026-05-19T10:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 14,
+    summary: 'Frontend developer, chú trọng accessibility và responsive.',
+    firstName: 'Mai',
+    lastName: 'Phan Thị',
+    avatarUrl: '',
+    phoneNumber: '0902000014',
+    birthday: '2004-03-02',
+  },
+}
+
+export const userNgoQuangHuy: User = {
+  userId: 15,
+  uid: 'SV22520015',
+  email: '22520015@gm.uit.edu.vn',
+  password: null,
+  name: 'Ngô Quang Huy',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T10:30:00',
+  updatedAt: '2026-05-19T11:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 15,
+    summary: 'ML engineer, nghiên cứu thị giác máy tính.',
+    firstName: 'Huy',
+    lastName: 'Ngô Quang',
+    avatarUrl: '',
+    phoneNumber: '0902000015',
+    birthday: '2004-12-15',
+  },
+}
+
+export const userDangThuyTrang: User = {
+  userId: 16,
+  uid: 'SV22520016',
+  email: '22520016@gm.uit.edu.vn',
+  password: null,
+  name: 'Đặng Thùy Trang',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T11:00:00',
+  updatedAt: '2026-05-19T12:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 16,
+    summary: 'Scrum master tập sự, quản lý tiến độ và tài liệu nhóm.',
+    firstName: 'Trang',
+    lastName: 'Đặng Thùy',
+    avatarUrl: '',
+    phoneNumber: '0902000016',
+    birthday: '2004-04-27',
+  },
+}
+
+export const userHuynhTanPhat: User = {
+  userId: 17,
+  uid: 'SV22520017',
+  email: '22520017@gm.uit.edu.vn',
+  password: null,
+  name: 'Huỳnh Tấn Phát',
+  role: 'STUDENT',
+  createdAt: '2026-02-13T11:30:00',
+  updatedAt: '2026-05-19T13:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 17,
+    summary: 'Backend developer, quan tâm bảo mật và tối ưu API.',
+    firstName: 'Phát',
+    lastName: 'Huỳnh Tấn',
+    avatarUrl: '',
+    phoneNumber: '0902000017',
+    birthday: '2004-08-30',
+  },
+}
+
+export const userVoThanhDat: User = {
+  userId: 18,
+  uid: 'SV22520018',
+  email: '22520018@gm.uit.edu.vn',
+  password: null,
+  name: 'Võ Thành Đạt',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T08:00:00',
+  updatedAt: '2026-05-20T09:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 18,
+    summary: 'Backend developer, đam mê kiến trúc microservices và message queue.',
+    firstName: 'Đạt',
+    lastName: 'Võ Thành',
+    avatarUrl: '',
+    phoneNumber: '0902000018',
+    birthday: '2004-05-21',
+  },
+}
+
+export const userNguyenThiThuHa: User = {
+  userId: 19,
+  uid: 'SV22520019',
+  email: '22520019@gm.uit.edu.vn',
+  password: null,
+  name: 'Nguyễn Thị Thu Hà',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T08:30:00',
+  updatedAt: '2026-05-20T10:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 19,
+    summary: 'Frontend developer, yêu thích animation và micro-interaction.',
+    firstName: 'Hà',
+    lastName: 'Nguyễn Thị Thu',
+    avatarUrl: '',
+    phoneNumber: '0902000019',
+    birthday: '2004-07-09',
+  },
+}
+
+export const userTruongMinhKhoa: User = {
+  userId: 20,
+  uid: 'SV22520020',
+  email: '22520020@gm.uit.edu.vn',
+  password: null,
+  name: 'Trương Minh Khoa',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T09:00:00',
+  updatedAt: '2026-05-20T11:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 20,
+    summary: 'Fullstack developer, thích thử nghiệm công nghệ mới.',
+    firstName: 'Khoa',
+    lastName: 'Trương Minh',
+    avatarUrl: '',
+    phoneNumber: '0902000020',
+    birthday: '2004-02-28',
+  },
+}
+
+export const userDinhBaoNgoc: User = {
+  userId: 21,
+  uid: 'SV22520021',
+  email: '22520021@gm.uit.edu.vn',
+  password: null,
+  name: 'Đinh Bảo Ngọc',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T09:30:00',
+  updatedAt: '2026-05-20T12:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 21,
+    summary: 'UI/UX designer, chú trọng design system và component library.',
+    firstName: 'Ngọc',
+    lastName: 'Đinh Bảo',
+    avatarUrl: '',
+    phoneNumber: '0902000021',
+    birthday: '2004-10-16',
+  },
+}
+
+export const userPhungGiaKhanh: User = {
+  userId: 22,
+  uid: 'SV22520022',
+  email: '22520022@gm.uit.edu.vn',
+  password: null,
+  name: 'Phùng Gia Khánh',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T10:00:00',
+  updatedAt: '2026-05-20T13:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 22,
+    summary: 'DevOps engineer, quan tâm Kubernetes và observability.',
+    firstName: 'Khánh',
+    lastName: 'Phùng Gia',
+    avatarUrl: '',
+    phoneNumber: '0902000022',
+    birthday: '2004-04-03',
+  },
+}
+
+export const userMaiThiBichTram: User = {
+  userId: 23,
+  uid: 'SV22520023',
+  email: '22520023@gm.uit.edu.vn',
+  password: null,
+  name: 'Mai Thị Bích Trâm',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T10:30:00',
+  updatedAt: '2026-05-20T14:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 23,
+    summary: 'Business analyst, mạnh về đặc tả yêu cầu và vẽ sơ đồ use case.',
+    firstName: 'Trâm',
+    lastName: 'Mai Thị Bích',
+    avatarUrl: '',
+    phoneNumber: '0902000023',
+    birthday: '2004-11-12',
+  },
+}
+
+export const userLamQuocThai: User = {
+  userId: 24,
+  uid: 'SV22520024',
+  email: '22520024@gm.uit.edu.vn',
+  password: null,
+  name: 'Lâm Quốc Thái',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T11:00:00',
+  updatedAt: '2026-05-20T15:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 24,
+    summary: 'Mobile developer, chuyên Kotlin và Jetpack Compose.',
+    firstName: 'Thái',
+    lastName: 'Lâm Quốc',
+    avatarUrl: '',
+    phoneNumber: '0902000024',
+    birthday: '2004-06-25',
+  },
+}
+
+export const userCaoThiKimNgan: User = {
+  userId: 25,
+  uid: 'SV22520025',
+  email: '22520025@gm.uit.edu.vn',
+  password: null,
+  name: 'Cao Thị Kim Ngân',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T11:30:00',
+  updatedAt: '2026-05-20T16:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 25,
+    summary: 'Data analyst, sử dụng thành thạo Python và Power BI.',
+    firstName: 'Ngân',
+    lastName: 'Cao Thị Kim',
+    avatarUrl: '',
+    phoneNumber: '0902000025',
+    birthday: '2004-09-30',
+  },
+}
+
+export const userTaQuangVinh: User = {
+  userId: 26,
+  uid: 'SV22520026',
+  email: '22520026@gm.uit.edu.vn',
+  password: null,
+  name: 'Tạ Quang Vinh',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T12:00:00',
+  updatedAt: '2026-05-20T17:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 26,
+    summary: 'ML engineer, nghiên cứu NLP và mô hình ngôn ngữ lớn.',
+    firstName: 'Vinh',
+    lastName: 'Tạ Quang',
+    avatarUrl: '',
+    phoneNumber: '0902000026',
+    birthday: '2004-01-07',
+  },
+}
+
+export const userDuongThiYenNhi: User = {
+  userId: 27,
+  uid: 'SV22520027',
+  email: '22520027@gm.uit.edu.vn',
+  password: null,
+  name: 'Dương Thị Yến Nhi',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T12:30:00',
+  updatedAt: '2026-05-20T18:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 27,
+    summary: 'QA engineer, viết test tự động với Cypress và Playwright.',
+    firstName: 'Nhi',
+    lastName: 'Dương Thị Yến',
+    avatarUrl: '',
+    phoneNumber: '0902000027',
+    birthday: '2004-08-19',
+  },
+}
+
+export const userHaMinhTuan: User = {
+  userId: 28,
+  uid: 'SV22520028',
+  email: '22520028@gm.uit.edu.vn',
+  password: null,
+  name: 'Hà Minh Tuấn',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T13:00:00',
+  updatedAt: '2026-05-20T19:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 28,
+    summary: 'Backend developer, quan tâm tối ưu hiệu năng và caching.',
+    firstName: 'Tuấn',
+    lastName: 'Hà Minh',
+    avatarUrl: '',
+    phoneNumber: '0902000028',
+    birthday: '2004-03-14',
+  },
+}
+
+export const userTrinhThiThanhThao: User = {
+  userId: 29,
+  uid: 'SV22520029',
+  email: '22520029@gm.uit.edu.vn',
+  password: null,
+  name: 'Trịnh Thị Thanh Thảo',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T13:30:00',
+  updatedAt: '2026-05-20T20:00:00',
+  isActive: true,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 29,
+    summary: 'Frontend developer, thành thạo React, Tailwind và TypeScript.',
+    firstName: 'Thảo',
+    lastName: 'Trịnh Thị Thanh',
+    avatarUrl: '',
+    phoneNumber: '0902000029',
+    birthday: '2004-12-01',
+  },
+}
+
+export const userDangXuanLoc: User = {
+  userId: 30,
+  uid: 'SV22520030',
+  email: '22520030@gm.uit.edu.vn',
+  password: null,
+  name: 'Đặng Xuân Lộc',
+  role: 'STUDENT',
+  createdAt: '2026-02-14T14:00:00',
+  updatedAt: '2026-05-20T21:00:00',
+  isActive: false,
+  verificationToken: null,
+  verificationTokenExpiry: null,
+  resetPasswordToken: null,
+  resetPasswordTokenExpiry: null,
+  userProfile: {
+    userId: 30,
+    summary: 'Fullstack developer, đang bảo lưu một học kỳ.',
+    firstName: 'Lộc',
+    lastName: 'Đặng Xuân',
+    avatarUrl: '',
+    phoneNumber: '0902000030',
+    birthday: '2004-02-05',
+  },
+}
+
 export const softwareEngineeringCourse: Course = {
   courseId: 1,
   name: 'SE330 - Công nghệ phần mềm',
@@ -243,6 +768,39 @@ export const projectManagementCourse: Course = {
   maxStudents: 90,
   startDate: '2026-03-01',
   endDate: '2026-07-15',
+  groups: [],
+  projects: [],
+}
+
+export const webDevCourse: Course = {
+  courseId: 3,
+  name: 'IS207 - Phát triển ứng dụng web',
+  lecturer: null,
+  maxStudents: 100,
+  startDate: '2026-02-15',
+  endDate: '2026-06-20',
+  groups: [],
+  projects: [],
+}
+
+export const mobileDevCourse: Course = {
+  courseId: 4,
+  name: 'NT118 - Phát triển ứng dụng di động',
+  lecturer: null,
+  maxStudents: 80,
+  startDate: '2026-02-20',
+  endDate: '2026-06-25',
+  groups: [],
+  projects: [],
+}
+
+export const machineLearningCourse: Course = {
+  courseId: 5,
+  name: 'CS117 - Thị giác máy tính',
+  lecturer: null,
+  maxStudents: 70,
+  startDate: '2026-03-05',
+  endDate: '2026-07-10',
   groups: [],
   projects: [],
 }
@@ -283,7 +841,47 @@ export const groupOrion: Group = {
   description: 'Nhóm chuẩn bị nền tảng nhắc lịch nộp bài nhóm.',
   course: projectManagementCourse,
   leader: userPhamQuynhNhu,
-  members: [userPhamQuynhNhu], 
+  members: [userPhamQuynhNhu],
+  tasks: [],
+}
+
+export const groupTitan: Group = {
+  groupId: 5,
+  name: 'Nhóm 01 - Titan',
+  description: 'Nhóm phát triển sàn thương mại điện tử mini cho môn IS207.',
+  course: webDevCourse,
+  leader: userDoanKhanhLinh,
+  members: [userDoanKhanhLinh, userPhanThiMai, userHuynhTanPhat],
+  tasks: [],
+}
+
+export const groupComet: Group = {
+  groupId: 6,
+  name: 'Nhóm 02 - Comet',
+  description: 'Nhóm xây dựng blog cá nhân hỗ trợ Markdown cho môn IS207.',
+  course: webDevCourse,
+  leader: userVuMinhHieu,
+  members: [userVuMinhHieu, userLyGiaHan],
+  tasks: [],
+}
+
+export const groupLuna: Group = {
+  groupId: 7,
+  name: 'Nhóm 01 - Luna',
+  description: 'Nhóm phát triển ứng dụng ghi chú đồng bộ đám mây cho môn NT118.',
+  course: mobileDevCourse,
+  leader: userTranThanhTung,
+  members: [userTranThanhTung, userDangThuyTrang, userNguyenMinhAn],
+  tasks: [],
+}
+
+export const groupVega: Group = {
+  groupId: 8,
+  name: 'Nhóm 01 - Vega',
+  description: 'Nhóm xây dựng mô hình nhận diện biển báo giao thông cho môn CS117.',
+  course: machineLearningCourse,
+  leader: userNgoQuangHuy,
+  members: [userNgoQuangHuy, userHoangPhuQuy, userLyGiaHan],
   tasks: [],
 }
 
@@ -296,7 +894,47 @@ export const mockClassMembers: User[] = [
   userHoangPhuQuy,
   userBuiNhatTruong,
   userLeViSa,
-  userNguyenMinhAn
+  userNguyenMinhAn,
+  userVoThanhDat,
+  userNguyenThiThuHa,
+  userTruongMinhKhoa,
+  userDinhBaoNgoc,
+  userPhungGiaKhanh,
+  userMaiThiBichTram,
+]
+
+// Tất cả sinh viên trong hệ thống (dùng cho danh sách quản trị / thêm thành viên).
+export const mockAllStudents: User[] = [
+  userSinhVienTran,
+  userLeHoangVy,
+  userTranGiaBao,
+  userPhamQuynhNhu,
+  userNguyenThuyDuong,
+  userHoangPhuQuy,
+  userBuiNhatTruong,
+  userLeViSa,
+  userNguyenMinhAn,
+  userDoanKhanhLinh,
+  userVuMinhHieu,
+  userTranThanhTung,
+  userLyGiaHan,
+  userPhanThiMai,
+  userNgoQuangHuy,
+  userDangThuyTrang,
+  userHuynhTanPhat,
+  userVoThanhDat,
+  userNguyenThiThuHa,
+  userTruongMinhKhoa,
+  userDinhBaoNgoc,
+  userPhungGiaKhanh,
+  userMaiThiBichTram,
+  userLamQuocThai,
+  userCaoThiKimNgan,
+  userTaQuangVinh,
+  userDuongThiYenNhi,
+  userHaMinhTuan,
+  userTrinhThiThanhThao,
+  userDangXuanLoc,
 ]
 
 export const mockTasks: Task[] = [
@@ -396,6 +1034,90 @@ export const mockTasks: Task[] = [
     createdAt: '2026-05-16T15:30:00',
     updatedAt: '2026-05-16T15:30:00',
   },
+  {
+    taskId: 9,
+    title: 'Thiết kế giao diện trang sản phẩm',
+    description: 'Dựng layout danh sách sản phẩm, bộ lọc và trang chi tiết cho sàn TMĐT mini.',
+    assignedTo: userPhanThiMai,
+    createdBy: userDoanKhanhLinh,
+    status: 'IN_PROGRESS',
+    group: groupTitan,
+    deadline: '2026-05-28T18:00:00',
+    createdAt: '2026-05-08T09:00:00',
+    updatedAt: '2026-05-20T14:30:00',
+  },
+  {
+    taskId: 10,
+    title: 'Xây dựng API giỏ hàng và thanh toán',
+    description: 'Thiết kế endpoint thêm/sửa/xóa giỏ hàng và luồng thanh toán giả lập.',
+    assignedTo: userHuynhTanPhat,
+    createdBy: userDoanKhanhLinh,
+    status: 'TODO',
+    group: groupTitan,
+    deadline: '2026-06-05T18:00:00',
+    createdAt: '2026-05-09T10:00:00',
+    updatedAt: '2026-05-09T10:00:00',
+  },
+  {
+    taskId: 11,
+    title: 'Tích hợp trình soạn thảo Markdown',
+    description: 'Cho phép người dùng viết bài blog bằng Markdown và xem trước real-time.',
+    assignedTo: userVuMinhHieu,
+    createdBy: userVuMinhHieu,
+    status: 'REVIEW',
+    group: groupComet,
+    deadline: '2026-05-30T20:00:00',
+    createdAt: '2026-05-10T13:00:00',
+    updatedAt: '2026-05-22T09:15:00',
+  },
+  {
+    taskId: 12,
+    title: 'Đồng bộ ghi chú với Firebase',
+    description: 'Lưu và đồng bộ ghi chú giữa các thiết bị qua Firebase Realtime Database.',
+    assignedTo: userTranThanhTung,
+    createdBy: userTranThanhTung,
+    status: 'IN_PROGRESS',
+    group: groupLuna,
+    deadline: '2026-06-08T18:00:00',
+    createdAt: '2026-05-12T08:30:00',
+    updatedAt: '2026-05-23T16:00:00',
+  },
+  {
+    taskId: 13,
+    title: 'Thiết kế màn hình danh sách ghi chú',
+    description: 'Dựng UI danh sách, tìm kiếm và phân loại ghi chú theo nhãn.',
+    assignedTo: userDangThuyTrang,
+    createdBy: userTranThanhTung,
+    status: 'DONE',
+    group: groupLuna,
+    deadline: '2026-05-25T18:00:00',
+    createdAt: '2026-05-11T09:00:00',
+    updatedAt: '2026-05-24T17:20:00',
+  },
+  {
+    taskId: 14,
+    title: 'Thu thập và gán nhãn dữ liệu biển báo',
+    description: 'Tổng hợp ảnh biển báo giao thông và gán nhãn cho tập huấn luyện.',
+    assignedTo: userNgoQuangHuy,
+    createdBy: userNgoQuangHuy,
+    status: 'DONE',
+    group: groupVega,
+    deadline: '2026-04-30T18:00:00',
+    createdAt: '2026-04-10T08:00:00',
+    updatedAt: '2026-04-28T15:00:00',
+  },
+  {
+    taskId: 15,
+    title: 'Huấn luyện mô hình CNN nhận diện biển báo',
+    description: 'Huấn luyện và đánh giá độ chính xác mô hình trên tập kiểm thử.',
+    assignedTo: userHoangPhuQuy,
+    createdBy: userNgoQuangHuy,
+    status: 'IN_PROGRESS',
+    group: groupVega,
+    deadline: '2026-06-10T18:00:00',
+    createdAt: '2026-05-02T10:00:00',
+    updatedAt: '2026-05-25T11:30:00',
+  },
 ]
 
 export const mockTeamRequests: User[] = [
@@ -416,18 +1138,27 @@ export const mockTeamRequests: User[] = [
 ];
 
 export const mockCourseMembersMap: Record<number, User[]> = {
-  1: mockClassMembers, 
-  2: [userSinhVienTran, userTranGiaBao, userBuiNhatTruong, userPhamQuynhNhu] 
+  1: mockClassMembers,
+  2: [userSinhVienTran, userTranGiaBao, userBuiNhatTruong, userPhamQuynhNhu, userLamQuocThai, userCaoThiKimNgan],
+  3: [userDoanKhanhLinh, userPhanThiMai, userHuynhTanPhat, userVuMinhHieu, userLyGiaHan, userTaQuangVinh, userDuongThiYenNhi],
+  4: [userTranThanhTung, userDangThuyTrang, userNguyenMinhAn, userSinhVienTran, userHaMinhTuan, userTrinhThiThanhThao],
+  5: [userNgoQuangHuy, userHoangPhuQuy, userLyGiaHan, userNguyenThuyDuong, userVoThanhDat, userDangXuanLoc],
 }
 
 export const mockMyGroupMap: Record<number, Group | null> = {
-  1: groupPhoenix, 
-  2: null 
+  1: groupPhoenix,
+  2: null,
+  3: groupTitan,
+  4: groupLuna,
+  5: null,
 }
 
 export const mockTeamRequestsMap: Record<number, User[]> = {
-  1: mockTeamRequests, 
-  2: [] 
+  1: mockTeamRequests,
+  2: [],
+  3: [userNguyenMinhAn],
+  4: [userLeViSa],
+  5: [],
 }
 
 export interface CourseRequirement {
@@ -436,13 +1167,32 @@ export interface CourseRequirement {
 }
 
 export const mockCourseRequirements: Record<number, CourseRequirement> = {
-  1: { 
+  1: {
     description: 'Các nhóm cần nộp đủ 3 file: Báo cáo (PDF), Slide thuyết trình (PPTX) và Source code (.zip). Nộp trễ trừ 50% số điểm.',
     deadline: '2026-06-30'
+  },
+  2: {
+    description: 'Nộp báo cáo quản lý dự án kèm bảng phân công công việc và biên bản họp nhóm hằng tuần.',
+    deadline: '2026-07-15'
+  },
+  3: {
+    description: 'Triển khai sản phẩm web lên hosting, nộp link demo, source code (.zip) và tài liệu API.',
+    deadline: '2026-06-20'
+  },
+  4: {
+    description: 'Nộp file APK, video demo (tối đa 5 phút) và source code của ứng dụng di động.',
+    deadline: '2026-06-25'
+  },
+  5: {
+    description: 'Nộp notebook huấn luyện, mô hình đã lưu, tập dữ liệu và báo cáo đánh giá độ chính xác.',
+    deadline: '2026-07-10'
   },
 };
 
 export const mockCourseGroupsMap: Record<number, Group[]> = {
-  1: [groupPhoenix, groupAster], 
-  2: [groupNimbus, groupOrion]
+  1: [groupPhoenix, groupAster],
+  2: [groupNimbus, groupOrion],
+  3: [groupTitan, groupComet],
+  4: [groupLuna],
+  5: [groupVega],
 }
