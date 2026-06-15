@@ -29,4 +29,6 @@ public class AdminCreateUserRequest {
 
     @NotNull(message = "Role is required")
     private Role role;
+
+    private String uid;
 }

@@ -46,8 +46,12 @@ public class AdminUserService {
             throw new RuntimeException("Email is already in use");
         }
 
+        String uid = (request.getUid() != null && !request.getUid().isBlank())
+                ? request.getUid()
+                : UUID.randomUUID().toString();
+
         User user = User.builder()
-                .uid(UUID.randomUUID().toString())
+                .uid(uid)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())

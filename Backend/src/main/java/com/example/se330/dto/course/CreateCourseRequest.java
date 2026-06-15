@@ -18,4 +18,5 @@ public class CreateCourseRequest {
     private Integer maxStudents;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String code;
 }

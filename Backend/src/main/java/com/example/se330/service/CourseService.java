@@ -29,9 +29,13 @@ public class CourseService {
 
         CustomUserDetails currentUser = (CustomUserDetails) authentication.getPrincipal();
 
+        String code = (req.getCode() != null && !req.getCode().isBlank())
+                ? req.getCode()
+                : generateCode();
+
         Course course = new Course();
         course.setName(req.getName());
-        course.setCode(generateCode());
+        course.setCode(code);
         course.setLecturer(currentUser.getUser());
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
