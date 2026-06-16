@@ -191,9 +191,15 @@ public class HomeService {
                             && !p.getEndDate().isBefore(LocalDate.now())
                             && p.getEndDate().isBefore(LocalDate.now().plusDays(14)))
                     .count();
+            // Đếm khớp với getStatDetails("pendingRequests"): yêu cầu vào lớp đang chờ duyệt
+            // trong các lớp do GV này phụ trách.
+            long pendingRequests = courseRepository.findByLecturer_Id(user.getId()).stream()
+                    .mapToLong(course -> courseRequestRepository
+                            .findAllByCourseAndStatus(course, JoinStatus.PENDING).size())
+                    .sum();
             quickStats.put("pendingGrades", pendingSubmissions);
             quickStats.put("totalProjects", (long) projects.size());
-            quickStats.put("pendingRequests", 0L);
+            quickStats.put("pendingRequests", pendingRequests);
             quickStats.put("upcomingDeadlines", upcomingDeadlines);
         } else {
             // Đếm theo task của chính sinh viên để khớp với phần chi tiết (getStatDetails),
@@ -343,8 +349,11 @@ public class HomeService {
 
             case "upcomingDeadlines": { // Sắp đến hạn
                 LocalDate today = LocalDate.now();
+                // Cùng cửa sổ 14 ngày với thẻ đếm trong getStats để số liệu khớp nhau.
                 for (Project project : resolveProjects(user)) {
-                    if (project.getEndDate() != null && !project.getEndDate().isBefore(today)) {
+                    if (project.getEndDate() != null
+                            && !project.getEndDate().isBefore(today)
+                            && project.getEndDate().isBefore(today.plusDays(14))) {
                         result.add(projectDetail(project));
                     }
                 }
