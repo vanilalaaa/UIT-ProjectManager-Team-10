@@ -10,4 +10,10 @@ public class ProjectSubmissionResponse {
     private String status;
     private String submittedAt;
     private String filePath;
+    private Long groupId;
+    private String groupName;
+    private Long submittedById;
+    private String submittedByName;
+    private String submittedByUid;
+    private String submittedByEmail;
 }

@@ -176,11 +176,22 @@ public class ProjectService {
     }
 
     private static ProjectSubmissionResponse toSubmission(Submission submission) {
+        Group group = submission.getGroup();
+        User submittedBy = submission.getSubmittedBy() != null
+                ? submission.getSubmittedBy()
+                : group != null ? group.getLeader() : null;
+
         return ProjectSubmissionResponse.builder()
                 .submissionId(submission.getId())
                 .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                 .submittedAt(submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null)
                 .filePath(submission.getFilePath())
+                .groupId(group != null ? group.getId() : null)
+                .groupName(group != null ? group.getName() : null)
+                .submittedById(submittedBy != null ? submittedBy.getId() : null)
+                .submittedByName(submittedBy != null ? submittedBy.getName() : null)
+                .submittedByUid(submittedBy != null ? submittedBy.getUid() : null)
+                .submittedByEmail(submittedBy != null ? submittedBy.getEmail() : null)
                 .build();
     }
 }

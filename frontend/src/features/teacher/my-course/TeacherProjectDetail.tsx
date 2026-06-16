@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
-import FileAttachment from '../../../components/ui/student/FileAttachment'
 import StatusBadge from '../../../components/ui/student/StatusBadge'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 
@@ -41,22 +40,7 @@ export default function TeacherProjectDetail() {
             <StatusBadge status={project.status} />
           </div>
 
-          <p className="text-text mt-6 leading-relaxed">
-            {project.description}
-          </p>
-
-          <div className="mt-8 p-6 bg-surface-soft/50 rounded-xl border border-border">
-            <h4 className="text-sm font-bold text-text mb-4">Project Files</h4>
-            <div className="flex flex-wrap gap-3">
-              {project.submissions && project.submissions.length > 0 ? (
-                project.submissions.map((sub) => (
-                  <FileAttachment key={sub.submissionId} fileName={sub.filePath?.split('/').pop() || 'file'} />
-                ))
-              ) : (
-                <p className="text-sm text-text-soft italic">Chưa có tệp đính kèm.</p>
-              )}
-            </div>
-          </div>
+          <p className="text-text mt-6 leading-relaxed">{project.description}</p>
 
           <div className="flex gap-12 mt-8 pt-8 border-t border-border">
             <div>

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import FileAttachment from '../student/FileAttachment'
 import Avatar from '../Avatar'
 import type { Project } from '../../../types/api/project'
 
@@ -21,15 +20,6 @@ export default function ProjectWorkspaceCard({ project }: Props) {
 
       <h3 className="font-bold text-lg mt-3 text-text">{project.title || 'Untitled Project'}</h3>
       <p className="text-sm text-text-soft mt-2 line-clamp-2">{project.description || 'No description'}</p>
-
-      <div className="mt-4 space-y-2">
-        {project.submissions?.slice(0, 2).map((sub) => (
-          <FileAttachment
-            key={sub.submissionId}
-            fileName={sub.filePath?.split('/').pop() || 'file'}
-          />
-        ))}
-      </div>
 
       <div className="mt-auto pt-6 flex items-center justify-between border-t border-border">
         <div className="flex items-center -space-x-2">

@@ -227,7 +227,7 @@ export default function UploadFilesCard({ onSubmit, isSubmitting = false, isLock
                     ? 'bg-red-500 text-white hover:bg-red-600 border border-red-500 shadow-md' 
                     : (file ? 'bg-primary text-white hover:opacity-90 border border-primary shadow-md' : 'bg-surface-soft text-text-soft border border-border cursor-not-allowed opacity-70')}`}
           >
-            {isSubmitting ? 'Đang xử lý...' : (isDeletingEmpty ? 'Xác nhận xóa bài' : (isEditing ? 'Xác nhận nộp đè' : 'Submit Work'))}
+            {isSubmitting ? 'Đang xử lý...' : (isDeletingEmpty ? 'Xác nhận xóa bài' : (isEditing ? 'Xác nhận' : 'Submit Work'))}
           </button>
         </div>
       )}

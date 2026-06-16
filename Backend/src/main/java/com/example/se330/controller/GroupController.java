@@ -195,6 +195,12 @@ public class GroupController {
         return ApiResponse.success(groupService.getCourseClassmates(courseId));
     }
 
+    // Danh sách sinh viên có thể mời: đã tham gia lớp và chưa có nhóm/lời mời/yêu cầu.
+    @GetMapping("/invite-candidates")
+    public ResponseEntity<ApiResponse<List<GroupMemberResponse>>> getInviteCandidates(@PathVariable Long courseId) {
+        return ApiResponse.success(groupService.getInviteCandidates(courseId));
+    }
+
     // Trưởng nhóm mời 1 sinh viên vào nhóm.
     @PostMapping("/{groupId}/invite")
     public ResponseEntity<ApiResponse<String>> invite(

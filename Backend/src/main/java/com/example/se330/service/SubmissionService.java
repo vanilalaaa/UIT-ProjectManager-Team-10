@@ -78,6 +78,7 @@ public class SubmissionService {
                 .filePath("/files/submissions/" + uniqueFolder + "/" + originalFileName)
                 .project(project)
                 .group(group)
+                .submittedBy(user)
                 .status(SubmissionStatus.SUBMITTED)
                 .submittedAt(LocalDateTime.now())
                 .build();

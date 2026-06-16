@@ -180,10 +180,11 @@ public class GroupService {
 
         // 4. Kiểm tra xem User này đã tham gia bất kỳ nhóm nào KHÁC trong cùng môn học
         // chưa
-        boolean alreadyInAnotherGroup = groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
-                userId, courseId, GroupMemberStatus.ACTIVE);
-        if (alreadyInAnotherGroup) {
-            throw new RuntimeException("Bạn đã tham gia một nhóm khác trong môn học này rồi!");
+        boolean unavailableInCourse = groupMemberRepository.existsByUser_IdAndGroup_Course_IdAndStatusIn(
+                userId, courseId,
+                List.of(GroupMemberStatus.ACTIVE, GroupMemberStatus.INVITED, GroupMemberStatus.PENDING));
+        if (unavailableInCourse) {
+            throw new RuntimeException("Bạn đã có nhóm hoặc đang có lời mời/yêu cầu trong môn học này!");
         }
 
         // 5. Thêm bản ghi mới vào bảng GROUP_MEMBER với trạng thái PENDING
@@ -332,6 +333,14 @@ public class GroupService {
                 .collect(Collectors.toList());
     }
 
+    // Sinh vien co the moi vao nhom: da o trong lop va chua dinh bat ky group record nao.
+    @Transactional(readOnly = true)
+    public List<GroupMemberResponse> getInviteCandidates(Long courseId) {
+        return getCourseClassmates(courseId).stream()
+                .filter(member -> "FREE".equals(member.getStatus()))
+                .collect(Collectors.toList());
+    }
+
     // Trưởng nhóm mời 1 sinh viên vào nhóm → GroupMember status INVITED (chờ SV chấp nhận).
     public void inviteMember(Long leaderId, Long courseId, Long groupId, Long invitedUserId) {
         Group group = groupRepository.findByIdAndCourseId(groupId, courseId)
@@ -348,10 +357,11 @@ public class GroupService {
         groupMemberRepository.findByGroupIdAndUserId(groupId, invitedUserId).ifPresent(gm -> {
             throw new RuntimeException("Sinh viên này đã ở trong nhóm hoặc đã được mời/đăng ký.");
         });
-        boolean inAnotherGroup = groupMemberRepository.existsByUserIdAndGroupCourseIdAndStatus(
-                invitedUserId, courseId, GroupMemberStatus.ACTIVE);
-        if (inAnotherGroup) {
-            throw new RuntimeException("Sinh viên này đã thuộc một nhóm khác trong lớp.");
+        boolean unavailableInCourse = groupMemberRepository.existsByUser_IdAndGroup_Course_IdAndStatusIn(
+                invitedUserId, courseId,
+                List.of(GroupMemberStatus.ACTIVE, GroupMemberStatus.INVITED, GroupMemberStatus.PENDING));
+        if (unavailableInCourse) {
+            throw new RuntimeException("Sinh viên này đã có nhóm hoặc đang có lời mời/yêu cầu trong lớp.");
         }
 
         GroupMember invitation = new GroupMember();

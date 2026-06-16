@@ -97,6 +97,9 @@ export const leaveGroup = (
 export const getCourseMembers = (courseId: number | string): Promise<TeamMember[]> =>
   axiosClient.get<ApiResponse<TeamMember[]>>(`${base(courseId)}/classmates`).then((r) => r.data.data)
 
+export const getInviteCandidates = (courseId: number | string): Promise<TeamMember[]> =>
+  axiosClient.get<ApiResponse<TeamMember[]>>(`${base(courseId)}/invite-candidates`).then((r) => r.data.data)
+
 export const inviteMember = (
   courseId: number | string,
   groupId: number | string,
