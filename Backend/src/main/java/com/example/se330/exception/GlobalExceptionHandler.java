@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.se330.dto.ApiResponse;
 
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
                                 HttpStatus.BAD_REQUEST,
                                 errorMessage,
                                 "400");
+        }
+
+        // Tệp tĩnh không tồn tại (vd /files/...) → 404, không để lọt xuống handler 500.
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ApiResponse<Void>> handleNoResource(NoResourceFoundException ex) {
+                return ApiResponse.error(HttpStatus.NOT_FOUND, "Không tìm thấy tài nguyên.");
         }
 
         // 3. Xử lý RuntimeException

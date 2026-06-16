@@ -11,6 +11,12 @@ export type ProjectSubmissionLite = {
   status: string
   submittedAt: string | null
   filePath: string | null
+  groupId: number | null
+  groupName: string | null
+  submittedById: number | null
+  submittedByName: string | null
+  submittedByUid: string | null
+  submittedByEmail: string | null
 }
 
 export type Project = {
@@ -31,6 +37,7 @@ export type Project = {
   submissions: ProjectSubmissionLite[]
   memberCount: number
   submissionCount: number
+  submissionLocked?: boolean
 }
 
 export type ProjectCreateRequest = {

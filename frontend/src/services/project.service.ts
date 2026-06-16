@@ -5,16 +5,21 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
+import type { ResourceType } from '../components/ui/student/ProjectResourcesCard'
+
+type ProjectResourceDto = { id: number; type: string; label: string; url: string }
+
+const toResource = (x: ProjectResourceDto): ProjectResource => ({
+  id: String(x.id),
+  type: x.type as ResourceType,
+  label: x.label,
+  url: x.url,
+})
 import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
 import type { HomeFeedItem } from './home.service'
 
 // Hoạt động gần đây của đồ án dùng chung shape FeedItemResponse với home feed.
 export type ProjectActivity = HomeFeedItem
-
-const MOCK_RESOURCES: ProjectResource[] = [
-  { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
-  { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
-]
 
 const MOCK_DELAY = 300
 const resolveMock = <T>(value: T): Promise<T> =>
@@ -81,6 +86,34 @@ export const getProjectById = (projectId: number | string): Promise<Project | nu
     .then((r) => r.data.data)
     .catch(() => null)
 
+export const getProjectResources = (projectId: number | string): Promise<ProjectResource[]> =>
+  axiosClient
+    .get<ApiResponse<ProjectResourceDto[]>>(`/projects/${projectId}/resources`)
+    .then((r) => (r.data.data ?? []).map(toResource))
+
+export const createProjectResource = (
+  projectId: number | string,
+  payload: { type: ResourceType; label: string; url: string },
+  file?: File,
+): Promise<ProjectResource> => {
+  const fd = new FormData()
+  fd.append('type', payload.type)
+  if (payload.label) fd.append('label', payload.label)
+  if (payload.url) fd.append('url', payload.url)
+  if (file) fd.append('file', file)
+  return axiosClient
+    .post<ApiResponse<ProjectResourceDto>>(`/projects/${projectId}/resources`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => toResource(r.data.data))
+}
+
+export const deleteProjectResource = (
+  projectId: number | string,
+  resourceId: number | string,
+): Promise<void> =>
+  axiosClient.delete(`/projects/${projectId}/resources/${resourceId}`).then(() => undefined)
+
 export const getProjectActivities = (
   courseId: number | string,
   projectId: number | string,
@@ -92,10 +125,3 @@ export const getProjectActivities = (
       { params: { limit } },
     )
     .then((r) => r.data.data ?? [])
-
-// ----- Mock — resources chưa có BE, giữ tới slice sau -----
-
-export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
-  void _projectId
-  return resolveMock(MOCK_RESOURCES)
-}

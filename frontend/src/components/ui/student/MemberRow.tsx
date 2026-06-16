@@ -9,6 +9,9 @@ type MemberRowProps = {
 }
 
 export default function MemberRow({ member, roleLabel, onViewProfile, children }: MemberRowProps) {
+  const identity = member.uid?.trim() || String(member.userId)
+  const email = member.email?.trim() || 'Chưa có email'
+
   return (
     <div className="flex items-center justify-between p-4 transition-all group relative border-b border-border/50 last:border-b-0 hover:bg-surface-soft/40">
       <div className="flex items-center gap-4 min-w-0">
@@ -34,9 +37,9 @@ export default function MemberRow({ member, roleLabel, onViewProfile, children }
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5 text-xs text-text-soft min-w-0">
-            <span className="font-semibold text-text/80 shrink-0">{member.uid}</span>
+            <span className="font-semibold text-text/80 shrink-0">{identity}</span>
             <span className="text-border text-[10px]">•</span>
-            <span className="truncate max-w-[120px] sm:max-w-[200px]">{member.email}</span>
+            <span className="truncate max-w-[120px] sm:max-w-[200px]">{email}</span>
           </div>
         </div>
       </div>

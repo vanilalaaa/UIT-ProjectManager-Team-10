@@ -16,6 +16,7 @@ import {
   type NotificationItem,
 } from '../../services/notification.service'
 import GlobalSearch from './GlobalSearch'
+import Avatar from '../ui/Avatar'
 
 const HOUR = 60 * 60 * 1000
 
@@ -77,16 +78,6 @@ function BellIcon({ muted = false }: { muted?: boolean }) {
       {muted ? <path d="M3 3l18 18" /> : null}
     </svg>
   )
-}
-
-function getInitials(name = '') {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(-2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase()
 }
 
 function NotificationDropdown() {
@@ -344,8 +335,6 @@ function Navbar() {
 
   const displayName = currentUser?.name ?? 'Người dùng'
   const studentCode = currentUser?.uid ?? ''
-  const initials = getInitials(displayName) || 'U'
-
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-4 md:px-6">
       <div className="min-w-0">
@@ -362,9 +351,12 @@ function Navbar() {
           className="flex items-center gap-3 rounded-lg border-l border-border pl-3 transition-colors hover:bg-surface-soft md:pl-4"
           to="/profile"
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
-            {isLoading ? '' : initials}
-          </div>
+          <Avatar 
+            name={displayName} 
+            avatarUrl={currentUser?.avatarUrl} 
+            sizeClass="size-10 shrink-0" 
+            textClass="text-sm font-semibold"
+          />
 
           <div className="hidden min-w-0 flex-col pr-3 sm:flex">
             {isLoading ? (

@@ -18,7 +18,7 @@ import type { Team, TeamMember } from '../../../types/api/team'
 import {
   getMyGroup,
   getJoinRequests,
-  getCourseMembers,
+  getInviteCandidates,
   createTeam,
   reviewJoinRequest,
   removeMember,
@@ -50,6 +50,7 @@ export default function MyTeamPage() {
   const [suggestedUsers, setSuggestedUsers] = useState<TeamMember[]>([])
 
   const [suggestedPopoverId, setSuggestedPopoverId] = useState<number | null>(null)
+  const [showAllInviteMembers, setShowAllInviteMembers] = useState(false)
   const [activeModal, setActiveModal] = useState<ModalKind>(null)
   const [memberToKickId, setMemberToKickId] = useState<number | null>(null)
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null)
@@ -67,13 +68,12 @@ export default function MyTeamPage() {
             ? getJoinRequests(courseId, group.groupId).catch(() => [] as TeamMember[])
             : Promise.resolve<TeamMember[]>([])
         const memP = group
-          ? getCourseMembers(courseId).catch(() => [] as TeamMember[])
+          ? getInviteCandidates(courseId).catch(() => [] as TeamMember[])
           : Promise.resolve<TeamMember[]>([])
         return Promise.all([reqP, memP]).then(([reqs, members]) => {
           setTeamRequests(reqs)
           const ids = new Set((group?.members ?? []).map((m) => m.userId))
-          // Chỉ gợi ý SV CHƯA có nhóm (status "FREE"); SV đã có nhóm bị loại.
-          setSuggestedUsers(members.filter((m) => !ids.has(m.userId) && m.status !== 'ACTIVE'))
+          setSuggestedUsers(members.filter((m) => !ids.has(m.userId)))
         })
       })
       .catch(() => {
@@ -233,6 +233,9 @@ export default function MyTeamPage() {
   if (loading || !currentUser) return <LoadingSpinner message="Đang tải dữ liệu nhóm..." />
 
   const regularMembers = myGroup ? myGroup.members.filter((m) => !m.isLeader) : []
+  const displayedSuggestedUsers = showAllInviteMembers ? suggestedUsers : suggestedUsers.slice(0, 3)
+  const requestIdentity = (request: TeamMember) => request.uid?.trim() || String(request.userId)
+  const requestEmail = (request: TeamMember) => request.email?.trim() || 'Chưa có email'
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -258,9 +261,20 @@ export default function MyTeamPage() {
             />
 
             <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-4">
-              <h3 className="text-lg font-bold text-text border-b border-border pb-4">Invite Members</h3>
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
+                <h3 className="text-lg font-bold text-text">Invite Members</h3>
+                {suggestedUsers.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllInviteMembers((prev) => !prev)}
+                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors shrink-0"
+                  >
+                    {showAllInviteMembers ? 'Show less' : 'View all'}
+                  </button>
+                )}
+              </div>
               <div className="divide-y divide-border">
-                {suggestedUsers.map(user => (
+                {displayedSuggestedUsers.map(user => (
                   <MemberRow key={user.userId} member={user} onViewProfile={(u) => setSuggestedPopoverId(suggestedPopoverId === u.userId ? null : u.userId)}>
                      {suggestedPopoverId === user.userId && (
                        <UserProfilePopover
@@ -315,7 +329,14 @@ export default function MyTeamPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <h4 className="text-sm font-bold text-text truncate">{request.name}</h4>
-                          <p className="text-xs text-text-soft mt-0.5">{request.summary}</p>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-text-soft min-w-0">
+                            <span className="font-semibold text-text/80 shrink-0">{requestIdentity(request)}</span>
+                            <span className="text-border text-[10px]">•</span>
+                            <span className="truncate">{requestEmail(request)}</span>
+                          </div>
+                          {request.summary && (
+                            <p className="text-xs text-text-soft mt-1 line-clamp-2">{request.summary}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-2 pt-3 mt-3 border-t border-border/50">

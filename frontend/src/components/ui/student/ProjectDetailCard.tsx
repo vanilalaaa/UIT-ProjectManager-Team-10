@@ -1,5 +1,4 @@
 import StatusBadge from '../student/StatusBadge'
-import FileAttachment from '../student/FileAttachment'
 import type { Project } from '../../../types/api/project'
 
 interface ProjectDetailCardProps {
@@ -9,11 +8,6 @@ interface ProjectDetailCardProps {
 }
 
 export default function ProjectDetailCard({ project, showEditButton, onEditClick }: ProjectDetailCardProps) {
-  const firstFile = project.submissions?.[0]?.filePath
-  const projectFiles = firstFile
-    ? [firstFile.split('/').pop() || 'document.pdf']
-    : ['Project_Spec.pdf', 'Analysis_V2.csv']
-
   return (
     <div className="rounded-[32px] border border-border bg-surface p-8 shadow-xl relative overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border/60 pb-6">
@@ -34,15 +28,6 @@ export default function ProjectDetailCard({ project, showEditButton, onEditClick
       <div className="mt-6">
         <h3 className="text-xs font-bold text-text uppercase tracking-widest text-primary/90">Description</h3>
         <p className="mt-2 text-[15px] text-text-soft leading-relaxed max-w-4xl">{project.description}</p>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-xs font-bold text-text uppercase tracking-widest text-primary/90 mb-3">Project Files</h3>
-        <div className="bg-surface-soft/60 border border-border rounded-xl p-4 flex flex-wrap gap-3">
-          {projectFiles.map((file, idx) => (
-            <FileAttachment key={idx} fileName={file} />
-          ))}
-        </div>
       </div>
 
       <div className="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -2,10 +2,13 @@ import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import type { Team } from '../../../types/api/team'
 import type { Project } from '../../../types/api/project'
+import { toast } from 'sonner'
 import {
   getProjectById,
   getProjectActivities,
   getProjectResources,
+  createProjectResource,
+  deleteProjectResource,
   type ProjectActivity,
 } from '../../../services/project.service'
 import { getGroupById } from '../../../services/team.service'
@@ -42,12 +45,22 @@ export default function ProjectOverview() {
   const [resources, setResources] = useState<ProjectResource[]>([])
   const [activities, setActivities] = useState<ProjectActivity[]>([])
 
-  const handleAddResource = (resource: Omit<ProjectResource, 'id'>) => {
-    setResources(prev => [{ ...resource, id: `r${Date.now()}` }, ...prev])
+  const handleAddResource = (resource: Omit<ProjectResource, 'id'>, file?: File) => {
+    createProjectResource(projectId ?? '', resource, file)
+      .then((saved) => {
+        setResources(prev => [saved, ...prev])
+        toast.success('Đã thêm tài nguyên.')
+      })
+      .catch((err: { message?: string }) => toast.error(err?.message ?? 'Không thêm được tài nguyên.'))
   }
 
   const handleRemoveResource = (id: string) => {
-    setResources(prev => prev.filter(r => r.id !== id))
+    deleteProjectResource(projectId ?? '', id)
+      .then(() => {
+        setResources(prev => prev.filter(r => r.id !== id))
+        toast.success('Đã xóa tài nguyên.')
+      })
+      .catch((err: { message?: string }) => toast.error(err?.message ?? 'Không xóa được tài nguyên.'))
   }
 
   useEffect(() => {
@@ -86,17 +99,10 @@ export default function ProjectOverview() {
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 
-  const groupLeader = currentGroup?.members.find((m) => m.isLeader) ?? null
-  const isGroupLeader = !!(
-    groupLeader &&
-    currentUser &&
-    (currentUser.uid === groupLeader.uid || currentUser.email === groupLeader.email)
-  )
+  // Thành viên nhóm (ACTIVE) được thêm/xóa tài nguyên dùng chung của nhóm.
   const isMemberOfGroup =
     currentGroup?.members?.some(m => m.uid === currentUser?.uid || m.email === currentUser?.email) ?? false
-  // Mock: user đăng nhập (BE seed) chưa chắc khớp nhóm mock → cho quản lý ở chế độ xem thử.
-  // Khi nối nhóm thật, đổi thành: const canManageResources = isGroupLeader
-  const canManageResources = isGroupLeader || !isMemberOfGroup
+  const canManageResources = isMemberOfGroup
 
   const displayedActivities = activities.slice(0, 4)
 
