@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { listActiveCategories } from '../../../services/admin/category.service'
 import type { Category } from '../../../types/api/category'
@@ -13,7 +13,6 @@ import {
   type ProjectRequirement,
   type RequirementFile,
 } from '../../../services/requirement.service'
-import UploadFilesCard from '../student/UploadFilesCard'
 
 interface CourseRequirementCardProps {
   courseId: number
@@ -28,7 +27,7 @@ export default function CourseRequirementCard({ courseId, readOnly = false }: Co
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [files, setFiles] = useState<RequirementFile[]>([])
   const [uploading, setUploading] = useState(false)
-  const [uploadKey, setUploadKey] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     getRequirement(courseId)
@@ -45,12 +44,12 @@ export default function CourseRequirementCard({ courseId, readOnly = false }: Co
     try {
       await uploadRequirementFile(courseId, file)
       setFiles(await listRequirementFiles(courseId))
-      setUploadKey((k) => k + 1)
       toast.success('Đã tải lên tài liệu.')
     } catch (e) {
       toast.error((e as { message?: string })?.message ?? 'Tải lên thất bại.')
     } finally {
       setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -197,13 +196,20 @@ export default function CourseRequirementCard({ courseId, readOnly = false }: Co
 
           {!readOnly ? (
             <div className="mt-3">
-              <UploadFilesCard
-                key={uploadKey}
-                onSubmit={handleUploadFile}
-                isSubmitting={uploading}
-                currentSubmission={null}
-                dueDate={null}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => handleUploadFile(e.target.files?.[0] ?? null)}
               />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full rounded-lg border border-dashed border-border bg-surface-soft/40 px-4 py-3 text-sm font-semibold text-text-soft transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+              >
+                {uploading ? 'Đang tải lên…' : '+ Tải lên tài liệu yêu cầu'}
+              </button>
             </div>
           ) : null}
         </div>
