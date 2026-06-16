@@ -15,6 +15,7 @@ import com.example.se330.entity.CourseRequest;
 import com.example.se330.entity.Grade;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Notification;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Registration;
 import com.example.se330.entity.Requirement;
@@ -34,6 +35,7 @@ import com.example.se330.repository.CourseRepository;
 import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
+import com.example.se330.repository.NotificationRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.RegistrationRepository;
 import com.example.se330.repository.RequirementRepository;
@@ -65,6 +67,7 @@ public class DataInitializer implements CommandLineRunner {
     private final RequirementRepository requirementRepository;
     private final RegistrationRepository registrationRepository;
     private final SubmissionRepository submissionRepository;
+    private final NotificationRepository notificationRepository;
     private final StudentCodeGenerator studentCodeGenerator;
     private final TeacherCodeGenerator teacherCodeGenerator;
     private final JdbcTemplate jdbc;
@@ -299,6 +302,9 @@ public class DataInitializer implements CommandLineRunner {
                 new String[] { "Thiết kế & kiến trúc", "Chức năng hoàn thiện",
                         "Giao diện UI/UX", "Báo cáo & thuyết trình" });
 
+        // --- Thông báo demo cho chuông Navbar (student@gmail & teacher@gmail) ---
+        seedNotifications(studentA, teacher, course, p1, p2, p3);
+
         // --- Các lớp học khác (cùng giảng viên) cho dashboard & danh sách lớp phong phú ---
         seedWebCourse(teacher, studentA, b, c, d, e, f, g, h, webCat, uiuxCat, researchCat);
         seedVisualCourse(teacher, studentA, i, j, k, l, m, capstoneCat, uiuxCat, webCat);
@@ -480,6 +486,56 @@ public class DataInitializer implements CommandLineRunner {
         requirement(course, webCat, "Xây dựng ứng dụng mạng có client-server, xử lý đồng thời & bảo mật.", 45,
                 new String[] { "Giao thức & kết nối", "Xử lý đồng thời",
                         "Bảo mật", "Hiệu năng", "Báo cáo & demo" });
+    }
+
+    // Seed thông báo demo cho chuông Navbar. Xoá thông báo cũ của 2 user demo trước
+    // để không bị nhân đôi mỗi lần khởi động (KHÔNG đụng thông báo của user khác).
+    private void seedNotifications(User student, User teacher, Course course,
+            Project p1, Project p2, Project p3) {
+        jdbc.update("DELETE FROM notifications WHERE recipient_id IN (?, ?)",
+                student.getId(), teacher.getId());
+
+        Long cid = course.getId();
+
+        // --- Cho sinh viên (student@gmail) — vài cái chưa đọc để badge đỏ hiện lên ---
+        notification(student, "APPROVED", "Đề tài đã được duyệt",
+                "Nhóm Phoenix đã được duyệt đề tài \"Website quản lý đồ án môn SE330\".",
+                cid, p1.getId(), false, 8);
+        notification(student, "TASK", "Bạn được giao task mới",
+                "Task \"Xây dựng API backend\" đã được giao cho bạn trong nhóm Phoenix.",
+                cid, p1.getId(), false, 45);
+        notification(student, "JOIN_REQUEST", "Yêu cầu tham gia nhóm",
+                "Lê Thị C muốn tham gia nhóm Phoenix. Vào trang nhóm để duyệt.",
+                cid, p1.getId(), false, 180);
+        notification(student, "GRADE", "Đồ án đã được chấm điểm",
+                "Nhóm Nova nhận 88/100 cho đề tài \"Hệ thống gợi ý đề tài bằng Machine Learning\".",
+                cid, p3.getId(), true, 60 * 24);
+        notification(student, "REJECTED", "Đăng ký đề tài bị từ chối",
+                "Đăng ký đề tài \"Nền tảng chấm bài tự động\" của nhóm Phoenix đã bị từ chối.",
+                cid, null, true, 60 * 48);
+        notification(student, "DEADLINE", "Sắp đến hạn nộp bài",
+                "Đề tài của nhóm Phoenix còn 3 ngày đến hạn nộp. Hãy hoàn thiện sớm nhé!",
+                cid, p1.getId(), true, 60 * 72);
+
+        // --- Cho giảng viên (teacher@gmail) ---
+        notification(teacher, "PROPOSAL", "Đề xuất đề tài mới",
+                "Nhóm Aster đề xuất đề tài \"Ứng dụng điểm danh lớp học bằng QR\" — chờ bạn duyệt.",
+                cid, p2.getId(), false, 30);
+        notification(teacher, "SUBMISSION", "Có bài nộp mới",
+                "Nhóm Phoenix vừa nộp bài cho đề tài \"Website quản lý đồ án môn SE330\".",
+                cid, p1.getId(), false, 120);
+        notification(teacher, "JOIN_REQUEST", "Yêu cầu vào lớp",
+                "Có sinh viên mới gửi yêu cầu tham gia lớp SE330 - Công nghệ phần mềm.",
+                cid, null, true, 60 * 20);
+    }
+
+    private void notification(User recipient, String type, String title, String message,
+            Long courseId, Long projectId, boolean isRead, int minutesAgo) {
+        notificationRepository.save(Notification.builder()
+                .recipient(recipient).type(type).title(title).message(message)
+                .courseId(courseId).projectId(projectId).isRead(isRead)
+                .createdAt(LocalDateTime.now().minusMinutes(minutesAgo))
+                .build());
     }
 
     private void enroll(Course course, User student) {
