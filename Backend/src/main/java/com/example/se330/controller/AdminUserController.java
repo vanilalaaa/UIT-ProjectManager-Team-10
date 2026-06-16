@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.UserDto;
 import com.example.se330.dto.auth.AdminCreateUserRequest;
+import com.example.se330.dto.auth.AdminResetPasswordRequest;
 import com.example.se330.dto.auth.AdminUpdateUserRequest;
 import com.example.se330.dto.auth.AdminUpdateUserStatusRequest;
 import com.example.se330.service.AdminUserService;
@@ -72,5 +73,14 @@ public class AdminUserController {
 
         UserDto userDto = adminUserService.getUserById(id);
         return ApiResponse.success(userDto, "User detail retrieved successfully");
+    }
+
+    @PatchMapping("/{id}/password")
+    public ResponseEntity<ApiResponse<UserDto>> resetPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminResetPasswordRequest request) {
+
+        UserDto userDto = adminUserService.resetPassword(id, request.getNewPassword());
+        return ApiResponse.success(userDto, "Đặt lại mật khẩu thành công");
     }
 }

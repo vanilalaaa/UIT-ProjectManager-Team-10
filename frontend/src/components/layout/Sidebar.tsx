@@ -90,9 +90,8 @@ function Sidebar() {
             to="/"
             onClick={closeMobile}
           >
-            EduCollaborate
+            Project Management
           </NavLink>
-          <p className="mt-1 hidden text-sm text-text-soft lg:block">Academic Workspace</p>
         </div>
 
         <button

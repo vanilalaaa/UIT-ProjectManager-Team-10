@@ -116,7 +116,7 @@ public class DataInitializer implements CommandLineRunner {
     // (mật khẩu 123123). admin dùng lại admin@gmail.com.
     // ---------------------------------------------------------------------
     private void seedDemoData() {
-        if (userRepository.findByEmail("sv1@uit.edu.vn").isPresent()) {
+        if (userRepository.findByEmail("sv1@gm.uit.edu.vn").isPresent()) {
             return; // đã seed
         }
 
@@ -125,7 +125,7 @@ public class DataInitializer implements CommandLineRunner {
         };
         List<User> t = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            t.add(ensureUser("gv" + (i + 1) + "@uit.edu.vn", teacherNames[i], Role.TEACHER));
+            t.add(ensureUser("gv" + (i + 1) + "@gm.uit.edu.vn", teacherNames[i], Role.TEACHER));
         }
 
         String[] studentNames = {
@@ -136,7 +136,7 @@ public class DataInitializer implements CommandLineRunner {
         };
         List<User> s = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            s.add(ensureUser("sv" + (i + 1) + "@uit.edu.vn", studentNames[i], Role.STUDENT));
+            s.add(ensureUser("sv" + (i + 1) + "@gm.uit.edu.vn", studentNames[i], Role.STUDENT));
         }
 
         Category webCat = cat("Web App");
