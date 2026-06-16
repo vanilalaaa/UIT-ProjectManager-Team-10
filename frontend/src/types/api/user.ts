@@ -1,4 +1,4 @@
-import type { Role, UserDto } from '../../mocks/types'
+import type { Role, UserDto } from '../models'
 
 export type { Role, UserDto }
 

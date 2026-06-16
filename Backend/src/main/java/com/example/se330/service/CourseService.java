@@ -1,6 +1,5 @@
 package com.example.se330.service;
 
-import java.security.SecureRandom;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
@@ -80,7 +79,7 @@ public class CourseService {
 
         Course course = new Course();
         course.setName(req.getName());
-        course.setCode(generateCode());
+        course.setCode(resolveCode(req.getCode()));
         course.setLecturer(resolveLecturer(req.getLecturerId(), currentUser.getUser()));
         course.setMaxStudents(req.getMaxStudents());
         course.setStartDate(req.getStartDate());
@@ -164,23 +163,14 @@ public class CourseService {
                 .build();
     }
 
-    private String generateCode() {
-        String code;
-        boolean isDuplicate;
-        String CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        SecureRandom random = new SecureRandom();
-
-        do {
-            StringBuilder sb = new StringBuilder(6);
-            for (int i = 0; i < 6; i++) {
-                int randomIndex = random.nextInt(CHARACTERS.length());
-                sb.append(CHARACTERS.charAt(randomIndex));
-            }
-            code = sb.toString();
-
-            isDuplicate = courseRepository.existsByCode(code);
-
-        } while (isDuplicate);
+    private String resolveCode(String requestedCode) {
+        if (requestedCode == null || requestedCode.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập mã lớp.");
+        }
+        String code = requestedCode.trim().toUpperCase();
+        if (this.courseRepository.existsByCode(code)) {
+            throw new RuntimeException("Mã môn học đã tồn tại, vui lòng chọn mã khác.");
+        }
         return code;
     }
 }

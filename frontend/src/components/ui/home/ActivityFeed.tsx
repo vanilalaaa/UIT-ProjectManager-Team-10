@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../../ui/Avatar';
 import type { HomeFeedItem } from '../../../services/home.service';
-import type { Role } from '../../../mocks/types';
+import type { Role } from '../../../types/models';
 
 interface ActivityFeedProps {
   activities: HomeFeedItem[];

@@ -1,4 +1,4 @@
-import type { Submission } from '../../mocks/types'
+import type { Submission } from '../models'
 
 export type { Submission }
 

@@ -191,16 +191,36 @@ public class HomeService {
                             && !p.getEndDate().isBefore(LocalDate.now())
                             && p.getEndDate().isBefore(LocalDate.now().plusDays(14)))
                     .count();
+            // Đếm khớp với getStatDetails("pendingRequests"): yêu cầu vào lớp đang chờ duyệt
+            // trong các lớp do GV này phụ trách.
+            long pendingRequests = courseRepository.findByLecturer_Id(user.getId()).stream()
+                    .mapToLong(course -> courseRequestRepository
+                            .findAllByCourseAndStatus(course, JoinStatus.PENDING).size())
+                    .sum();
             quickStats.put("pendingGrades", pendingSubmissions);
             quickStats.put("totalProjects", (long) projects.size());
-            quickStats.put("pendingRequests", 0L);
+            quickStats.put("pendingRequests", pendingRequests);
             quickStats.put("upcomingDeadlines", upcomingDeadlines);
         } else {
-            quickStats.put("completed", completedTasks);
-            quickStats.put("updated", updatedTasks);
-            quickStats.put("created", createdTasks);
-            quickStats.put("dueSoon", totalTasks - completedTasks);
-            quickStats.put("total", totalTasks);
+            // Đếm theo task của chính sinh viên để khớp với phần chi tiết (getStatDetails),
+            // vốn lọc theo assignedTo/createdBy chứ không phải toàn bộ task của project.
+            List<Task> assignedTasks = taskRepository.findByAssignedTo_Id(userId);
+            long myCompleted = assignedTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.DONE)
+                    .count();
+            long myUpdated = assignedTasks.stream()
+                    .filter(t -> t.getUpdatedAt() != null && !t.getUpdatedAt().equals(t.getCreatedAt()))
+                    .count();
+            long myCreated = taskRepository.findByCreatedBy_Id(userId).size();
+            long myDueSoon = assignedTasks.stream()
+                    .filter(t -> t.getStatus() != TaskStatus.DONE)
+                    .count();
+
+            quickStats.put("completed", myCompleted);
+            quickStats.put("updated", myUpdated);
+            quickStats.put("created", myCreated);
+            quickStats.put("dueSoon", myDueSoon);
+            quickStats.put("total", (long) assignedTasks.size());
         }
 
         return HomeStatsResponse.builder()
@@ -329,8 +349,11 @@ public class HomeService {
 
             case "upcomingDeadlines": { // Sắp đến hạn
                 LocalDate today = LocalDate.now();
+                // Cùng cửa sổ 14 ngày với thẻ đếm trong getStats để số liệu khớp nhau.
                 for (Project project : resolveProjects(user)) {
-                    if (project.getEndDate() != null && !project.getEndDate().isBefore(today)) {
+                    if (project.getEndDate() != null
+                            && !project.getEndDate().isBefore(today)
+                            && project.getEndDate().isBefore(today.plusDays(14))) {
                         result.add(projectDetail(project));
                     }
                 }
