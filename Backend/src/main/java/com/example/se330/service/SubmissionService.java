@@ -144,7 +144,13 @@ public class SubmissionService {
     private String storeSubmissionFile(MultipartFile file, Path submissionFolder, Set<String> usedNames) throws IOException {
         String originalFileName = uniqueFileName(sanitizeFileName(file.getOriginalFilename()), usedNames);
         Path filePath = submissionFolder.resolve(originalFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        file.transferTo(filePath.toFile());
+        if (!Files.exists(filePath) || Files.size(filePath) != file.getSize()) {
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        if (!Files.exists(filePath)) {
+            throw new IOException("Khong the luu file nop bai: " + originalFileName);
+        }
         return originalFileName;
     }
 
