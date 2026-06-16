@@ -1,4 +1,5 @@
 import axiosClient from '../lib/api/axiosClient'
+import type { ApiResponse } from '../types/api/common'
 import type {
   Submission,
   SubmissionUpdateRequest,

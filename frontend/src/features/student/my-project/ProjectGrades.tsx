@@ -17,11 +17,15 @@ type GradeData = {
   criteria: ScoreCriteria[]
   lecturer: GradeLecturer | null
   feedback: string
+  overdue: boolean
 }
 
 // Lấy điểm nhóm mình từ BE (GET /projects/{id}/grades/me). Nếu chưa chấm,
 // vẫn hiển thị barem (tiêu chí + thang điểm) với trạng thái "chưa chấm".
 const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
+  const project = projectId ? await getProjectById(projectId) : null
+  const overdue =
+    !!project?.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < Date.now()
   const grade = projectId ? await getMyGrade(projectId) : null
 
   if (grade) {
@@ -39,11 +43,10 @@ const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeDa
     const lecturer: GradeLecturer | null = grade.gradedByName
       ? { name: grade.gradedByName, avatar: '', department: 'Giảng viên' }
       : null
-    return { grade: overall, criteria, lecturer, feedback: grade.feedback }
+    return { grade: overall, criteria, lecturer, feedback: grade.feedback, overdue }
   }
 
   // Chưa có điểm: hiển thị barem để sinh viên biết tiêu chí sẽ được chấm.
-  const project = await getProjectById(projectId ?? '')
   const courseId = project?.courseId
   const req = courseId != null ? await getRequirement(courseId).catch(() => null) : null
   const criteria: ScoreCriteria[] = (req?.criteria ?? []).map((c) => ({
@@ -53,7 +56,7 @@ const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeDa
     colorClass: 'text-primary',
     bgFillClass: 'bg-brand-gradient',
   }))
-  return { grade: null, criteria, lecturer: null, feedback: '' }
+  return { grade: null, criteria, lecturer: null, feedback: '', overdue }
 }
 
 export default function ProjectGrades() {
@@ -82,6 +85,14 @@ export default function ProjectGrades() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {data.overdue && (
+        <div className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600">
+          <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          Đồ án đã quá hạn nộp
+        </div>
+      )}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
         <div className="xl:col-span-1">
           <OverallGradeCard grade={data.grade} maxGrade={MAX_GRADE} status={status} />

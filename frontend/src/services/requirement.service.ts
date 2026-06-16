@@ -74,3 +74,33 @@ export const newCriterion = (): RubricCriterion => ({
   name: '',
   maxScore: 10,
 })
+
+// ----- Tài liệu yêu cầu (tệp GV tải lên cho SV tải về) -----
+
+export type RequirementFile = { id: number; label: string; url: string }
+
+export const listRequirementFiles = (courseId: number | string): Promise<RequirementFile[]> =>
+  axiosClient
+    .get<ApiResponse<RequirementFile[]>>(`/courses/${courseId}/requirement/files`)
+    .then((r) => r.data.data ?? [])
+
+export const uploadRequirementFile = (
+  courseId: number | string,
+  file: File,
+  label?: string,
+): Promise<RequirementFile> => {
+  const fd = new FormData()
+  fd.append('file', file)
+  if (label) fd.append('label', label)
+  return axiosClient
+    .post<ApiResponse<RequirementFile>>(`/courses/${courseId}/requirement/files`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => r.data.data)
+}
+
+export const deleteRequirementFile = (
+  courseId: number | string,
+  fileId: number | string,
+): Promise<void> =>
+  axiosClient.delete(`/courses/${courseId}/requirement/files/${fileId}`).then(() => undefined)

@@ -50,3 +50,11 @@ export const patchUser = (
 
 export const getUserById = (id: number | string): Promise<ApiResponse<AdminUserListItem>> =>
   axiosClient.get<ApiResponse<AdminUserListItem>>(`${BASE}/${id}`).then((r) => r.data)
+
+export const resetUserPassword = (
+  id: number | string,
+  newPassword: string,
+): Promise<ApiResponse<AdminUserListItem>> =>
+  axiosClient
+    .patch<ApiResponse<AdminUserListItem>>(`${BASE}/${id}/password`, { newPassword })
+    .then((r) => r.data)
