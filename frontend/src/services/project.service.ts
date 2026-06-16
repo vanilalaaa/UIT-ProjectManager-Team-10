@@ -21,10 +21,6 @@ import type { HomeFeedItem } from './home.service'
 // Hoạt động gần đây của đồ án dùng chung shape FeedItemResponse với home feed.
 export type ProjectActivity = HomeFeedItem
 
-const MOCK_DELAY = 300
-const resolveMock = <T>(value: T): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY))
-
 export const listMyProjects = (): Promise<ApiResponse<Project[]>> =>
   axiosClient.get<ApiResponse<Project[]>>('/students/me/projects').then((r) => r.data)
 
