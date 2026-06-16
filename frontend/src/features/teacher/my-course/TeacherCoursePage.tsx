@@ -65,7 +65,7 @@ export default function TeacherCoursePage() {
         await updateCourse(selectedCourse.id, payload)
         toast.success('Đã cập nhật lớp học.')
       } else {
-        await createCourse(payload)
+        await createCourse({ ...payload, code: data.code.trim() })
         toast.success('Đã tạo lớp học.')
       }
       setIsFormModalOpen(false)
@@ -147,6 +147,7 @@ export default function TeacherCoursePage() {
           selectedCourse
             ? {
                 name: selectedCourse.name,
+                code: selectedCourse.code,
                 maxStudents: selectedCourse.maxStudents ?? selectedCourse.membersCount,
                 startDate: selectedCourse.startDate ?? '',
                 endDate: selectedCourse.endDate ?? '',

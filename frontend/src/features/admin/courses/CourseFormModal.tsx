@@ -17,6 +17,7 @@ import type {
 const schema = z
   .object({
     name: z.string().min(2, 'Tối thiểu 2 ký tự'),
+    code: z.string().trim().min(1, 'Vui lòng nhập mã lớp'),
     lecturerId: z.number().int().positive('Vui lòng chọn giảng viên'),
     maxStudents: z.number().int().min(1, 'Tối thiểu 1').max(500, 'Tối đa 500'),
     startDate: z.string().min(1, 'Chọn ngày bắt đầu'),
@@ -51,7 +52,7 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', lecturerId: 0, maxStudents: 40, startDate: '', endDate: '' },
+    defaultValues: { name: '', code: '', lecturerId: 0, maxStudents: 40, startDate: '', endDate: '' },
   })
 
   const lecturerId = useWatch({ control, name: 'lecturerId' })
@@ -60,6 +61,7 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
     if (!open) return
     reset({
       name: initial?.name ?? '',
+      code: initial?.code ?? '',
       lecturerId: initial?.lecturer ?? 0,
       maxStudents: initial?.maxStudents ?? 40,
       startDate: initial?.startDate ?? '',
@@ -95,6 +97,21 @@ export default function CourseFormModal({ open, initial, onClose, onCreate, onUp
             type="text"
           />
           {errors.name ? <p className="mt-1 text-xs text-red-500">{errors.name.message}</p> : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text">Mã lớp</label>
+          <input
+            {...register('code')}
+            className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm uppercase read-only:bg-surface-soft/50 read-only:text-text-soft"
+            type="text"
+            placeholder="VD: SE330"
+            readOnly={isEdit}
+          />
+          <p className="mt-1 text-xs text-text-soft">
+            {isEdit ? 'Mã lớp không thể thay đổi sau khi tạo.' : 'Nhập mã lớp (sẽ kiểm tra trùng).'}
+          </p>
+          {errors.code ? <p className="mt-1 text-xs text-red-500">{errors.code.message}</p> : null}
         </div>
 
         <div>
