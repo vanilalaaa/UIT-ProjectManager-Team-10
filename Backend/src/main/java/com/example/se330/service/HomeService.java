@@ -15,7 +15,6 @@ import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.home.HomeStatsResponse;
 import com.example.se330.dto.home.StatDetailResponse;
 import com.example.se330.entity.Course;
-import com.example.se330.entity.CourseRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.Notification;
@@ -26,14 +25,12 @@ import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
 import com.example.se330.enums.FeedType;
 import com.example.se330.enums.GroupMemberStatus;
-import com.example.se330.enums.JoinStatus;
 import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CourseRepository;
-import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.NotificationRepository;
@@ -59,7 +56,6 @@ public class HomeService {
     private final GroupMemberRepository groupMemberRepository;
     private final RegistrationRepository registrationRepository;
     private final NotificationRepository notificationRepository;
-    private final CourseRequestRepository courseRequestRepository;
 
     @Transactional(readOnly = true)
     public List<FeedItemResponse> getFeed(Long userId, int limit) {
@@ -194,11 +190,12 @@ public class HomeService {
                             && !p.getEndDate().isBefore(LocalDate.now())
                             && p.getEndDate().isBefore(LocalDate.now().plusDays(14)))
                     .count();
-            // Đếm khớp với getStatDetails("pendingRequests"): yêu cầu vào lớp đang chờ duyệt
-            // trong các lớp do GV này phụ trách.
+            // "Chờ duyệt" của GV = đề xuất đồ án đang chờ duyệt (Registration PENDING) trong các
+            // lớp do GV phụ trách. Mỗi đề xuất luôn gắn với một nhóm SV đã đăng ký — GV chỉ duyệt
+            // đồ án có nhóm tham gia, không có đồ án trống. Khớp với getStatDetails("pendingRequests").
             long pendingRequests = courseRepository.findByLecturer_Id(user.getId()).stream()
-                    .mapToLong(course -> courseRequestRepository
-                            .findAllByCourseAndStatus(course, JoinStatus.PENDING).size())
+                    .mapToLong(course -> registrationRepository
+                            .findByProject_Course_IdAndStatus(course.getId(), RegistrationStatus.PENDING).size())
                     .sum();
             quickStats.put("pendingGrades", pendingSubmissions);
             quickStats.put("totalProjects", (long) projects.size());
@@ -330,20 +327,22 @@ public class HomeService {
                 }
                 break;
 
-            case "pendingRequests": { // Chờ duyệt
+            case "pendingRequests": { // Chờ duyệt — đề xuất đồ án chờ GV duyệt (đã có nhóm đăng ký)
                 List<Course> courses = (user.getRole() == Role.TEACHER)
                         ? courseRepository.findByLecturer_Id(user.getId())
                         : courseRepository.findAll();
                 for (Course course : courses) {
-                    for (CourseRequest req : courseRequestRepository
-                            .findAllByCourseAndStatus(course, JoinStatus.PENDING)) {
+                    for (Registration reg : registrationRepository
+                            .findByProject_Course_IdAndStatus(course.getId(), RegistrationStatus.PENDING)) {
+                        Project proposed = reg.getProject();
+                        String groupName = reg.getGroup() != null ? reg.getGroup().getName() : "Nhóm";
                         result.add(StatDetailResponse.builder()
-                                .id(req.getId())
-                                .type("REQUEST")
-                                .title(req.getStudent() != null ? req.getStudent().getName() : "Sinh viên")
-                                .subtitle(course.getName())
-                                .status(req.getStatus() != null ? req.getStatus().name() : null)
-                                .timestamp(req.getRequestAt())
+                                .id(reg.getRegistrationId())
+                                .type("REGISTRATION")
+                                .title(proposed != null ? proposed.getTitle() : "Đề xuất đồ án")
+                                .subtitle("Nhóm " + groupName + " · " + course.getName())
+                                .status(reg.getStatus() != null ? reg.getStatus().name() : null)
+                                .timestamp(reg.getRegisteredAt())
                                 .build());
                     }
                 }
