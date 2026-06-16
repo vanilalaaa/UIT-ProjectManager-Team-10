@@ -196,11 +196,25 @@ public class HomeService {
             quickStats.put("pendingRequests", 0L);
             quickStats.put("upcomingDeadlines", upcomingDeadlines);
         } else {
-            quickStats.put("completed", completedTasks);
-            quickStats.put("updated", updatedTasks);
-            quickStats.put("created", createdTasks);
-            quickStats.put("dueSoon", totalTasks - completedTasks);
-            quickStats.put("total", totalTasks);
+            // Đếm theo task của chính sinh viên để khớp với phần chi tiết (getStatDetails),
+            // vốn lọc theo assignedTo/createdBy chứ không phải toàn bộ task của project.
+            List<Task> assignedTasks = taskRepository.findByAssignedTo_Id(userId);
+            long myCompleted = assignedTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.DONE)
+                    .count();
+            long myUpdated = assignedTasks.stream()
+                    .filter(t -> t.getUpdatedAt() != null && !t.getUpdatedAt().equals(t.getCreatedAt()))
+                    .count();
+            long myCreated = taskRepository.findByCreatedBy_Id(userId).size();
+            long myDueSoon = assignedTasks.stream()
+                    .filter(t -> t.getStatus() != TaskStatus.DONE)
+                    .count();
+
+            quickStats.put("completed", myCompleted);
+            quickStats.put("updated", myUpdated);
+            quickStats.put("created", myCreated);
+            quickStats.put("dueSoon", myDueSoon);
+            quickStats.put("total", (long) assignedTasks.size());
         }
 
         return HomeStatsResponse.builder()
