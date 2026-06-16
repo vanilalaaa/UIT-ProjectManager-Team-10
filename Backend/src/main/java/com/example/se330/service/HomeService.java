@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.home.HomeStatsResponse;
+import com.example.se330.dto.home.StatDetailResponse;
 import com.example.se330.entity.Course;
+import com.example.se330.entity.CourseRequest;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.Notification;
@@ -24,12 +26,14 @@ import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
 import com.example.se330.enums.FeedType;
 import com.example.se330.enums.GroupMemberStatus;
+import com.example.se330.enums.JoinStatus;
 import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.CourseRequestRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.NotificationRepository;
@@ -55,6 +59,7 @@ public class HomeService {
     private final GroupMemberRepository groupMemberRepository;
     private final RegistrationRepository registrationRepository;
     private final NotificationRepository notificationRepository;
+    private final CourseRequestRepository courseRequestRepository;
 
     @Transactional(readOnly = true)
     public List<FeedItemResponse> getFeed(Long userId, int limit) {
@@ -189,16 +194,36 @@ public class HomeService {
                             && !p.getEndDate().isBefore(LocalDate.now())
                             && p.getEndDate().isBefore(LocalDate.now().plusDays(14)))
                     .count();
+            // Đếm khớp với getStatDetails("pendingRequests"): yêu cầu vào lớp đang chờ duyệt
+            // trong các lớp do GV này phụ trách.
+            long pendingRequests = courseRepository.findByLecturer_Id(user.getId()).stream()
+                    .mapToLong(course -> courseRequestRepository
+                            .findAllByCourseAndStatus(course, JoinStatus.PENDING).size())
+                    .sum();
             quickStats.put("pendingGrades", pendingSubmissions);
             quickStats.put("totalProjects", (long) projects.size());
-            quickStats.put("pendingRequests", 0L);
+            quickStats.put("pendingRequests", pendingRequests);
             quickStats.put("upcomingDeadlines", upcomingDeadlines);
         } else {
-            quickStats.put("completed", completedTasks);
-            quickStats.put("updated", updatedTasks);
-            quickStats.put("created", createdTasks);
-            quickStats.put("dueSoon", totalTasks - completedTasks);
-            quickStats.put("total", totalTasks);
+            // Đếm theo task của chính sinh viên để khớp với phần chi tiết (getStatDetails),
+            // vốn lọc theo assignedTo/createdBy chứ không phải toàn bộ task của project.
+            List<Task> assignedTasks = taskRepository.findByAssignedTo_Id(userId);
+            long myCompleted = assignedTasks.stream()
+                    .filter(t -> t.getStatus() == TaskStatus.DONE)
+                    .count();
+            long myUpdated = assignedTasks.stream()
+                    .filter(t -> t.getUpdatedAt() != null && !t.getUpdatedAt().equals(t.getCreatedAt()))
+                    .count();
+            long myCreated = taskRepository.findByCreatedBy_Id(userId).size();
+            long myDueSoon = assignedTasks.stream()
+                    .filter(t -> t.getStatus() != TaskStatus.DONE)
+                    .count();
+
+            quickStats.put("completed", myCompleted);
+            quickStats.put("updated", myUpdated);
+            quickStats.put("created", myCreated);
+            quickStats.put("dueSoon", myDueSoon);
+            quickStats.put("total", (long) assignedTasks.size());
         }
 
         return HomeStatsResponse.builder()
@@ -262,6 +287,135 @@ public class HomeService {
                             .build());
                 }
             }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatDetailResponse> getStatDetails(Long userId, String type) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (type == null || type.isBlank()) {
+            throw new IllegalArgumentException("Thiếu tham số 'type'.");
+        }
+
+        List<StatDetailResponse> result = new ArrayList<>();
+
+        switch (type) {
+
+            // ----- GIẢNG VIÊN -----
+            case "pendingGrades": // Bài chờ chấm
+                for (Project project : resolveProjects(user)) {
+                    for (Submission s : submissionRepository.findByProject_Id(project.getId())) {
+                        if (s.getStatus() != SubmissionStatus.GRADED) {
+                            result.add(StatDetailResponse.builder()
+                                    .id(s.getId())
+                                    .type("SUBMISSION")
+                                    .title(s.getGroup() != null
+                                            ? "Bài nộp của nhóm " + s.getGroup().getName()
+                                            : "Bài nộp #" + s.getId())
+                                    .subtitle(project.getTitle())
+                                    .status(s.getStatus() != null ? s.getStatus().name() : null)
+                                    .timestamp(s.getSubmittedAt())
+                                    .build());
+                        }
+                    }
+                }
+                break;
+
+            case "totalProjects": // Tổng đồ án
+                for (Project project : resolveProjects(user)) {
+                    result.add(projectDetail(project));
+                }
+                break;
+
+            case "pendingRequests": { // Chờ duyệt
+                List<Course> courses = (user.getRole() == Role.TEACHER)
+                        ? courseRepository.findByLecturer_Id(user.getId())
+                        : courseRepository.findAll();
+                for (Course course : courses) {
+                    for (CourseRequest req : courseRequestRepository
+                            .findAllByCourseAndStatus(course, JoinStatus.PENDING)) {
+                        result.add(StatDetailResponse.builder()
+                                .id(req.getId())
+                                .type("REQUEST")
+                                .title(req.getStudent() != null ? req.getStudent().getName() : "Sinh viên")
+                                .subtitle(course.getName())
+                                .status(req.getStatus() != null ? req.getStatus().name() : null)
+                                .timestamp(req.getRequestAt())
+                                .build());
+                    }
+                }
+                break;
+            }
+
+            case "upcomingDeadlines": { // Sắp đến hạn
+                LocalDate today = LocalDate.now();
+                // Cùng cửa sổ 14 ngày với thẻ đếm trong getStats để số liệu khớp nhau.
+                for (Project project : resolveProjects(user)) {
+                    if (project.getEndDate() != null
+                            && !project.getEndDate().isBefore(today)
+                            && project.getEndDate().isBefore(today.plusDays(14))) {
+                        result.add(projectDetail(project));
+                    }
+                }
+                result.sort(Comparator.comparing(StatDetailResponse::getTimestamp,
+                        Comparator.nullsLast(Comparator.naturalOrder())));
+                break;
+            }
+
+            // ----- SINH VIÊN -----
+            case "completed": // Completed
+                addTaskDetails(result, taskRepository.findByAssignedTo_IdAndStatus(userId, TaskStatus.DONE));
+                break;
+
+            case "updated": // Updated
+                addTaskDetails(result, taskRepository.findByAssignedTo_Id(userId).stream()
+                        .filter(t -> t.getUpdatedAt() != null && !t.getUpdatedAt().equals(t.getCreatedAt()))
+                        .collect(Collectors.toList()));
+                break;
+
+            case "created": // Created
+                addTaskDetails(result, taskRepository.findByCreatedBy_Id(userId));
+                break;
+
+            case "dueSoon": // Due Soon
+                addTaskDetails(result, taskRepository.findByAssignedTo_Id(userId).stream()
+                        .filter(t -> t.getStatus() != TaskStatus.DONE)
+                        .sorted(Comparator.comparing(Task::getDeadline,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                        .collect(Collectors.toList()));
+                break;
+
+            default:
+                throw new IllegalArgumentException("Loại thống kê không hợp lệ: " + type);
+        }
+
+        return result;
+    }
+
+    private StatDetailResponse projectDetail(Project project) {
+        return StatDetailResponse.builder()
+                .id(project.getId())
+                .type("PROJECT")
+                .title(project.getTitle())
+                .subtitle(project.getCourse() != null ? project.getCourse().getName() : null)
+                .status(project.getStatus() != null ? project.getStatus().name() : null)
+                .timestamp(project.getEndDate() != null ? project.getEndDate().atStartOfDay() : null)
+                .build();
+    }
+
+    private void addTaskDetails(List<StatDetailResponse> result, List<Task> tasks) {
+        for (Task task : tasks) {
+            result.add(StatDetailResponse.builder()
+                    .id(task.getId())
+                    .type("TASK")
+                    .title(task.getTitle())
+                    .subtitle(task.getProject() != null ? task.getProject().getTitle() : null)
+                    .status(task.getStatus() != null ? task.getStatus().name() : null)
+                    .timestamp(task.getDeadline() != null ? task.getDeadline() : task.getUpdatedAt())
+                    .build());
         }
     }
 

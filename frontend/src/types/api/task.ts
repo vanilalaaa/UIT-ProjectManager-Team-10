@@ -1,4 +1,4 @@
-import type { TaskPriority } from '../../mocks/types'
+import type { TaskPriority } from '../models'
 
 export type { TaskPriority }
 

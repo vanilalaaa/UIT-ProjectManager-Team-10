@@ -28,4 +28,10 @@ public interface TaskRepository
             Long assigneeId,
             TaskStatus status
     );
+
+    List<Task> findByAssignedTo_Id(Long assigneeId);
+
+    List<Task> findByAssignedTo_IdAndStatus(Long assigneeId, TaskStatus status);
+
+    List<Task> findByCreatedBy_Id(Long creatorId);
 }

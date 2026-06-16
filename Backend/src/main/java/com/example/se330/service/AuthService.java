@@ -1,7 +1,6 @@
 package com.example.se330.service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,6 +20,7 @@ import com.example.se330.entity.User;
 import com.example.se330.entity.UserProfile;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
+import com.example.se330.util.StudentCodeGenerator;
 
 @Service
 public class AuthService {
@@ -29,18 +29,21 @@ public class AuthService {
         private final JwtService jwtService;
         private final PasswordEncoder passwordEncoder;
         private final AuthenticationManager authenticationManager;
+        private final StudentCodeGenerator studentCodeGenerator;
 
         public AuthService(
                         UserRepository userRepository,
                         EmailService emailService,
                         JwtService jwtService,
                         PasswordEncoder passwordEncoder,
-                        AuthenticationManager authenticationManager) {
+                        AuthenticationManager authenticationManager,
+                        StudentCodeGenerator studentCodeGenerator) {
                 this.userRepository = userRepository;
                 this.emailService = emailService;
                 this.jwtService = jwtService;
                 this.passwordEncoder = passwordEncoder;
                 this.authenticationManager = authenticationManager;
+                this.studentCodeGenerator = studentCodeGenerator;
         }
 
         public AuthResponse register(RegisterRequest request) {
@@ -50,7 +53,7 @@ public class AuthService {
                 }
 
                 // 2. Tạo dữ liệu
-                String uid = UUID.randomUUID().toString();
+                String uid = studentCodeGenerator.generate();
                 String verificationToken = jwtService.generateVerificationToken(request.getEmail());
 
                 System.out.println("Verification token: " + verificationToken);

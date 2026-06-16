@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.home.HomeStatsResponse;
+import com.example.se330.dto.home.StatDetailResponse;
 import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.HomeService;
 
@@ -42,5 +43,16 @@ public class HomeController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         HomeStatsResponse resp = homeService.getStats(userDetails.getId());
         return ApiResponse.success(resp, "Lấy thống kê thành công.");
+    }
+
+    // GET /home/stats/detail?type=... - chi tiết phía sau từng ô thống kê (sổ xuống khi click)
+    @GetMapping("/stats/detail")
+    public ResponseEntity<ApiResponse<List<StatDetailResponse>>> getStatDetail(
+            Authentication authentication,
+            @RequestParam String type) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        List<StatDetailResponse> resp = homeService.getStatDetails(userDetails.getId(), type);
+        return ApiResponse.success(resp, "Lấy chi tiết thống kê thành công.");
     }
 }

@@ -13,11 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.course.CourseCardResponse;
 import com.example.se330.dto.group.InvitationResponse;
+import com.example.se330.dto.home.FeedItemResponse;
 import com.example.se330.dto.project.ProjectResponse;
 import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.CourseService;
 import com.example.se330.service.GroupService;
+import com.example.se330.service.HomeService;
 import com.example.se330.service.StudentService;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/students")
@@ -25,12 +28,14 @@ public class StudentController {
     private final StudentService studentService;
     private final CourseService courseService;
     private final GroupService groupService;
+    private final HomeService homeService;
 
     public StudentController(StudentService studentService, CourseService courseService,
-            GroupService groupService) {
+            GroupService groupService, HomeService homeService) {
         this.studentService = studentService;
         this.courseService = courseService;
         this.groupService = groupService;
+        this.homeService = homeService;
     }
 
     @GetMapping("/me/projects")
@@ -38,6 +43,14 @@ public class StudentController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         List<ProjectResponse> resp = this.studentService.getStudentProjects(userDetails.getId());
         return ApiResponse.success(resp, "Lấy danh sách projects của sinh viên thành công.");
+    }
+    @GetMapping("/me/feed")
+    public ResponseEntity<ApiResponse<List<FeedItemResponse>>> getStudentFeed(
+            Authentication authentication,
+            @RequestParam(defaultValue = "20") int limit) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        List<FeedItemResponse> resp = this.homeService.getFeed(userDetails.getId(), limit);
+        return ApiResponse.success(resp, "Lấy danh sách hoạt động của sinh viên thành công.");
     }
 
     @GetMapping("/me/courses")

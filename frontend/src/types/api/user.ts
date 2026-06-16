@@ -1,4 +1,4 @@
-import type { Role, UserDto } from './auth'
+import type { Role, UserDto } from '../models'
 
 export type { Role, UserDto }
 

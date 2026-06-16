@@ -11,4 +11,10 @@ import com.example.se330.entity.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     List<Notification> findTop30ByRecipient_IdOrderByCreatedAtDesc(Long recipientId);
+
+    // Số thông báo chưa đọc → hiển thị badge đỏ trên chuông.
+    long countByRecipient_IdAndIsReadFalse(Long recipientId);
+
+    // Các thông báo chưa đọc → dùng khi "đánh dấu tất cả đã đọc".
+    List<Notification> findByRecipient_IdAndIsReadFalse(Long recipientId);
 }

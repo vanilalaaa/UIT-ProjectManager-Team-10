@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 
 export interface CourseFormData {
   name: string;
+  code: string;
   maxStudents: number;
   startDate: string;
   endDate: string;
@@ -14,7 +15,7 @@ interface CourseFormModalProps {
   initialData?: CourseFormData | null;
 }
 
-const EMPTY: CourseFormData = { name: '', maxStudents: 100, startDate: '', endDate: '' }
+const EMPTY: CourseFormData = { name: '', code: '', maxStudents: 100, startDate: '', endDate: '' }
 
 export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData }: CourseFormModalProps) {
   const [formData, setFormData] = useState<CourseFormData>(EMPTY)
@@ -32,13 +33,14 @@ export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'maxStudents' ? Number(value) : value,
+      [name]: name === 'maxStudents' ? Number(value) : name === 'code' ? value.toUpperCase() : value,
     }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) return setError('Vui lòng nhập tên môn học.')
+    if (!initialData && !formData.code.trim()) return setError('Vui lòng nhập mã lớp.')
     if (!formData.startDate || !formData.endDate) return setError('Vui lòng chọn thời gian bắt đầu và kết thúc.')
     if (formData.startDate > formData.endDate) return setError('Ngày kết thúc phải sau ngày bắt đầu.')
     setError(null)
@@ -69,7 +71,21 @@ export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData
                 placeholder="VD: Công nghệ phần mềm"
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
               />
-              <p className="mt-1.5 text-xs text-text-soft">Mã lớp sẽ được hệ thống tự tạo và đảm bảo không trùng.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Mã lớp {initialData ? '' : '*'}</label>
+              <input
+                type="text" name="code" value={formData.code ?? ''} onChange={handleChange}
+                disabled={!!initialData} required={!initialData}
+                placeholder="VD: SE330"
+                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text disabled:bg-surface-soft/50 disabled:text-text-soft uppercase"
+              />
+              <p className="mt-1.5 text-xs text-text-soft">
+                {initialData
+                  ? 'Mã lớp không thể thay đổi sau khi tạo lớp.'
+                  : 'Nhập mã lớp (sẽ kiểm tra trùng).'}
+              </p>
             </div>
 
             <div>

@@ -1,4 +1,4 @@
-import type { Course } from '../../mocks/types'
+import type { Course } from '../models'
 
 export type { Course }
 
@@ -35,6 +35,8 @@ export type AdminCourseQuery = {
 
 export type AdminCourseCreateRequest = {
   name: string
+  // Mã lớp bắt buộc do người tạo nhập; BE kiểm tra trùng, không tự sinh.
+  code: string
   // Optional: admin chọn giảng viên; teacher tự tạo lớp -> BE gán chính họ.
   lecturerId?: number
   maxStudents: number

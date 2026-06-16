@@ -1,4 +1,3 @@
-// src/types/api/auth.ts
 
 export type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
