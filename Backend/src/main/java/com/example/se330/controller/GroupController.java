@@ -18,6 +18,7 @@ import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.group.CreateGroupRequest;
 import com.example.se330.dto.group.GroupMemberResponse;
 import com.example.se330.dto.group.GroupResponse;
+import com.example.se330.dto.group.InviteRequest;
 import com.example.se330.dto.group.TransferLeaderRequest;
 import com.example.se330.dto.group.UpdateGroupRequest;
 import com.example.se330.enums.GroupMemberStatus;
@@ -49,6 +50,14 @@ public class GroupController {
     public ResponseEntity<ApiResponse<List<GroupResponse>>> getGroupsByCourseId(@PathVariable Long courseId) {
         List<GroupResponse> groups = groupService.getGroupsByCourseId(courseId);
         return ApiResponse.success(groups);
+    }
+
+    // Nhóm của sinh viên đang đăng nhập trong lớp này (null nếu chưa có nhóm).
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<GroupResponse>> getMyGroup(
+            Authentication authentication, @PathVariable Long courseId) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return ApiResponse.success(groupService.getMyGroup(userDetails.getId(), courseId));
     }
 
     // [READ ONE] Lấy chi tiết 1 group cụ thể
@@ -83,6 +92,18 @@ public class GroupController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         groupService.deleteGroup(userDetails.getId(), courseId, groupId);
         return ApiResponse.success(null); // Hoặc trả về thông báo xóa thành công tùy cấu trúc ApiResponse
+    }
+
+    // Sinh viên tự rời nhóm
+    @PostMapping("/{groupId}/leave")
+    public ResponseEntity<ApiResponse<String>> leaveGroup(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        groupService.leaveGroup(userDetails.getId(), courseId, groupId);
+        return ApiResponse.success("Bạn đã rời nhóm thành công.");
     }
 
     // Gửi lời yêu cầu tham gia nhóm (Student gửi yêu cầu, Leader duyệt)
@@ -166,5 +187,30 @@ public class GroupController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String message = groupService.removeGroupMember(userDetails.getId(), courseId, groupId, memberId);
         return ApiResponse.success(message);
+    }
+
+    // Danh sách sinh viên đã tham gia lớp (để trưởng nhóm chọn mời).
+    @GetMapping("/classmates")
+    public ResponseEntity<ApiResponse<List<GroupMemberResponse>>> getClassmates(@PathVariable Long courseId) {
+        return ApiResponse.success(groupService.getCourseClassmates(courseId));
+    }
+
+    // Danh sách sinh viên có thể mời: đã tham gia lớp và chưa có nhóm/lời mời/yêu cầu.
+    @GetMapping("/invite-candidates")
+    public ResponseEntity<ApiResponse<List<GroupMemberResponse>>> getInviteCandidates(@PathVariable Long courseId) {
+        return ApiResponse.success(groupService.getInviteCandidates(courseId));
+    }
+
+    // Trưởng nhóm mời 1 sinh viên vào nhóm.
+    @PostMapping("/{groupId}/invite")
+    public ResponseEntity<ApiResponse<String>> invite(
+            Authentication authentication,
+            @PathVariable Long courseId,
+            @PathVariable Long groupId,
+            @RequestBody InviteRequest request) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        groupService.inviteMember(userDetails.getId(), courseId, groupId, request.getUserId());
+        return ApiResponse.success("Đã gửi lời mời tham gia nhóm.");
     }
 }

@@ -1,6 +1,14 @@
 import { Link } from 'react-router-dom';
+import type { ChartStats } from '../../../services/home.service';
 
-export default function StatusChart({ role, chartStats, selectedStatus, onToggle }: any) {
+interface StatusChartProps {
+  role: string;
+  chartStats: ChartStats;
+  selectedStatus: string | null;
+  onToggle: (status: string | null) => void;
+}
+
+export default function StatusChart({ role, chartStats, selectedStatus, onToggle }: StatusChartProps) {
   const isTeacher = role === 'TEACHER';
   const labels = isTeacher 
     ? { todo: 'Chưa nộp', inProgress: 'Đã nộp', readyForTest: 'Đã chấm' }
@@ -37,7 +45,7 @@ export default function StatusChart({ role, chartStats, selectedStatus, onToggle
         </div>
       </div>
       <div className="text-center mt-6">
-        <Link to="/my-project" className="text-sm font-bold text-primary hover:underline">View all work items</Link>
+        <Link to={isTeacher ? '/teacher/my-course/1/project-list/1/submit' : '/my-project'} className="text-sm font-bold text-primary hover:underline">View all work items</Link>
       </div>
     </div>
   );

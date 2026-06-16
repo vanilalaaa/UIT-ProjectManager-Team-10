@@ -44,11 +44,12 @@ public class CourseRequestService {
             throw new RuntimeException("Bạn đã gửi yêu cầu rồi.");
         }
 
+        // Tham gia lớp tức thì, không cần giảng viên duyệt (không có UI duyệt vào lớp).
         CourseRequest jc = CourseRequest.builder()
                 .course(course)
                 .student(currentUser)
                 .requestAt(LocalDateTime.now())
-                .status(JoinStatus.PENDING)
+                .status(JoinStatus.ACTIVE)
                 .build();
 
         CourseRequest saved = this.courseRequestRepository.save(jc);

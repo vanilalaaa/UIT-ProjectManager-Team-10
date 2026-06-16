@@ -1,16 +1,31 @@
-import type { Group, User } from '../../mocks/types'
+// Nhóm + thành viên dạng phẳng theo BE GroupResponse/GroupMemberResponse.
+export type TeamMember = {
+  groupMemberId: number | null
+  userId: number
+  name: string
+  avatar: string | null
+  summary: string | null
+  uid: string | null
+  email: string | null
+  isLeader: boolean
+  status: string
+}
 
-export type Team = Group
-export type TeamMember = User
+export type Team = {
+  groupId: number
+  name: string
+  description: string
+  courseId: number | null
+  leaderId: number | null
+  leaderName: string | null
+  members: TeamMember[]
+  memberCount: number
+  // Trạng thái đề tài của nhóm: "PENDING" (chờ duyệt) / "APPROVED" (đã có đồ án) / null.
+  projectStatus: string | null
+  projectTitle: string | null
+}
 
 export type TeamCreateRequest = {
   name: string
   description: string
-}
-
-export type TeamJoinRequestCreate = { note?: string }
-
-export type TeamJoinRequestPatch = {
-  status: 'APPROVED' | 'REJECTED'
-  note?: string
 }

@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
 
 export interface CourseFormData {
-  courseCode: string;
   name: string;
+  code: string;
   maxStudents: number;
-  groupDeadline: string;
-  categoryName: string;       
-  categoryDescription: string; 
-  projectDeadline: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface CourseFormModalProps {
@@ -17,52 +15,42 @@ interface CourseFormModalProps {
   initialData?: CourseFormData | null;
 }
 
+const EMPTY: CourseFormData = { name: '', code: '', maxStudents: 100, startDate: '', endDate: '' }
+
 export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData }: CourseFormModalProps) {
-  const [formData, setFormData] = useState<CourseFormData>({
-    courseCode: '',
-    name: '',
-    maxStudents: 100,
-    groupDeadline: '',
-    categoryName: '',
-    categoryDescription: '',
-    projectDeadline: ''
-  })
+  const [formData, setFormData] = useState<CourseFormData>(EMPTY)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (initialData && isOpen) {
-      setFormData(initialData)
-    } else if (isOpen) {
-      setFormData({
-        courseCode: '',
-        name: '',
-        maxStudents: 100,
-        groupDeadline: '',
-        categoryName: '',
-        categoryDescription: '',
-        projectDeadline: ''
-      })
-    }
+    if (!isOpen) return
+    setError(null)
+    setFormData(initialData ?? EMPTY)
   }, [initialData, isOpen])
 
   if (!isOpen) return null
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'maxStudents' ? Number(value) : value
+      [name]: name === 'maxStudents' ? Number(value) : name === 'code' ? value.toUpperCase() : value,
     }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.name.trim()) return setError('Vui lòng nhập tên môn học.')
+    if (!initialData && !formData.code.trim()) return setError('Vui lòng nhập mã lớp.')
+    if (!formData.startDate || !formData.endDate) return setError('Vui lòng chọn thời gian bắt đầu và kết thúc.')
+    if (formData.startDate > formData.endDate) return setError('Ngày kết thúc phải sau ngày bắt đầu.')
+    setError(null)
     onSubmit(formData)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-fade-in">
       <div className="bg-surface rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-xl font-bold text-text">
             {initialData ? 'Chỉnh sửa Lớp học' : 'Tạo Lớp học mới'}
@@ -76,83 +64,66 @@ export default function CourseFormModal({ isOpen, onClose, onSubmit, initialData
 
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
           <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-            
-            {/* THÔNG TIN LỚP HỌC */}
             <div>
               <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Tên môn học *</label>
-              <input 
+              <input
                 type="text" name="name" value={formData.name} onChange={handleChange} required
                 placeholder="VD: Công nghệ phần mềm"
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Mã lớp (ID) *</label>
-                <input 
-                  type="text" name="courseCode" value={formData.courseCode} onChange={handleChange} required
-                  placeholder="VD: SE330.O21"
-                  className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Sĩ số tối đa *</label>
-                <input 
-                  type="number" name="maxStudents" value={formData.maxStudents} onChange={handleChange} required min="1"
-                  className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
-                />
-              </div>
-            </div>
-
             <div>
-              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Deadline lập nhóm *</label>
-              <input 
-                type="date" name="groupDeadline" value={formData.groupDeadline} onChange={handleChange} required
-                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text text-text-soft"
+              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Mã lớp {initialData ? '' : '*'}</label>
+              <input
+                type="text" name="code" value={formData.code ?? ''} onChange={handleChange}
+                disabled={!!initialData} required={!initialData}
+                placeholder="VD: SE330"
+                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text disabled:bg-surface-soft/50 disabled:text-text-soft uppercase"
               />
-              <p className="text-[12px] text-text-soft mt-1.5">Sau ngày này, sinh viên sẽ không thể tự tạo nhóm mới.</p>
+              <p className="mt-1.5 text-xs text-text-soft">
+                {initialData
+                  ? 'Mã lớp không thể thay đổi sau khi tạo lớp.'
+                  : 'Nhập mã lớp (sẽ kiểm tra trùng).'}
+              </p>
             </div>
 
-            <hr className="border-border" />
-
             <div>
-              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Tên đề tài chung *</label>
-              <input 
-                type="text" name="categoryName" value={formData.categoryName} onChange={handleChange} required
-                placeholder="VD: Ứng dụng Web / Ứng dụng Di động"
+              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Sĩ số tối đa *</label>
+              <input
+                type="number" name="maxStudents" value={formData.maxStudents} onChange={handleChange} required min="1"
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Mô tả đề tài chung *</label>
-              <textarea 
-                name="categoryDescription" value={formData.categoryDescription} onChange={handleChange} required
-                placeholder="Nhập yêu cầu và mô tả cho đề tài..."
-                rows={3}
-                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text resize-none"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Ngày bắt đầu *</label>
+                <input
+                  type="date" name="startDate" value={formData.startDate} onChange={handleChange} required
+                  className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Ngày kết thúc *</label>
+                <input
+                  type="date" name="endDate" value={formData.endDate} onChange={handleChange} required
+                  className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-text-soft mb-1.5 uppercase tracking-wider">Deadline nộp đồ án *</label>
-              <input 
-                type="date" name="projectDeadline" value={formData.projectDeadline} onChange={handleChange} required
-                className="w-full px-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary text-text text-text-soft"
-              />
-            </div>
-
+            {error ? <p className="text-sm text-red-500 font-medium">{error}</p> : null}
           </div>
 
           <div className="p-6 border-t border-border flex items-center justify-end gap-3 bg-surface-soft/30">
-            <button 
+            <button
               type="button" onClick={onClose}
               className="px-5 py-2.5 text-sm font-bold text-text-soft hover:text-text transition-colors"
             >
               Hủy
             </button>
-            <button 
+            <button
               type="submit"
               className="px-6 py-2.5 bg-brand-gradient hover:bg-[#209CE8] text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
             >

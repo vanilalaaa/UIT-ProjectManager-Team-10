@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { useContext } from 'react';
 
 import { getCurrentUser, logout as logoutApi } from '../../services/auth.service'
 import type { AuthResponse, UserDto } from '../../types/api/auth'
@@ -50,17 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const updateSessionUser = useCallback((user: UserDto) => {
+    setCurrentUser(user)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ currentUser, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, isLoading, login, logout, updateSessionUser }}>
       {children}
     </AuthContext.Provider>
   )
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth phải được sử dụng bên trong AuthProvider');
-  }
-  return context;
-};

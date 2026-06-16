@@ -1,5 +1,7 @@
 package com.example.se330.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +29,7 @@ public class Submission {
     @Builder.Default
     private LocalDateTime submittedAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
     private SubmissionStatus status;
 
     @Column(name = "file_path")
@@ -40,6 +43,13 @@ public class Submission {
     @JoinColumn(name = "group_id")
     private Group group;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitted_by")
+    private User submittedBy;
+
+    // Tránh vòng lặp serialization Submission -> Grade -> Submission khi controller
+    // trả thẳng entity (GET /projects/{id}/submissions). Điểm được lấy qua API riêng.
+    @JsonIgnore
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Grade grade;
 }

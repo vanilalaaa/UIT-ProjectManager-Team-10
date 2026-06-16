@@ -4,7 +4,7 @@
  * Rules (PROJECT_RULES §2): Avoid duplicated role checks.
  * Sidebar reads this map; it never hard-codes role conditions itself.
  */
-import type { Role } from '../../mocks/types'
+import type { Role } from '../../types/models'
 
 export type NavItem = {
   label: string

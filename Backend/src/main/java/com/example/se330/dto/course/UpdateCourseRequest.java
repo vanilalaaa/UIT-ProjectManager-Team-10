@@ -15,6 +15,7 @@ import lombok.Setter;
 @Builder
 public class UpdateCourseRequest {
     private String name;
+    private Long lecturerId;
     private int maxStudents;
     private LocalDate startDate;
     private LocalDate endDate;

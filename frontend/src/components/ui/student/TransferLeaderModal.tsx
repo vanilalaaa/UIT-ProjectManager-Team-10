@@ -1,9 +1,9 @@
-import type { User } from '../../../mocks/types'
+import type { TeamMember } from '../../../types/api/team'
 
 interface TransferLeaderModalProps {
   isOpen: boolean
   onClose: () => void
-  members: User[]
+  members: TeamMember[]
   onTransfer: (newLeaderId: number) => void
 }
 

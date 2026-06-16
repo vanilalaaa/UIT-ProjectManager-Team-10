@@ -1,5 +1,7 @@
 package com.example.se330.repository;
 
+import java.util.List;
+
 import com.example.se330.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,4 +14,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     boolean existsByName(String name);
+
+    List<Category> findByIsActiveTrue();
 }

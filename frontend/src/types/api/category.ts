@@ -1,4 +1,4 @@
-import type { Category } from '../../mocks/types'
+import type { Category } from '../models'
 
 export type { Category }
 

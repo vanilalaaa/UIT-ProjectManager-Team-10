@@ -2,11 +2,11 @@ import { useState } from 'react'
 import Avatar from '../Avatar'
 import MemberRow from './MemberRow'
 import UserProfilePopover from './UserProfilePopover'
-import type { User, Group } from '../../../mocks/types'
+import type { Team } from '../../../types/api/team'
 
 interface TeamInfoCardProps {
-  myGroup: Group
-  currentUser: User
+  myGroup: Team
+  currentUserId: number
   isCurrentUserLeader: boolean
   onLeaveClick: () => void
   onDeleteClick: () => void
@@ -15,7 +15,7 @@ interface TeamInfoCardProps {
 
 export default function TeamInfoCard({
   myGroup,
-  currentUser,
+  currentUserId,
   isCurrentUserLeader,
   onLeaveClick,
   onDeleteClick,
@@ -23,9 +23,9 @@ export default function TeamInfoCard({
 }: TeamInfoCardProps) {
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
-  const leader = myGroup.leader
-  const regularMembers = (myGroup.members as User[]).filter((m) => m.userId !== leader?.userId)
-  const currentMemberCount = myGroup.members?.length || 0
+  const leader = myGroup.members.find((m) => m.isLeader) ?? null
+  const regularMembers = myGroup.members.filter((m) => !m.isLeader)
+  const currentMemberCount = myGroup.members.length
   const maxMembers = 5
 
   return (
@@ -64,7 +64,7 @@ export default function TeamInfoCard({
           <div className="flex items-center gap-4">
             <Avatar 
               name={leader.name}
-              avatarUrl={leader.userProfile?.avatarUrl}
+              avatarUrl={leader.avatar}
               sizeClass="size-12"
               className="border border-primary/30"
             />
@@ -92,7 +92,7 @@ export default function TeamInfoCard({
               member={member} 
               onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
             >
-              {isCurrentUserLeader && member.userId !== currentUser.userId && (
+              {isCurrentUserLeader && member.userId !== currentUserId && (
                 <button 
                   onClick={() => onKickMember(member.userId)}
                   className="ml-2 p-1.5 text-error hover:bg-error/10 rounded-full transition-colors"

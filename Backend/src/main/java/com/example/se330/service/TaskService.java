@@ -1,183 +1,194 @@
 package com.example.se330.service;
 
+import com.example.se330.dto.task.BoardGroupResponse;
+import com.example.se330.dto.task.BoardResponse;
 import com.example.se330.dto.task.CreateTaskRequest;
+import com.example.se330.dto.task.TaskResponse;
 import com.example.se330.dto.task.UpdateTaskRequest;
+import com.example.se330.dto.task.UserLiteResponse;
 import com.example.se330.entity.Group;
+import com.example.se330.entity.GroupMember;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
+import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.Role;
 import com.example.se330.enums.TaskStatus;
+import com.example.se330.repository.GroupMemberRepository;
+import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
-    // =========================
-    // GET TASKS (FILTER)
-    // =========================
-    public List<Task> getProjectTasks(
-            Long projectId,
-            Long assigneeId,
-            TaskStatus status
-    ) {
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getProjectTasks(Long projectId, Long assigneeId, TaskStatus status) {
 
+        List<Task> tasks;
         if (assigneeId != null && status != null) {
-            return taskRepository
-                    .findByProject_IdAndAssignedTo_IdAndStatus(
-                            projectId, assigneeId, status
-                    );
+            tasks = taskRepository.findByProject_IdAndAssignedTo_IdAndStatus(projectId, assigneeId, status);
+        } else if (assigneeId != null) {
+            tasks = taskRepository.findByProject_IdAndAssignedTo_Id(projectId, assigneeId);
+        } else if (status != null) {
+            tasks = taskRepository.findByProject_IdAndStatus(projectId, status);
+        } else {
+            tasks = taskRepository.findByProject_Id(projectId);
         }
 
-        if (assigneeId != null) {
-            return taskRepository
-                    .findByProject_IdAndAssignedTo_Id(
-                            projectId, assigneeId
-                    );
-        }
-
-        if (status != null) {
-            return taskRepository
-                    .findByProject_IdAndStatus(
-                            projectId, status
-                    );
-        }
-
-        return taskRepository.findByProject_Id(projectId);
+        return tasks.stream().map(this::toResponse).toList();
     }
 
-    // =========================
-    // CREATE TASK
-    // =========================
-    public Task createTask(
-            Long projectId,
-            CreateTaskRequest request,
-            Long currentUserId
-    ) {
+    // Dữ liệu 1 lần load Kanban: nhóm của user trong lớp của đồ án + task của nhóm.
+    @Transactional(readOnly = true)
+    public BoardResponse getBoard(Long projectId, Long currentUserId) {
 
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
-        User createdBy = userRepository.findById(currentUserId)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("User not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        User assignedUser = null;
+        Long courseId = project.getCourse() != null ? project.getCourse().getId() : null;
 
-        if (request.getAssignedToId() != null) {
-            assignedUser = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() ->
-                            new EntityNotFoundException("Assigned user not found"));
+        GroupMember membership = courseId != null
+                ? groupMemberRepository
+                        .findFirstByUser_IdAndGroup_Course_IdAndStatus(
+                                currentUserId, courseId, GroupMemberStatus.ACTIVE)
+                        .orElse(null)
+                : null;
+
+        BoardGroupResponse groupResp = null;
+        List<TaskResponse> tasks = List.of();
+
+        if (membership != null && membership.getGroup() != null) {
+            Group group = membership.getGroup();
+
+            List<UserLiteResponse> members = group.getMembers().stream()
+                    .filter(m -> m.getStatus() == GroupMemberStatus.ACTIVE && m.getUser() != null)
+                    .map(m -> toUserLite(m.getUser()))
+                    .toList();
+
+            groupResp = BoardGroupResponse.builder()
+                    .groupId(group.getId())
+                    .name(group.getName())
+                    .leaderId(group.getLeader() != null ? group.getLeader().getId() : null)
+                    .members(members)
+                    .build();
+
+            tasks = taskRepository.findByProject_IdAndGroup_Id(projectId, group.getId())
+                    .stream().map(this::toResponse).toList();
         }
 
-        // validate deadline
-        if (request.getDeadline() != null &&
-                request.getDeadline().isBefore(LocalDateTime.now())) {
+        return BoardResponse.builder()
+                .tasks(tasks)
+                .currentUser(toUserLite(currentUser))
+                .group(groupResp)
+                .build();
+    }
+
+    public TaskResponse createTask(Long projectId, CreateTaskRequest request, Long currentUserId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+
+        User createdBy = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        User assignedUser = null;
+        if (request.getAssignedToId() != null) {
+            assignedUser = userRepository.findById(request.getAssignedToId())
+                    .orElseThrow(() -> new EntityNotFoundException("Assigned user not found"));
+        }
+
+        Group group = null;
+        if (request.getGroupId() != null) {
+            group = groupRepository.findById(request.getGroupId())
+                    .orElseThrow(() -> new EntityNotFoundException("Group not found"));
+        }
+
+        if (request.getDeadline() != null && request.getDeadline().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Deadline must be greater than now");
         }
 
         Task task = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status(request.getStatus() != null
-                        ? request.getStatus()
-                        : TaskStatus.TODO)
+                .status(request.getStatus() != null ? request.getStatus() : TaskStatus.TODO)
                 .deadline(request.getDeadline())
                 .assignedTo(assignedUser)
                 .createdBy(createdBy)
+                .group(group)
                 .project(project)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return taskRepository.save(task);
+        return toResponse(taskRepository.save(task));
     }
 
-    // =========================
-    // UPDATE TASK
-    // =========================
-    public Task updateTask(
-            Long taskId,
-            UpdateTaskRequest request
-    ) {
+    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request) {
 
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
 
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
         }
-
         if (request.getDescription() != null) {
             task.setDescription(request.getDescription());
         }
-
         if (request.getStatus() != null) {
             task.setStatus(request.getStatus());
         }
-
         if (request.getDeadline() != null) {
-
             if (request.getDeadline().isBefore(LocalDateTime.now())) {
                 throw new RuntimeException("Deadline must be greater than now");
             }
-
             task.setDeadline(request.getDeadline());
         }
-
         if (request.getAssignedToId() != null) {
-
             User assignedUser = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() ->
-                            new EntityNotFoundException("Assigned user not found"));
-
+                    .orElseThrow(() -> new EntityNotFoundException("Assigned user not found"));
             task.setAssignedTo(assignedUser);
         }
 
         task.setUpdatedAt(LocalDateTime.now());
 
-        return taskRepository.save(task);
+        return toResponse(taskRepository.save(task));
     }
 
-    // =========================
-    // UPDATE STATUS (KANBAN)
-    // =========================
-    public Task updateTaskStatus(
-            Long taskId,
-            TaskStatus status
-    ) {
+    public TaskResponse updateTaskStatus(Long taskId, TaskStatus status) {
 
         if (status == null) {
             throw new RuntimeException("Status cannot be null");
         }
 
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
 
         task.setStatus(status);
         task.setUpdatedAt(LocalDateTime.now());
 
-        return taskRepository.save(task);
+        return toResponse(taskRepository.save(task));
     }
 
-    // =========================
-    // DELETE TASK (LEADER ONLY)
-    // =========================
+    // Leader của nhóm hoặc ADMIN mới được xóa.
     public void deleteTask(Long taskId, Long currentUserId) {
 
         Task task = taskRepository.findById(taskId)
@@ -186,22 +197,46 @@ public class TaskService {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-
         if (currentUser.getRole() == Role.ADMIN) {
-                taskRepository.delete(task);
-                return;
+            taskRepository.delete(task);
+            return;
         }
 
         Group group = task.getGroup();
-
         if (group == null || group.getLeader() == null) {
-                throw new RuntimeException("No permission");
+            throw new RuntimeException("No permission");
         }
-
         if (!group.getLeader().getId().equals(currentUser.getId())) {
-                throw new RuntimeException("Only leader can delete task");
+            throw new RuntimeException("Only leader can delete task");
         }
 
         taskRepository.delete(task);
+    }
+
+    private TaskResponse toResponse(Task task) {
+        return TaskResponse.builder()
+                .taskId(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .status(task.getStatus() != null ? task.getStatus().name() : null)
+                .assignee(toUserLite(task.getAssignedTo()))
+                .createdBy(toUserLite(task.getCreatedBy()))
+                .groupId(task.getGroup() != null ? task.getGroup().getId() : null)
+                .deadline(task.getDeadline() != null ? task.getDeadline().toString() : null)
+                .createdAt(task.getCreatedAt() != null ? task.getCreatedAt().toString() : null)
+                .updatedAt(task.getUpdatedAt() != null ? task.getUpdatedAt().toString() : null)
+                .build();
+    }
+
+    private UserLiteResponse toUserLite(User user) {
+        if (user == null) {
+            return null;
         }
+        String avatar = user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null;
+        return UserLiteResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .avatar(avatar)
+                .build();
+    }
 }

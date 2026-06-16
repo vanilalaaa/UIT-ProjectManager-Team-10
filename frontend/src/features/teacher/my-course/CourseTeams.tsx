@@ -4,8 +4,8 @@ import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
-import { mockCourseGroupsMap } from '../../../mocks/tasks.mock'
-import type { Group } from '../../../mocks/types'
+import { getCourseGroups, deleteTeam, removeMember } from '../../../services/team.service'
+import type { Team } from '../../../types/api/team'
 
 function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -40,13 +40,13 @@ function SmartPopoverWrapper({ children }: { children: React.ReactNode }) {
 
 export default function CourseTeams() {
   const { courseId } = useParams<{ courseId: string }>()
-  const [teams, setTeams] = useState<Group[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const [expandedTeams, setExpandedTeams] = useState<number[]>([])
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
-  
-  const [deleteTarget, setDeleteTarget] = useState<Group | null>(null)
+
+  const [deleteTarget, setDeleteTarget] = useState<Team | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     title: '',
@@ -56,13 +56,12 @@ export default function CourseTeams() {
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    setTimeout(() => {
+    getCourseGroups(courseId ?? '').then((data) => {
       if (isMounted) {
-        const targetId = Number(courseId)
-        setTeams(mockCourseGroupsMap[targetId] || [])
+        setTeams(data)
         setLoading(false)
       }
-    }, 500)
+    })
     return () => { isMounted = false }
   }, [courseId])
 
@@ -79,46 +78,46 @@ export default function CourseTeams() {
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return
-    setTeams(prev => prev.filter(t => t.groupId !== deleteTarget.groupId))
     const groupName = deleteTarget.name
+    const gid = deleteTarget.groupId
     setDeleteTarget(null)
-    setNotification({
-      isOpen: true,
-      title: 'Thành công',
-      message: `Đã xóa nhóm ${groupName} thành công!`
-    })
+    deleteTeam(courseId ?? '', gid)
+      .then(() => {
+        setTeams(prev => prev.filter(t => t.groupId !== gid))
+        setNotification({ isOpen: true, title: 'Thành công', message: `Đã xóa nhóm ${groupName} thành công!` })
+      })
+      .catch((err: { message?: string }) =>
+        setNotification({ isOpen: true, title: 'Lỗi', message: err?.message || 'Không xóa được nhóm.' }),
+      )
   }
 
   const handleRemoveMemberFromTeam = (groupId: number, userId: number) => {
-    const targetTeam = teams.find(t => t.groupId === groupId);
-    if (!targetTeam) return;
+    const targetTeam = teams.find(t => t.groupId === groupId)
+    if (!targetTeam) return
 
-    if (targetTeam.leader.userId === userId) {
+    if (targetTeam.leaderId === userId) {
       setNotification({
         isOpen: true,
         title: 'Không thể thực hiện',
         message: 'Không thể xóa Leader ra khỏi nhóm!'
-      });
-      return; 
+      })
+      return
     }
 
-    setTeams(prevTeams => 
-      prevTeams.map(team => {
-        if (team.groupId === groupId) {
-          return {
-            ...team,
-            members: team.members.filter(m => m.userId !== userId)
-          };
-        }
-        return team;
+    removeMember(courseId ?? '', groupId, userId)
+      .then(() => {
+        setTeams(prevTeams =>
+          prevTeams.map(team =>
+            team.groupId === groupId
+              ? { ...team, members: team.members.filter(m => m.userId !== userId), memberCount: Math.max(0, team.memberCount - 1) }
+              : team,
+          ),
+        )
+        setNotification({ isOpen: true, title: 'Thành công', message: 'Đã xóa thành viên khỏi nhóm!' })
       })
-    );
-
-    setNotification({
-      isOpen: true,
-      title: 'Thành công',
-      message: 'Đã xóa thành viên khỏi nhóm!'
-    });
+      .catch((err: { message?: string }) =>
+        setNotification({ isOpen: true, title: 'Lỗi', message: err?.message || 'Không xóa được thành viên.' }),
+      )
   }
 
   return (
@@ -236,7 +235,7 @@ export default function CourseTeams() {
                       <div key={member.userId} className="relative">
                         <MemberRow 
                           member={member}
-                          roleLabel={member.userId === team.leader.userId ? 'LEADER' : undefined}
+                          roleLabel={member.isLeader ? 'LEADER' : undefined}
                           onViewProfile={(user) => setActivePopoverId(activePopoverId === user.userId ? null : user.userId)}
                         >
                           {activePopoverId === member.userId && (

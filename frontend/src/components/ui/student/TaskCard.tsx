@@ -1,11 +1,9 @@
-import type { Task } from '../../../mocks/types'
+import type { Task } from '../../../types/api/task'
+import Avatar from '../Avatar'
 
-// TaskCard accepts an extended task shape — BE chưa trả `category`/`priority`/
-// `commentsCount`/`attachmentsCount`, nhưng UI demo cần. Khi BE cập nhật
-// schema, chuyển các field này vào `Task` type chính.
+// category/commentsCount/attachmentsCount là field UI demo, BE chưa trả.
 type TaskCardData = Task & {
   category?: string
-  priority?: 'High' | 'Medium' | 'Low'
   commentsCount?: number
   attachmentsCount?: number
 }
@@ -20,7 +18,7 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
     ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'No date'
 
-  const taskCategory = task.category || task.group?.name?.split(' - ')[1] || 'Task'
+  const taskCategory = task.category || 'Task'
   const taskPriority = task.priority || 'Medium'
   
   const priorityStyles: Record<string, string> = {
@@ -69,18 +67,13 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
       <hr className="my-4 border-border" />
 
       <div className="flex items-center justify-between">
-        {task.assignedTo?.userProfile?.avatarUrl ? (
-          <img 
-            src={task.assignedTo.userProfile.avatarUrl} 
-            alt={task.assignedTo.name}
-            className="size-8 rounded-full object-cover shadow-soft border border-surface"
-            title={task.assignedTo.name}
-          />
-        ) : (
-          <div className="size-8 rounded-full bg-surface-soft border border-surface flex items-center justify-center text-xs font-bold text-text-soft" title={task.assignedTo?.name}>
-            {task.assignedTo?.name?.charAt(0) || '?'}
-          </div>
-        )}
+        <Avatar
+          name={task.assignee?.name || 'User'}
+          avatarUrl={task.assignee?.avatar}
+          sizeClass="size-8"
+          textClass="text-xs"
+          className="shadow-soft border border-surface"
+        />
 
         <span className={`px-3 py-1 text-xs font-bold rounded-full ${priorityStyles[taskPriority] || priorityStyles.Medium}`}>
           {taskPriority}

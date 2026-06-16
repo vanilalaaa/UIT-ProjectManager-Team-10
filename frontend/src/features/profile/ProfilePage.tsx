@@ -1,14 +1,23 @@
+import { useState } from 'react'
 import ProfileAvatarCard from '../../components/ui/profile/ProfileAvatarCard'
 import PasswordSettings from '../../components/ui/profile/PasswordSettings'
 import GeneralDetailsForm from '../../components/ui/profile/GeneralDetailsForm'
 import { AdminLoading, AdminError } from '../admin/components/AdminStates'
 import { useAuth } from '../auth/useAuth'
+import type { UserDto } from '../../types/api/auth'
 
 export default function ProfilePage() {
-  const { currentUser, isLoading } = useAuth()
+  const { currentUser, isLoading, updateSessionUser } = useAuth()
+  
+  const [newAvatar, setNewAvatar] = useState<string | null>(null)
 
   if (isLoading) return <AdminLoading message="Đang tải thông tin…" />
   if (!currentUser) return <AdminError message="Không tìm thấy người dùng." />
+
+  const handleProfileUpdated = async (updatedUser: UserDto) => {
+    setNewAvatar(null)
+    updateSessionUser(updatedUser)
+  }
 
   return (
     <div className="max-w-7xl mx-auto pb-10">
@@ -19,11 +28,19 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-4 space-y-6">
-          <ProfileAvatarCard user={currentUser} />
+          <ProfileAvatarCard 
+            user={currentUser} 
+            newAvatar={newAvatar} 
+            onAvatarChange={setNewAvatar} 
+          />
           <PasswordSettings />
         </div>
         <div className="lg:col-span-8">
-          <GeneralDetailsForm user={currentUser} />
+          <GeneralDetailsForm 
+            user={currentUser} 
+            newAvatar={newAvatar} 
+            onUpdated={handleProfileUpdated} 
+          />
         </div>
       </div>
     </div>

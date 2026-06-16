@@ -1,7 +1,6 @@
 package com.example.se330.service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,8 +17,10 @@ import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
 import com.example.se330.entity.User;
+import com.example.se330.entity.UserProfile;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
+import com.example.se330.util.StudentCodeGenerator;
 
 @Service
 public class AuthService {
@@ -28,18 +29,21 @@ public class AuthService {
         private final JwtService jwtService;
         private final PasswordEncoder passwordEncoder;
         private final AuthenticationManager authenticationManager;
+        private final StudentCodeGenerator studentCodeGenerator;
 
         public AuthService(
                         UserRepository userRepository,
                         EmailService emailService,
                         JwtService jwtService,
                         PasswordEncoder passwordEncoder,
-                        AuthenticationManager authenticationManager) {
+                        AuthenticationManager authenticationManager,
+                        StudentCodeGenerator studentCodeGenerator) {
                 this.userRepository = userRepository;
                 this.emailService = emailService;
                 this.jwtService = jwtService;
                 this.passwordEncoder = passwordEncoder;
                 this.authenticationManager = authenticationManager;
+                this.studentCodeGenerator = studentCodeGenerator;
         }
 
         public AuthResponse register(RegisterRequest request) {
@@ -49,7 +53,7 @@ public class AuthService {
                 }
 
                 // 2. Tạo dữ liệu
-                String uid = UUID.randomUUID().toString();
+                String uid = studentCodeGenerator.generate();
                 String verificationToken = jwtService.generateVerificationToken(request.getEmail());
 
                 System.out.println("Verification token: " + verificationToken);
@@ -246,9 +250,23 @@ public class AuthService {
                         user.setEmail(request.getEmail());
                 }
 
+                // 1. Cập nhật bảng users
                 if (request.getName() != null && !request.getName().isBlank()) {
                         user.setName(request.getName());
                 }
+
+                // 2. Cập nhật bảng user_profiles
+                UserProfile profile = user.getUserProfile();
+                if (profile == null) {
+                        profile = new UserProfile();
+                        profile.setUser(user);
+                        user.setUserProfile(profile); 
+                }
+
+                if (request.getFirstName() != null) profile.setFirstName(request.getFirstName());
+                if (request.getLastName() != null) profile.setLastName(request.getLastName());
+                if (request.getSummary() != null) profile.setSummary(request.getSummary());
+                if (request.getAvatarUrl() != null) profile.setAvatarUrl(request.getAvatarUrl());
 
                 user.setUpdatedAt(LocalDateTime.now());
                 userRepository.save(user);
@@ -259,6 +277,7 @@ public class AuthService {
                                 .email(user.getEmail())
                                 .name(user.getName())
                                 .role(user.getRole().name())
+                                .avatarUrl(user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
                                 .build();
         }
 
@@ -276,6 +295,7 @@ public class AuthService {
                                 .name(user.getName())
                                 .role(user.getRole().name())
                                 .isActive(user.getIsActive())
+                                .avatarUrl(user.getUserProfile() != null ? user.getUserProfile().getAvatarUrl() : null)
                                 .build();
         }
 }

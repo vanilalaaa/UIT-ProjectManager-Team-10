@@ -21,7 +21,7 @@ import com.example.se330.dto.auth.AdminUpdateUserStatusRequest;
 import com.example.se330.service.AdminUserService;
 
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping("/admin/users")
 public class AdminUserController {
     private final AdminUserService adminUserService;
 
@@ -33,9 +33,10 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<Page<UserDto>>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String role) {
 
-        Page<UserDto> users = adminUserService.listUsers(page, size, search);
+        Page<UserDto> users = adminUserService.listUsers(page, size, search, role);
         return ApiResponse.success(users, "Admin user list retrieved successfully");
     }
 

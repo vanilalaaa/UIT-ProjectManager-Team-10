@@ -1,15 +1,3 @@
-/**
- * NestedTabLayout.tsx
- *
- * Reusable layout wrapper that renders a horizontal "Mini Navbar" (tab bar)
- * using <NavLink> for active state, then an <Outlet /> for child routes.
- *
- * Usage:
- *   <Route element={<NestedTabLayout tabs={TABS} />}>
- *     <Route path="overview" element={<Overview />} />
- *     ...
- *   </Route>
- */
 import { NavLink, Outlet } from 'react-router-dom'
 import type { NavLinkRenderProps } from 'react-router-dom'
 

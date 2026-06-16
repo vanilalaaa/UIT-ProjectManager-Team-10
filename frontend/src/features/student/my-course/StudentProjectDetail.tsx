@@ -1,41 +1,36 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectDetailCard from '../../../components/ui/student//ProjectDetailCard' 
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
-import type { Project, Group, User } from '../../../mocks/types'
-
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import type { Team } from '../../../types/api/team'
+import type { Project } from '../../../types/api/project'
+import { getProjectById } from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 export default function StudentProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
-  const navigate = useNavigate()
 
   const [project, setProject] = useState<Project | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
-        setProject(foundProject || null)
 
-        const registration = foundProject?.registrations?.[0]
-        if (registration) {
-          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-          const group = allGroups.find(g => g.groupId === registration.groupId)
-          setCurrentGroup(group || null)
-        }
-        setLoading(false)
+    getProjectById(projectId ?? '').then(async (foundProject) => {
+      if (!isMounted) return
+      setProject(foundProject)
+      const groupId = foundProject?.groupId
+      if (groupId) {
+        const group = await getGroupById(groupId)
+        if (isMounted) setCurrentGroup(group)
       }
-    }, 500)
+      setLoading(false)
+    })
 
     return () => { isMounted = false }
   }, [projectId])
@@ -43,38 +38,13 @@ export default function StudentProjectDetail() {
   if (loading) return <LoadingSpinner message="Đang tải chi tiết đồ án..." />
   if (!project) return <div className="p-6 text-center text-text-soft">Project not found</div>
 
-  const registration = project.registrations?.[0]
-  const isRegistered = !!registration
+  const isRegistered = project.groupId != null
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
-      <div className="flex items-center gap-2 text-sm text-text-soft">
-        <button 
-          onClick={() => navigate(-2)} 
-          className="hover:text-primary font-medium transition-colors"
-        >
-          My Course
-        </button>
-
-        <span className="text-border font-bold">{'>'}</span>
-        
-        <button 
-          onClick={() => navigate(-1)} 
-          className="hover:text-primary font-medium transition-colors"
-        >
-          Project List
-        </button>
-        
-        <span className="text-border font-bold">{'>'}</span>
-        
-        <span className="text-text font-semibold truncate max-w-[200px] sm:max-w-[350px]">
-          {project.title}
-        </span>
-      </div>
-
-      <ProjectDetailCard 
+      <ProjectDetailCard
         project={project} 
         showEditButton={false} 
       />
@@ -120,8 +90,8 @@ export default function StudentProjectDetail() {
             </div>
 
             <div className="flex flex-col">
-              {((currentGroup.members as User[]) || []).map((member: User) => {
-                const isLeader = member.userId === currentGroup.leader?.userId
+              {(currentGroup.members || []).map((member) => {
+                const isLeader = member.isLeader
                 return (
                   <MemberRow 
                     key={member.userId}

@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
 public class GradeController {
 
     private final GradeService gradeService;
@@ -48,5 +47,11 @@ public class GradeController {
 
         Long studentId = ((CustomUserDetails) authentication.getPrincipal()).getId();
         return ApiResponse.success(gradeService.getMyGrade(id, studentId));
+    }
+
+    // Giảng viên xem điểm hiện tại của 1 bài nộp (null nếu chưa chấm).
+    @GetMapping("/submissions/{id}/grade")
+    public ResponseEntity<ApiResponse<GradeResponse>> bySubmission(@PathVariable Long id) {
+        return ApiResponse.success(gradeService.getBySubmission(id));
     }
 }

@@ -31,6 +31,7 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
     @Column(name = "start_date")

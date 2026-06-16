@@ -1,96 +1,92 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import CourseCard, { type CourseCardData } from '../../../components/ui/student/CourseCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CourseFormModal, { type CourseFormData } from '../../../components/ui/teacher/CourseFormModal'
 import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
-import type { Project } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { mockCourseMembersMap } from '../../../mocks/tasks.mock' 
+import {
+  createCourse,
+  deleteCourse,
+  listTeacherCourseCards,
+  updateCourse,
+} from '../../../services/course.service'
+import type { ApiError } from '../../../lib/api/axiosClient'
 
-const transformProjectsToCourses = (projects: Project[]): CourseCardData[] => {
-  const uniqueCoursesMap = new Map<number, CourseCardData>()
-  
-  projects.forEach((project) => {
-    const course = project.course
-    if (course && !uniqueCoursesMap.has(course.courseId)) {
-      const nameParts = course.name.split(' - ')
-      const courseCode = nameParts[0] || 'COURSE'
-      const courseName = nameParts[1] || course.name
-      const allMembersInClass = mockCourseMembersMap[course.courseId] || []
-      const totalActualMembers = allMembersInClass.length
-      
-      const memberAvatars = allMembersInClass
-        .map(user => ({
-          name: user.name,
-          avatarUrl: user.userProfile?.avatarUrl || null
-        }))
-        .slice(0, 3)
-
-      uniqueCoursesMap.set(course.courseId, {
-        id: course.courseId,
-        code: courseCode,
-        name: courseName,
-        lecturer: course.lecturer?.name || 'Chưa phân công',
-        semester: 'Fall Semester 2026',
-        projectsCount: projects.filter((p) => p.course.courseId === course.courseId).length,
-        membersCount: totalActualMembers > 0 ? totalActualMembers : (course.maxStudents || 120),
-        memberAvatars: memberAvatars, 
-        extraMembers: totalActualMembers > 3 ? totalActualMembers - 3 : 0,
-      })
-    }
-  })
-  
-  return Array.from(uniqueCoursesMap.values())
-}
+const isBusinessError = (apiErr: ApiError) =>
+  apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403
 
 export default function TeacherCoursePage() {
   const [courses, setCourses] = useState<CourseCardData[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  
+  const [error, setError] = useState<string | null>(null)
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<CourseCardData | null>(null)
 
+  const fetchCourses = () => {
+    setLoading(true)
+    setError(null)
+    listTeacherCourseCards()
+      .then(setCourses)
+      .catch((err) => {
+        const apiErr = err as ApiError
+        setError(apiErr?.message ?? 'Không tải được danh sách lớp.')
+      })
+      .finally(() => setLoading(false))
+  }
+
   useEffect(() => {
-    setCourses(transformProjectsToCourses(mockProjects))
-    setLoading(false)
+    fetchCourses()
   }, [])
 
-  const handleOpenCreate = () => { setSelectedCourse(null); setIsFormModalOpen(true); }
-  const handleOpenEdit = (id: number) => { 
-    setSelectedCourse(courses.find(c => c.id === id) || null); 
-    setIsFormModalOpen(true); 
+  const handleOpenCreate = () => {
+    setSelectedCourse(null)
+    setIsFormModalOpen(true)
   }
-  const handleOpenDelete = (id: number) => { 
-    setSelectedCourse(courses.find(c => c.id === id) || null); 
-    setIsDeleteModalOpen(true); 
+  const handleOpenEdit = (id: number) => {
+    setSelectedCourse(courses.find((c) => c.id === id) || null)
+    setIsFormModalOpen(true)
+  }
+  const handleOpenDelete = (id: number) => {
+    setSelectedCourse(courses.find((c) => c.id === id) || null)
+    setIsDeleteModalOpen(true)
   }
 
-  const handleSave = (data: CourseFormData) => {
-    if (selectedCourse) {
-      setCourses(prev => prev.map(c => c.id === selectedCourse.id ? { ...c, name: data.name, code: data.courseCode } : c))
-    } else {
-      setCourses(prev => [
-        { 
-          id: Math.random(), 
-          ...data, 
-          code: data.courseCode, 
-          lecturer: 'Bạn', 
-          semester: 'Fall 2026', 
-          projectsCount: 0, 
-          membersCount: data.maxStudents, 
-          memberAvatars: [], 
-          extraMembers: 0 
-        }, 
-        ...prev
-      ])
+  const handleSave = async (data: CourseFormData) => {
+    const payload = {
+      name: data.name,
+      maxStudents: data.maxStudents,
+      startDate: data.startDate,
+      endDate: data.endDate,
     }
-    setIsFormModalOpen(false)
+    try {
+      if (selectedCourse) {
+        await updateCourse(selectedCourse.id, payload)
+        toast.success('Đã cập nhật lớp học.')
+      } else {
+        await createCourse({ ...payload, code: data.code.trim() })
+        toast.success('Đã tạo lớp học.')
+      }
+      setIsFormModalOpen(false)
+      fetchCourses()
+    } catch (err) {
+      const apiErr = err as ApiError
+      if (isBusinessError(apiErr)) toast.error(apiErr?.message ?? 'Lưu lớp học thất bại.')
+    }
   }
 
-  const handleDelete = () => {
-    setCourses(prev => prev.filter(c => c.id !== selectedCourse?.id))
-    setIsDeleteModalOpen(false)
+  const handleDelete = async () => {
+    if (!selectedCourse) return
+    try {
+      await deleteCourse(selectedCourse.id)
+      toast.success('Đã xóa lớp học.')
+      setIsDeleteModalOpen(false)
+      fetchCourses()
+    } catch (err) {
+      const apiErr = err as ApiError
+      if (isBusinessError(apiErr)) toast.error(apiErr?.message ?? 'Xóa lớp học thất bại.')
+    }
   }
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách lớp học..." />
@@ -113,12 +109,23 @@ export default function TeacherCoursePage() {
         </button>
       </div>
 
-      {courses.length > 0 ? (
+      {error ? (
+        <div className="text-center py-16 bg-surface border border-border rounded-2xl shadow-sm space-y-3">
+          <p className="text-red-500 font-medium">{error}</p>
+          <button
+            onClick={fetchCourses}
+            className="rounded-md border border-border px-4 py-1.5 text-sm hover:bg-surface-soft"
+            type="button"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : courses.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <CourseCard 
-              key={course.id} 
-              course={course}  
+            <CourseCard
+              key={course.id}
+              course={course}
               basePath="/teacher/my-course"
               onEdit={handleOpenEdit}
               onDelete={handleOpenDelete}
@@ -127,26 +134,29 @@ export default function TeacherCoursePage() {
         </div>
       ) : (
         <div className="text-center py-20 bg-surface border border-border rounded-2xl shadow-sm">
-          <p className="text-text-soft">Bạn chưa tạo lớp học nào.</p>
+          <p className="text-text font-semibold">Bạn chưa tạo lớp học nào</p>
+          <p className="text-sm text-text-soft mt-1">Nhấn “Tạo lớp học mới” để bắt đầu.</p>
         </div>
       )}
 
-      <CourseFormModal 
-        isOpen={isFormModalOpen} 
-        onClose={() => setIsFormModalOpen(false)} 
+      <CourseFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
         onSubmit={handleSave}
-        initialData={selectedCourse ? { 
-          courseCode: selectedCourse.code, 
-          name: selectedCourse.name, 
-          maxStudents: selectedCourse.membersCount, 
-          groupDeadline: '',
-          categoryName: '',
-          categoryDescription: '',
-          projectDeadline: ''
-        } : null}
+        initialData={
+          selectedCourse
+            ? {
+                name: selectedCourse.name,
+                code: selectedCourse.code,
+                maxStudents: selectedCourse.maxStudents ?? selectedCourse.membersCount,
+                startDate: selectedCourse.startDate ?? '',
+                endDate: selectedCourse.endDate ?? '',
+              }
+            : null
+        }
       />
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isDeleteModalOpen}
         title="Xóa lớp học?"
         message={

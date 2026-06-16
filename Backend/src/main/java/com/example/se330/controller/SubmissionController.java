@@ -1,43 +1,46 @@
 package com.example.se330.controller;
 
-import com.example.se330.dto.submission.CreateSubmissionRequest;
 import com.example.se330.dto.submission.UpdateSubmissionRequest;
 import com.example.se330.entity.Submission;
 import com.example.se330.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
 public class SubmissionController {
 
     private final SubmissionService submissionService;
 
-    // GET
     @GetMapping("/projects/{id}/submissions")
     public List<Submission> get(@PathVariable Long id) {
         return submissionService.getByProject(id);
     }
 
-    // CREATE
-    @PostMapping("/projects/{id}/submissions")
-    public Submission create(
+    @PostMapping(value = "/projects/{id}/submissions", consumes = {"multipart/form-data"})
+    public List<Submission> create(
             @PathVariable Long id,
-            @RequestBody CreateSubmissionRequest request,
+            @RequestParam("groupId") Long groupId,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "file", required = false) MultipartFile file,
             Authentication authentication
-    ) {
+    ) throws IOException {
 
         Long userId = ((com.example.se330.security.CustomUserDetails)
                 authentication.getPrincipal()).getId();
 
-        return submissionService.createSubmission(id, request, userId);
+        if ((files == null || files.isEmpty()) && file != null) {
+            files = List.of(file);
+        }
+
+        return submissionService.createSubmission(id, groupId, files, userId);
     }
 
-    // UPDATE
     @PutMapping("/submissions/{id}")
     public Submission update(
             @PathVariable Long id,
@@ -46,7 +49,6 @@ public class SubmissionController {
         return submissionService.updateSubmission(id, request);
     }
 
-    // DELETE
     @DeleteMapping("/submissions/{id}")
     public String delete(@PathVariable Long id) {
         submissionService.deleteSubmission(id);

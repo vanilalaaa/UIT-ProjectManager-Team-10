@@ -15,6 +15,9 @@ import lombok.Setter;
 @Builder
 public class CreateCourseRequest {
     private String name;
+    // Mã lớp bắt buộc do người tạo nhập (kiểm tra trùng, không tự sinh).
+    private String code;
+    private Long lecturerId;
     private Integer maxStudents;
     private LocalDate startDate;
     private LocalDate endDate;

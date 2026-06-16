@@ -1,3 +1,5 @@
+// Định nghĩa type dùng chung, khớp với DTO/entity của backend (com.example.se330).
+// Trước đây nằm trong src/mocks/types.ts; đã tách khỏi mock vì là type thật.
 export type ApiStatus = 'success' | 'error'
 // Matches com.example.se330.enums.Role
 export type Role = 'ADMIN' | 'TEACHER' | 'STUDENT'
@@ -126,6 +128,8 @@ export type Project = {
   submissions: Submission[]
 }
 
+export type TaskPriority = 'Low' | 'Medium' | 'High'
+
 export type Task = {
   taskId: number
   title: string
@@ -133,6 +137,8 @@ export type Task = {
   assignedTo: User
   createdBy: User
   status: string
+  // UI-only: BE Task entity chưa có cột priority, mới dùng để hiển thị/sắp xếp.
+  priority?: TaskPriority
   group: Group
   deadline: DateTimeString
   createdAt: DateTimeString

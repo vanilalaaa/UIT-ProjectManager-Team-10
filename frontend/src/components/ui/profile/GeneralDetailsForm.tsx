@@ -10,7 +10,7 @@ import type { UpdateMeRequest, UserDto } from '../../../types/api/auth'
 
 const schema = z.object({
   firstName: z.string().min(1, 'Bắt buộc'),
-  lastName: z.string().min(1, 'Bắt buộc'),
+  lastName: z.string().optional().or(z.literal('')),
   summary: z.string().max(500, 'Tối đa 500 ký tự').optional().or(z.literal('')),
 })
 
@@ -18,6 +18,7 @@ type FormValues = z.infer<typeof schema>
 
 type Props = {
   user: UserDto
+  newAvatar: string | null
   onUpdated?: (next: UserDto) => void
 }
 
@@ -28,9 +29,10 @@ function splitName(fullName: string): { firstName: string; lastName: string } {
   return { firstName: parts.join(' '), lastName }
 }
 
-export default function GeneralDetailsForm({ user, onUpdated }: Props) {
+export default function GeneralDetailsForm({ user, newAvatar, onUpdated }: Props) {
   const initial = splitName(user.name)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const hasAvatarChanged = newAvatar !== null
 
   const {
     register,
@@ -54,6 +56,7 @@ export default function GeneralDetailsForm({ user, onUpdated }: Props) {
         firstName: values.firstName,
         lastName: values.lastName,
         summary: values.summary || '',
+        avatarUrl: newAvatar || undefined, 
       }
       const res = await updateMe(payload)
       
@@ -129,9 +132,9 @@ export default function GeneralDetailsForm({ user, onUpdated }: Props) {
           <div className="flex items-center justify-end gap-4 pt-4">
             <button
               type="submit"
-              disabled={isSubmitting || !isDirty}
+              disabled={isSubmitting || (!isDirty && !hasAvatarChanged)}
               className={`flex items-center gap-2 rounded-button px-5 py-2.5 text-sm font-semibold text-surface shadow-soft transition-all duration-200 ${
-                isDirty && !isSubmitting
+                (isDirty || hasAvatarChanged) && !isSubmitting
                   ? 'bg-brand-gradient cursor-pointer hover:opacity-90' 
                   : 'bg-brand-gradient opacity-40 cursor-not-allowed shadow-none'
               }`}

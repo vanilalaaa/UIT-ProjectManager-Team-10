@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "grades")
@@ -40,4 +42,10 @@ public class Grade {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "graded_by")
     private User gradedBy;
+
+    // Điểm chi tiết theo từng tiêu chí của barem. score/maxScore tổng ở trên
+    // được tính từ tổng của danh sách này khi chấm theo barem.
+    @OneToMany(mappedBy = "grade", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<GradeCriterionScore> criterionScores = new ArrayList<>();
 }

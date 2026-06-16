@@ -14,12 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.security.core.Authentication;
+
 import com.example.se330.dto.ApiResponse;
+import com.example.se330.dto.course.CourseCardResponse;
 import com.example.se330.dto.course.CourseResponse;
 import com.example.se330.dto.course.CreateCourseRequest;
 import com.example.se330.dto.course.UpdateCourseRequest;
 import com.example.se330.dto.join_course.JoinCourseItemResponse;
 import com.example.se330.dto.join_course.MemberInCourseResponse;
+import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.CourseRequestService;
 import com.example.se330.service.CourseService;
 
@@ -36,7 +40,21 @@ public class CourseController {
         this.courseRequestService = courseRequestService;
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CourseResponse>>> getCourses() {
+        List<CourseResponse> resp = this.courseService.getAllCourses();
+        return ApiResponse.success(resp, "Lấy danh sách lớp học thành công.");
+    }
+
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    @GetMapping("/teaching")
+    public ResponseEntity<ApiResponse<List<CourseCardResponse>>> getTeachingCourses(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        List<CourseCardResponse> resp = this.courseService.getTeacherCourses(userDetails.getId());
+        return ApiResponse.success(resp, "Lấy danh sách lớp giảng dạy thành công.");
+    }
+
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<CourseResponse>> createCourse(@RequestBody CreateCourseRequest req) {
         CourseResponse resp = this.courseService.createCourse(req);
@@ -56,7 +74,7 @@ public class CourseController {
         return ApiResponse.success(resp, "Lấy danh sách thành viên trong lớp thành công.");
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CourseResponse>> updateCourse(@PathVariable Long id,
             @RequestBody UpdateCourseRequest req) {
@@ -64,7 +82,7 @@ public class CourseController {
         return ApiResponse.success(resp, "Cập nhật lớp học thành công.");
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteCourse(@PathVariable Long id) {
         this.courseService.deleteCourse(id);

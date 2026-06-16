@@ -1,72 +1,93 @@
 import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import type { Project, Group, User } from '../../../mocks/types'
-import { mockProjects } from '../../../mocks/projects.mock'
-import { groupPhoenix, groupAster, groupNimbus, groupOrion } from '../../../mocks/tasks.mock'
+import type { Team } from '../../../types/api/team'
+import type { Project } from '../../../types/api/project'
+import { toast } from 'sonner'
+import {
+  getProjectById,
+  getProjectActivities,
+  getProjectResources,
+  createProjectResource,
+  deleteProjectResource,
+  type ProjectActivity,
+} from '../../../services/project.service'
+import { getGroupById } from '../../../services/team.service'
 
 import ProjectDetailCard from '../../../components/ui/student/ProjectDetailCard'
 import MemberRow from '../../../components/ui/student/MemberRow'
 import UserProfilePopover from '../../../components/ui/student/UserProfilePopover'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import Avatar from '../../../components/ui/Avatar'
+import ProjectResourcesCard, { type ProjectResource } from '../../../components/ui/student/ProjectResourcesCard'
+import { useAuth } from '../../auth/useAuth'
 
-const MOCK_ACTIVITIES = [
-  {
-    id: 1,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã nộp tệp đính kèm',
-    target: 'srs-v1.pdf',
-    time: '2 giờ trước'
-  },
-  {
-    id: 2,
-    user: { name: 'Nguyễn Minh An', avatarUrl: null },
-    action: 'đã chuyển trạng thái đồ án task',
-    target: 'IN_PROGRESS',
-    time: '1 ngày trước'
-  },
-  {
-    id: 3,
-    user: { name: 'Lê Hoàng Vy', avatarUrl: null },
-    action: 'đã chuyển trạng thái Task ',
-    target: 'Website quản lý đồ án môn SE330',
-    time: '3 ngày trước'
-  },
-  {
-    id: 4,
-    user: { name: 'Sinh viên Trần', avatarUrl: null },
-    action: 'đã tạo task cho Lê Hoàng Vy ',
-    target: 'Thiết kế API danh sách đồ án',
-    time: '2 giờ trước'
-  },
-];
+const getRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  if (diffMinutes < 1) return 'Vừa xong'
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours} giờ trước`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays} ngày trước`
+  return date.toLocaleDateString('vi-VN')
+}
 
 export default function ProjectOverview() {
   const { projectId } = useParams<{ projectId: string }>()
-  
+
+  const { currentUser } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null)
+  const [currentGroup, setCurrentGroup] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePopoverId, setActivePopoverId] = useState<number | null>(null)
+  const [resources, setResources] = useState<ProjectResource[]>([])
+  const [activities, setActivities] = useState<ProjectActivity[]>([])
+
+  const handleAddResource = (resource: Omit<ProjectResource, 'id'>, file?: File) => {
+    createProjectResource(projectId ?? '', resource, file)
+      .then((saved) => {
+        setResources(prev => [saved, ...prev])
+        toast.success('Đã thêm tài nguyên.')
+      })
+      .catch((err: { message?: string }) => toast.error(err?.message ?? 'Không thêm được tài nguyên.'))
+  }
+
+  const handleRemoveResource = (id: string) => {
+    deleteProjectResource(projectId ?? '', id)
+      .then(() => {
+        setResources(prev => prev.filter(r => r.id !== id))
+        toast.success('Đã xóa tài nguyên.')
+      })
+      .catch((err: { message?: string }) => toast.error(err?.message ?? 'Không xóa được tài nguyên.'))
+  }
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
-    
-    setTimeout(() => {
-      if (isMounted) {
-        const foundProject = mockProjects.find(p => p.projectId.toString() === projectId)
-        setProject(foundProject || null)
+    const pid = projectId ?? ''
 
-        const registration = foundProject?.registrations?.[0]
-        if (registration) {
-          const allGroups = [groupPhoenix, groupAster, groupNimbus, groupOrion]
-          const group = allGroups.find(g => g.groupId === registration.groupId)
-          setCurrentGroup(group || null)
-        }
-        setLoading(false)
+    getProjectById(pid).then(async (foundProject) => {
+      if (!isMounted) return
+      setProject(foundProject)
+
+      const courseId = foundProject?.courseId
+      const [acts, res] = await Promise.all([
+        courseId != null ? getProjectActivities(courseId, pid) : Promise.resolve([]),
+        getProjectResources(pid),
+      ])
+      if (!isMounted) return
+      setActivities(acts)
+      setResources(res)
+
+      const groupId = foundProject?.groupId
+      if (groupId) {
+        const group = await getGroupById(groupId)
+        if (isMounted) setCurrentGroup(group)
       }
-    }, 500)
+      setLoading(false)
+    })
 
     return () => { isMounted = false }
   }, [projectId])
@@ -74,12 +95,16 @@ export default function ProjectOverview() {
   if (loading) return <LoadingSpinner message="Đang tải dữ liệu..." />
   if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>
 
-  const registration = project.registrations?.[0]
-  const isRegistered = !!registration
+  const isRegistered = project.groupId != null
   const currentMembersCount = currentGroup?.members?.length || 0
   const maxMembersCount = 5
 
-  const displayedActivities = MOCK_ACTIVITIES.slice(0, 4)
+  // Thành viên nhóm (ACTIVE) được thêm/xóa tài nguyên dùng chung của nhóm.
+  const isMemberOfGroup =
+    currentGroup?.members?.some(m => m.uid === currentUser?.uid || m.email === currentUser?.email) ?? false
+  const canManageResources = isMemberOfGroup
+
+  const displayedActivities = activities.slice(0, 4)
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -99,34 +124,38 @@ export default function ProjectOverview() {
             </div>
             
             <div className="space-y-5">
-              {displayedActivities.map((activity) => (
-                <div key={activity.id} className="flex gap-3">
-                  <Avatar 
-                    name={activity.user.name}
-                    avatarUrl={activity.user.avatarUrl}
-                    sizeClass="size-9"
-                    className="border border-border shrink-0 mt-0.5"
-                  />
-                  <div className="flex-1 text-sm leading-relaxed">
-                    <p className="text-text">
-                      <span className="font-bold">{activity.user.name}</span>{' '}
-                      <span className="text-text-soft">{activity.action}</span>{' '}
-                      <span className="font-semibold text-text">{activity.target}</span>
-                    </p>
-                    <p className="text-[11px] font-medium text-text-soft mt-1">
-                      {activity.time}
-                    </p>
+              {displayedActivities.length === 0 ? (
+                <p className="text-sm text-text-soft">Chưa có hoạt động nào.</p>
+              ) : (
+                displayedActivities.map((activity) => (
+                  <div key={`${activity.type}-${activity.referenceId}`} className="flex gap-3">
+                    <Avatar
+                      name={activity.actorName}
+                      avatarUrl={activity.actorAvatar ?? null}
+                      sizeClass="size-9"
+                      className="border border-border shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 text-sm leading-relaxed">
+                      <p className="text-text">
+                        <span className="font-bold">{activity.actorName}</span>{' '}
+                        <span className="text-text-soft">{activity.title}</span>
+                      </p>
+                      <p className="text-[11px] font-medium text-text-soft mt-1">
+                        {getRelativeTime(activity.timestamp)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {isRegistered && currentGroup && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          
+
           <div className="lg:col-span-1 rounded-[28px] border border-border bg-surface p-6 shadow-xl flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-text flex items-center gap-2">
@@ -166,8 +195,8 @@ export default function ProjectOverview() {
             </div>
 
             <div className="flex flex-col">
-              {((currentGroup.members as User[]) || []).map((member: User) => {
-                const isLeader = member.userId === currentGroup.leader?.userId
+              {(currentGroup.members || []).map((member) => {
+                const isLeader = member.isLeader
                 return (
                   <MemberRow 
                     key={member.userId}
@@ -188,8 +217,16 @@ export default function ProjectOverview() {
               })}
             </div>
           </div>
-          
+
         </div>
+
+        <ProjectResourcesCard
+          resources={resources}
+          canManage={canManageResources}
+          onAdd={handleAddResource}
+          onRemove={handleRemoveResource}
+        />
+        </>
       )}
     </div>
   )

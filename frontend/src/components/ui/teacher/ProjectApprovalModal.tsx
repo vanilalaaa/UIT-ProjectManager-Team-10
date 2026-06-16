@@ -1,12 +1,13 @@
 // src/components/ui/teacher/ProjectApprovalModal.tsx
-import type { ProjectApprovalRequest } from '../../../mocks/projects.mock'
+import { useEffect, useState } from 'react'
+import type { PendingRegistration } from '../../../types/api/registration'
 import Avatar from '../Avatar'
 
 interface ProjectApprovalModalProps {
-  selectedRequest: ProjectApprovalRequest | null
+  selectedRequest: PendingRegistration | null
   onClose: () => void
-  onAccept: (requestId: number, title: string, e: React.MouseEvent) => void
-  onDecline: (requestId: number, title: string, e: React.MouseEvent) => void
+  onAccept: (registrationId: number, title: string, e: React.MouseEvent, note?: string) => void
+  onDecline: (registrationId: number, title: string, e: React.MouseEvent, note?: string) => void
 }
 
 export default function ProjectApprovalModal({
@@ -15,6 +16,12 @@ export default function ProjectApprovalModal({
   onAccept,
   onDecline
 }: ProjectApprovalModalProps) {
+  const [feedback, setFeedback] = useState('')
+
+  useEffect(() => {
+    setFeedback('')
+  }, [selectedRequest?.registrationId])
+
   if (!selectedRequest) return null
 
   return (
@@ -27,10 +34,10 @@ export default function ProjectApprovalModal({
               Đang chờ duyệt
             </span>
             <h2 className="text-lg font-bold text-gray-950 leading-snug">
-              {selectedRequest.title}
+              {selectedRequest.projectTitle}
             </h2>
             <p className="text-xs text-gray-500 mt-1">
-              Trưởng nhóm: <span className="font-semibold text-gray-800">{selectedRequest.leader.name}</span>
+              Trưởng nhóm: <span className="font-semibold text-gray-800">{selectedRequest.leaderName}</span>
             </p>
           </div>
           <button
@@ -46,7 +53,7 @@ export default function ProjectApprovalModal({
         <div className="mb-5">
           <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mô tả đề tài</h4>
           <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-sm text-gray-700 leading-relaxed max-h-[180px] overflow-y-auto whitespace-pre-line">
-            {selectedRequest.description}
+            {selectedRequest.projectDescription}
           </div>
         </div>
 
@@ -54,16 +61,16 @@ export default function ProjectApprovalModal({
           <div>
             <h5 className="text-sm font-bold text-gray-900">{selectedRequest.groupName}</h5>
             <p className="text-xs text-gray-500 mt-0.5">
-              Thành viên: <span className="font-semibold text-blue-500">{selectedRequest.members.length}/{selectedRequest.maxMembers}</span>
+              Thành viên: <span className="font-semibold text-blue-500">{selectedRequest.members.length}</span>
             </p>
           </div>
 
           <div className="flex -space-x-2 overflow-hidden">
             {selectedRequest.members.map((member) => (
-              <Avatar 
-                key={member.userId}
+              <Avatar
+                key={member.id}
                 name={member.name}
-                avatarUrl={member.userProfile?.avatarUrl}
+                avatarUrl={member.avatar}
                 sizeClass="size-8"
                 textClass="text-xs"
                 className="ring-2 ring-white !bg-sky-50 !text-sky-500"
@@ -72,10 +79,24 @@ export default function ProjectApprovalModal({
           </div>
         </div>
 
+        <div className="mb-5">
+          <label htmlFor="approval-feedback" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Nhận xét của giảng viên <span className="font-normal normal-case text-gray-400">(tùy chọn)</span>
+          </label>
+          <textarea
+            id="approval-feedback"
+            rows={3}
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            placeholder="Nhập nhận xét gửi kèm khi duyệt hoặc từ chối đề tài..."
+            className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
+
         <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
           <button
             onClick={(e) => {
-              onDecline(selectedRequest.requestId, selectedRequest.title, e)
+              onDecline(selectedRequest.registrationId, selectedRequest.projectTitle, e, feedback)
               onClose()
             }}
             className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
@@ -84,7 +105,7 @@ export default function ProjectApprovalModal({
           </button>
           <button
             onClick={(e) => {
-              onAccept(selectedRequest.requestId, selectedRequest.title, e)
+              onAccept(selectedRequest.registrationId, selectedRequest.projectTitle, e, feedback)
               onClose()
             }}
             className="px-5 py-2 text-sm font-bold bg-brand-gradient from-blue-500 to-cyan-400 text-white rounded-lg hover:opacity-90 shadow-md transition-all"

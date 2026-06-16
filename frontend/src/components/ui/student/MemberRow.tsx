@@ -1,15 +1,16 @@
 import Avatar from '../../ui/Avatar'
-import type { User } from '../../../mocks/types'
+import type { TeamMember } from '../../../types/api/team'
 
 type MemberRowProps = {
-  member: User
+  member: TeamMember
   roleLabel?: string
-  onViewProfile?: (user: User) => void
-  children?: React.ReactNode 
+  onViewProfile?: (user: TeamMember) => void
+  children?: React.ReactNode
 }
 
 export default function MemberRow({ member, roleLabel, onViewProfile, children }: MemberRowProps) {
-  const isLeader = roleLabel?.toLowerCase() === 'leader'
+  const identity = member.uid?.trim() || String(member.userId)
+  const email = member.email?.trim() || 'Chưa có email'
 
   return (
     <div className="flex items-center justify-between p-4 transition-all group relative border-b border-border/50 last:border-b-0 hover:bg-surface-soft/40">
@@ -17,7 +18,7 @@ export default function MemberRow({ member, roleLabel, onViewProfile, children }
         <div className="relative shrink-0">
           <Avatar 
             name={member.name}
-            avatarUrl={member.userProfile?.avatarUrl}
+            avatarUrl={member.avatar}
             sizeClass="size-10" 
             className="group-hover:border-primary/40 shadow-sm transition-colors"
           />
@@ -36,9 +37,9 @@ export default function MemberRow({ member, roleLabel, onViewProfile, children }
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5 text-xs text-text-soft min-w-0">
-            <span className="font-semibold text-text/80 shrink-0">{member.uid}</span>
+            <span className="font-semibold text-text/80 shrink-0">{identity}</span>
             <span className="text-border text-[10px]">•</span>
-            <span className="truncate max-w-[120px] sm:max-w-[200px]">{member.email}</span>
+            <span className="truncate max-w-[120px] sm:max-w-[200px]">{email}</span>
           </div>
         </div>
       </div>

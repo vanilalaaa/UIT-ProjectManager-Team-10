@@ -15,5 +15,10 @@ public class UpdateUserRequest {
     private String name;
 
     @Email(message = "Email must be valid")
+    
     private String email;
+    private String firstName;
+    private String lastName;
+    private String summary;
+    private String avatarUrl;
 }

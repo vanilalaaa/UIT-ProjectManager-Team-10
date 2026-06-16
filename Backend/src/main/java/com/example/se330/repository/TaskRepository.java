@@ -11,6 +11,8 @@ public interface TaskRepository
 
     List<Task> findByProject_Id(Long projectId);
 
+    List<Task> findByProject_IdAndGroup_Id(Long projectId, Long groupId);
+
     List<Task> findByProject_IdAndStatus(
             Long projectId,
             TaskStatus status
@@ -26,4 +28,10 @@ public interface TaskRepository
             Long assigneeId,
             TaskStatus status
     );
+
+    List<Task> findByAssignedTo_Id(Long assigneeId);
+
+    List<Task> findByAssignedTo_IdAndStatus(Long assigneeId, TaskStatus status);
+
+    List<Task> findByCreatedBy_Id(Long creatorId);
 }

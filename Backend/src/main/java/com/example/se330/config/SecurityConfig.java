@@ -45,6 +45,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // Tệp tĩnh tải lên (tài nguyên nhóm, bài nộp) — mở để mở/tải trực tiếp.
+                        .requestMatchers("/files/**").permitAll()
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
@@ -53,10 +55,10 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification")
                         .permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        
+                        .requestMatchers("/files/**").permitAll()
 
-                        .requestMatchers("/api/admin/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         .requestMatchers(
                                 "/api/projects/*/tasks/**",
@@ -68,11 +70,9 @@ public class SecurityConfig {
                                 "/api/submissions/**")
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
 
-                        // Sinh viên chỉ được xem điểm & nhận xét của nhóm mình
                         .requestMatchers("/api/projects/*/grades/me")
                         .hasRole("STUDENT")
 
-                        // Giảng viên: xem bài nộp, chấm điểm, cập nhật điểm
                         .requestMatchers(
                                 "/api/projects/*/grades",
                                 "/api/grades/**")

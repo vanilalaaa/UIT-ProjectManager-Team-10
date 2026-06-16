@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.example.se330.enums.GroupMemberStatus;
 
@@ -34,6 +35,12 @@ public class GroupMember {
     @Column(name = "joined_date")
     private LocalDate joinedDate;
 
+    // Thời điểm bản ghi được tạo (gửi yêu cầu / được mời) — dùng cho thông báo có
+    // giờ chính xác. joinedDate chỉ là ngày nên không hiển thị đúng "x phút trước".
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
     private GroupMemberStatus status;
 
     @Column(name = "is_leader")

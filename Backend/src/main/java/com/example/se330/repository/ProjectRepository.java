@@ -13,6 +13,8 @@ import com.example.se330.entity.Project;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByCourse(Course course);
 
+    boolean existsByCategory_Id(Long categoryId);
+
     // Các project đã qua hạn nộp (endDate < ngày truyền vào) mà chưa bị khóa nộp bài
     List<Project> findByEndDateBeforeAndSubmissionLockedFalse(LocalDate date);
 }

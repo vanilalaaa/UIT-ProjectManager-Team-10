@@ -1,25 +1,28 @@
-import { useState } from 'react'
 import Avatar from '../Avatar'
-import type { UserDto } from '../../../mocks/types'
+import type { UserDto } from '../../../types/api/auth'
 
-export default function ProfileAvatarCard({ user }: { user: UserDto }) {
-  const [avatar, setAvatar] = useState('')
+interface Props {
+  user: UserDto
+  newAvatar: string | null
+  onAvatarChange: (base64: string | null) => void
+}
 
+export default function ProfileAvatarCard({ user, newAvatar, onAvatarChange }: Props) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onload = (event) => setAvatar(event.target?.result as string)
+      reader.onload = (event) => onAvatarChange(event.target?.result as string)
       reader.readAsDataURL(file)
     }
+    e.target.value = ''
   }
 
   return (
     <div className="glass-panel rounded-[var(--radius-card)] p-8 flex flex-col items-center text-center">
-      
       <Avatar 
         name={user.name} 
-        avatarUrl={avatar || (user as any).userProfile?.avatarUrl} 
+        avatarUrl={newAvatar || user.avatarUrl}
         sizeClass="size-32 mb-4 border-4 border-surface shadow-md" 
         textClass="text-5xl" 
       />
@@ -37,9 +40,9 @@ export default function ProfileAvatarCard({ user }: { user: UserDto }) {
           Upload New
         </label>
         
-        {avatar && (
+        {newAvatar && (
           <button 
-            onClick={() => setAvatar('')} 
+            onClick={() => onAvatarChange(null)} 
             className="cursor-pointer bg-surface-soft hover:bg-border-soft text-text-soft px-5 py-2 rounded-button text-sm font-semibold transition-colors"
           >
             Remove
