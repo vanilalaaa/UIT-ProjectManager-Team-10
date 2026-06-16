@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import ProjectCard from '../../../components/ui/student/ProjectCard'
 import CourseRequirementCard from '../../../components/ui/teacher/CourseRequirementCard'
-import ConfirmModal from '../../../components/ui/teacher/ConfirmModal'
 import NotificationModal from '../../../components/ui/student/NotificationModal'
 import ApprovalRequestSidebar from '../../../components/ui/teacher/ApprovalRequestSidebar'
 import ProjectApprovalModal from '../../../components/ui/teacher/ProjectApprovalModal'
@@ -21,9 +20,7 @@ export default function TeacherProjectList() {
   const { courseId } = useParams<{ courseId: string }>()
   const id = Number(courseId)
   const [loading, setLoading] = useState(true)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
-  
+
   const [requests, setRequests] = useState<PendingRegistration[]>([])
   const [selectedRequest, setSelectedRequest] = useState<PendingRegistration | null>(null)
   
@@ -75,10 +72,8 @@ export default function TeacherProjectList() {
       .catch(() => triggerNotification('Lỗi', 'Không từ chối được yêu cầu đăng ký.'))
   }
 
-  const handleDeleteConfirm = () => {
-    triggerNotification('Thông báo', `Đã xóa vĩnh viễn đề tài thành công!`)
-    setIsDeleteModalOpen(false)
-  }
+  // Giáo viên chỉ xem các đồ án đã có nhóm đăng ký (đã được duyệt).
+  const projectsWithGroup = courseProjects.filter((p) => p.groupId != null)
 
   if (loading) return <LoadingSpinner message="Đang tải danh sách đồ án..." />
 
@@ -98,10 +93,10 @@ export default function TeacherProjectList() {
         
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-lg font-bold text-text">
-            Danh sách Đồ án ({courseProjects.length})
+            Danh sách Đồ án ({projectsWithGroup.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {courseProjects.map((project) => {
+            {projectsWithGroup.map((project) => {
               const groupNameDisplay = project.groupName ?? undefined
 
               return (
@@ -111,14 +106,6 @@ export default function TeacherProjectList() {
                   courseId={courseId || ''}
                   isTeacherView={true}
                   groupName={groupNameDisplay}
-                  onDelete={() => {
-                    if (project.endDate && new Date(project.endDate) < new Date()) {
-                      triggerNotification('Lỗi hệ thống', "Đề tài đã quá hạn, không được phép xóa!")
-                    } else {
-                      setProjectToDelete(project)
-                      setIsDeleteModalOpen(true)
-                    }
-                  }}
                 />
               )
             })}
@@ -139,21 +126,6 @@ export default function TeacherProjectList() {
         onClose={() => setSelectedRequest(null)}
         onAccept={handleAcceptRequest}
         onDecline={handleDeclineRequest}
-      />
-
-      <ConfirmModal 
-        isOpen={isDeleteModalOpen}
-        title="Xác nhận xóa đề tài"
-        message={
-          <>
-            Bạn có chắc chắn muốn xóa đồ án <strong>{projectToDelete?.title}</strong>? 
-            Hành động này sẽ xóa vĩnh viễn dữ liệu và không thể hoàn tác.
-          </>
-        }
-        confirmText="Xóa đề tài"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setIsDeleteModalOpen(false)}
-        isDestructive={true} 
       />
     </div>
   )

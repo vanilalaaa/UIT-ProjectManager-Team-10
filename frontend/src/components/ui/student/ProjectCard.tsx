@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { Project } from '../../../types/api/project'
 
@@ -6,7 +5,6 @@ interface ProjectCardProps {
   project: Project
   courseId: string | number
   groupName?: string
-  onDelete?: () => void
   isTeacherView?: boolean
 }
 
@@ -14,34 +12,9 @@ export default function ProjectCard({
   project,
   courseId,
   groupName,
-  onDelete,
   isTeacherView
 }: ProjectCardProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const isRegistered = !!groupName
-  const isExpired = project.endDate ? new Date(project.endDate) < new Date() : false
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsMenuOpen(false)
-    if (isExpired) {
-      alert('Đề tài này đã quá thời hạn, không được phép xóa!')
-    } else if (onDelete) {
-      onDelete()
-    }
-  }
 
   return (
     <div className="flex flex-col rounded-card border-t-4 border-primary bg-surface p-5 shadow-soft hover:shadow-card transition-shadow h-full">
@@ -55,34 +28,6 @@ export default function ProjectCard({
               {project.title}
             </Link>
           </h3>
-          
-          {isTeacherView && (
-            <div className="relative shrink-0" ref={menuRef}>
-              <button 
-                type="button" 
-                onClick={(e) => {
-                  e.preventDefault()
-                  setIsMenuOpen(!isMenuOpen)
-                }}
-                className="p-1 rounded-full transition-colors hover:bg-surface-soft text-text"
-              >
-                <svg className="size-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
-                </svg>
-              </button>
-
-              {isMenuOpen && (
-                <div className="absolute right-0 top-8 z-10 w-36 bg-surface border border-border rounded-xl shadow-card py-1 overflow-hidden">
-                  <button 
-                    onClick={handleDeleteClick}
-                    className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Xóa đồ án
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <p className="mt-2 text-sm text-text-soft line-clamp-2 min-h-[2.5rem]">
