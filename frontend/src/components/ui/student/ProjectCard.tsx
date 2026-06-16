@@ -15,9 +15,10 @@ export default function ProjectCard({
   isTeacherView
 }: ProjectCardProps) {
   const isRegistered = !!groupName
+  const isOverdue = !!project.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < new Date().getTime()
 
   return (
-    <div className="flex flex-col rounded-card border-t-4 border-primary bg-surface p-5 shadow-soft hover:shadow-card transition-shadow h-full">
+    <div className={`flex flex-col rounded-card border-t-4 bg-surface p-5 shadow-soft hover:shadow-card transition-shadow h-full ${isOverdue ? 'border-red-400' : 'border-primary'}`}>
       <div className="flex-1">
         <div className="flex items-start justify-between">
           <h3 className="text-[18px] font-bold text-text line-clamp-2 min-h-[3rem] pr-4">
@@ -60,6 +61,9 @@ export default function ProjectCard({
 
       <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-sm text-text-soft">
         <span className="font-bold text-text">Deadline: <span className="font-semibold">{project.endDate}</span></span>
+        {isOverdue && (
+          <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-600">Quá hạn</span>
+        )}
       </div>
     </div>
   )

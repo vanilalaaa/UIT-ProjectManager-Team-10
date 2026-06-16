@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { listActiveCategories } from '../../../services/admin/category.service'
 import type { Category } from '../../../types/api/category'
@@ -7,7 +7,11 @@ import {
   saveRequirement,
   newCriterion,
   EMPTY_REQUIREMENT,
+  listRequirementFiles,
+  uploadRequirementFile,
+  deleteRequirementFile,
   type ProjectRequirement,
+  type RequirementFile,
 } from '../../../services/requirement.service'
 
 interface CourseRequirementCardProps {
@@ -21,12 +25,43 @@ export default function CourseRequirementCard({ courseId, readOnly = false }: Co
   const [draft, setDraft] = useState<ProjectRequirement>(EMPTY_REQUIREMENT)
   const [categories, setCategories] = useState<Category[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [files, setFiles] = useState<RequirementFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     getRequirement(courseId)
       .then(setReq)
       .catch(() => setReq(EMPTY_REQUIREMENT))
+    listRequirementFiles(courseId)
+      .then(setFiles)
+      .catch(() => setFiles([]))
   }, [courseId])
+
+  const handleUploadFile = async (file: File | null) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      await uploadRequirementFile(courseId, file)
+      setFiles(await listRequirementFiles(courseId))
+      toast.success('Đã tải lên tài liệu.')
+    } catch (e) {
+      toast.error((e as { message?: string })?.message ?? 'Tải lên thất bại.')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDeleteFile = async (fileId: number) => {
+    try {
+      await deleteRequirementFile(courseId, fileId)
+      setFiles((prev) => prev.filter((f) => f.id !== fileId))
+      toast.success('Đã xóa tài liệu.')
+    } catch (e) {
+      toast.error((e as { message?: string })?.message ?? 'Xóa thất bại.')
+    }
+  }
 
   useEffect(() => {
     if (!isModalOpen) return
@@ -119,6 +154,64 @@ export default function CourseRequirementCard({ courseId, readOnly = false }: Co
           ) : (
             <p className="text-sm text-text-soft">Chưa có tiêu chí chấm điểm.</p>
           )}
+        </div>
+
+        <div className="mt-5 border-t border-border pt-4">
+          <span className="text-sm font-bold text-text block mb-2">Tài liệu yêu cầu:</span>
+          {files.length > 0 ? (
+            <ul className="space-y-1.5">
+              {files.map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-2 bg-surface-soft rounded-lg px-3 py-2 text-sm">
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline truncate font-medium"
+                  >
+                    <svg className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+                    </svg>
+                    <span className="truncate">{f.label}</span>
+                  </a>
+                  {!readOnly ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(f.id)}
+                      className="shrink-0 text-text-soft hover:text-red-500"
+                      title="Xóa tài liệu"
+                    >
+                      <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-text-soft">
+              {readOnly ? 'Giảng viên chưa đính kèm tài liệu.' : 'Chưa có tài liệu. Tải lên bên dưới.'}
+            </p>
+          )}
+
+          {!readOnly ? (
+            <div className="mt-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => handleUploadFile(e.target.files?.[0] ?? null)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full rounded-lg border border-dashed border-border bg-surface-soft/40 px-4 py-3 text-sm font-semibold text-text-soft transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+              >
+                {uploading ? 'Đang tải lên…' : '+ Tải lên tài liệu yêu cầu'}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 

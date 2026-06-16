@@ -63,8 +63,7 @@ function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-app-bg px-4">
       <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8 shadow-soft">
-        <h1 className="text-2xl font-semibold text-text">Đăng nhập</h1>
-        <p className="mt-1 text-sm text-text-soft">EduCollaborate — Quản lý đồ án</p>
+        <h1 className="text-2xl text-center font-semibold text-text">Đăng nhập</h1>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>

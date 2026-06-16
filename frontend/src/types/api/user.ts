@@ -1,7 +1,5 @@
 import type { Role, UserDto } from '../models'
 
-export type { Role, UserDto }
-
 export type AdminUserListItem = UserDto & {
   createdAt?: string
   updatedAt?: string | null

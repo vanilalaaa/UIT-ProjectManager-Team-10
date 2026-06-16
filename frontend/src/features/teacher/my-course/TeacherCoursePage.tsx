@@ -62,7 +62,7 @@ export default function TeacherCoursePage() {
     }
     try {
       if (selectedCourse) {
-        await updateCourse(selectedCourse.id, payload)
+        await updateCourse(selectedCourse.id, { ...payload, code: data.code.trim() })
         toast.success('Đã cập nhật lớp học.')
       } else {
         await createCourse({ ...payload, code: data.code.trim() })
