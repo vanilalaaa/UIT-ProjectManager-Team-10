@@ -7,7 +7,8 @@ import { AdminEmpty, AdminError, AdminLoading } from './components/AdminStates'
 import UserFormModal from './users/UserFormModal'
 import { useAdminUsers } from './hooks/useAdminUsers'
 import type { ApiError } from '../../lib/api/axiosClient'
-import type { AdminUserListItem, Role } from '../../types/api/user'
+import type { AdminUserListItem } from '../../types/api/user'
+import type { Role } from '../../types/api/auth'
 
 const ROLES: ReadonlyArray<Role | ''> = ['', 'ADMIN', 'TEACHER', 'STUDENT']
 

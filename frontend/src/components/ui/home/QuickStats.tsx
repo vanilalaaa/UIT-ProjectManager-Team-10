@@ -35,7 +35,7 @@ const formatDate = (iso: string) => {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-export default function QuickStats({ role, stats }: { role: string; stats: any }) {
+export default function QuickStats({ role, stats }: { role: string; stats: Record<string, number> }) {
   const items: StatItem[] = role === 'TEACHER'
     ? [
         { key: 'pendingGrades', label: 'Bài chờ chấm', val: stats.pendingGrades, color: 'text-primary', bg: 'bg-primary-soft', icon: '✎' },
@@ -67,8 +67,8 @@ export default function QuickStats({ role, stats }: { role: string; stats: any }
     try {
       const res = await getStatDetail(key);
       setDetails(res.data ?? []);
-    } catch (e: any) {
-      setError(e?.message ?? 'Không tải được chi tiết.');
+    } catch (e) {
+      setError((e as { message?: string })?.message ?? 'Không tải được chi tiết.');
     } finally {
       setLoading(false);
     }
