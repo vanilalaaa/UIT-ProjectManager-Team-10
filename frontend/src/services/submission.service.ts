@@ -1,16 +1,17 @@
 import axiosClient from '../lib/api/axiosClient'
-import type { ApiResponse } from '../types/api/common'
 import type {
   Submission,
   SubmissionUpdateRequest,
 } from '../types/api/submission'
 
+// Lưu ý: SubmissionController trả thẳng entity/list (KHÔNG bọc trong ApiResponse),
+// nên các hàm dưới đây trả luôn body thô từ BE.
 export const listProjectSubmissions = (
   projectId: number | string,
-): Promise<ApiResponse<Submission[]>> =>
+): Promise<Submission[]> =>
   axiosClient
-    .get<ApiResponse<Submission[]>>(`/projects/${projectId}/submissions`)
-    .then((r) => r.data)
+    .get<Submission[]>(`/projects/${projectId}/submissions`)
+    .then((r) => r.data ?? [])
 
 export const createSubmissionFormData = (
   projectId: number | string,
@@ -23,13 +24,13 @@ export const createSubmissionFormData = (
       },
     })
     .then((r) => r.data)
-    
+
 export const updateSubmission = (
   submissionId: number | string,
   payload: SubmissionUpdateRequest,
-): Promise<ApiResponse<Submission>> =>
+): Promise<Submission> =>
   axiosClient
-    .put<ApiResponse<Submission>>(`/submissions/${submissionId}`, payload)
+    .put<Submission>(`/submissions/${submissionId}`, payload)
     .then((r) => r.data)
 
 export const deleteSubmission = (

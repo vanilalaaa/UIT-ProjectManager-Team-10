@@ -2,30 +2,81 @@ import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getProjectById } from '../../../services/project.service';
 import { getRequirement, type RubricCriterion } from '../../../services/requirement.service';
-import type { Project } from '../../../types/api/project';
+import {
+  getGradeBySubmission,
+  createGrade,
+  updateGrade,
+  type CriterionScorePayload,
+} from '../../../services/grade.service';
+import type { Project, ProjectSubmissionLite } from '../../../types/api/project';
 
 export default function TeamGrades() {
   const { courseId, projectId } = useParams<{ courseId: string; projectId: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [criteria, setCriteria] = useState<RubricCriterion[]>([]);
+  const [submission, setSubmission] = useState<ProjectSubmissionLite | null>(null);
+  const [gradeId, setGradeId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isGraded, setIsGraded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [scores, setScores] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
-    if (courseId) {
-      getRequirement(courseId)
-        .then((r) => setCriteria(r.criteria))
-        .catch(() => setCriteria([]));
-    }
-    getProjectById(projectId ?? '').then((found) => {
-      if (found) setProject(found);
+    let mounted = true;
+    setLoading(true);
+
+    const loadCriteria = courseId
+      ? getRequirement(courseId).then((r) => r.criteria).catch(() => [] as RubricCriterion[])
+      : Promise.resolve([] as RubricCriterion[]);
+
+    const loadProject = getProjectById(projectId ?? '');
+
+    Promise.all([loadCriteria, loadProject]).then(async ([crits, proj]) => {
+      if (!mounted) return;
+      setCriteria(crits);
+      if (proj) setProject(proj);
+
+      // Bài nộp mới nhất của project (lấy từ ProjectResponse đã phẳng) là bài được chấm.
+      const subs = proj?.submissions ?? [];
+      const sub = subs.length
+        ? [...subs].sort((a, b) => (b.submittedAt ?? '').localeCompare(a.submittedAt ?? ''))[0]
+        : null;
+      setSubmission(sub);
+
+      if (sub) {
+        const grade = await getGradeBySubmission(sub.submissionId);
+        if (!mounted) return;
+        if (grade) {
+          const nextScores: Record<string, number> = {};
+          const nextNotes: Record<string, string> = {};
+          grade.criterionScores.forEach((cs) => {
+            if (cs.criterionId != null) {
+              nextScores[String(cs.criterionId)] = cs.score;
+              nextNotes[String(cs.criterionId)] = cs.note;
+            }
+          });
+          setScores(nextScores);
+          setNotes(nextNotes);
+          setFeedback(grade.feedback);
+          setGradeId(grade.id);
+          setIsGraded(true);
+        }
+      }
+      setLoading(false);
     });
+
+    return () => {
+      mounted = false;
+    };
   }, [projectId, courseId]);
 
-  if (!project) return <div className="p-8 text-center text-text-soft">Đang tải đồ án...</div>;
+  if (loading) return <div className="p-8 text-center text-text-soft">Đang tải đồ án...</div>;
+  if (!project) return <div className="p-8 text-center text-text-soft">Không tìm thấy đồ án.</div>;
 
   const totalMax = criteria.reduce((s, c) => s + c.maxScore, 0);
   const totalScore = criteria.reduce((s, c) => s + (scores[c.id] || 0), 0);
@@ -36,9 +87,35 @@ export default function TeamGrades() {
     if (num >= 0 && num <= crit.maxScore) setScores((prev) => ({ ...prev, [crit.id]: num }));
   };
 
-  const handleSave = () => {
-    setIsGraded(true);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!submission) return;
+    setSaving(true);
+    setError(null);
+
+    const criterionScores: CriterionScorePayload[] = criteria.map((c) => ({
+      criterionId: Number.isNaN(Number(c.id)) ? null : Number(c.id),
+      name: c.name,
+      maxScore: c.maxScore,
+      score: scores[c.id] || 0,
+      note: notes[c.id] || '',
+    }));
+
+    try {
+      const saved = gradeId
+        ? await updateGrade(gradeId, { feedback, criterionScores })
+        : await createGrade(projectId ?? '', {
+            submissionId: submission.submissionId,
+            feedback,
+            criterionScores,
+          });
+      setGradeId(saved.id);
+      setIsGraded(true);
+      setIsEditing(false);
+    } catch {
+      setError('Lưu điểm thất bại. Vui lòng thử lại.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -51,6 +128,10 @@ export default function TeamGrades() {
       {criteria.length === 0 ? (
         <div className="glass-panel rounded-[var(--radius-card)] p-10 text-center text-text-soft">
           Giảng viên chưa thiết lập barem chấm điểm cho lớp này. Vào tab “Danh sách Đồ án” → “Tạo yêu cầu” để thêm tiêu chí.
+        </div>
+      ) : !submission ? (
+        <div className="glass-panel rounded-[var(--radius-card)] p-10 text-center text-text-soft">
+          Nhóm chưa nộp bài cho đồ án này nên chưa thể chấm điểm.
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -116,10 +197,26 @@ export default function TeamGrades() {
               ))}
             </div>
 
+            <div className="mt-6">
+              <h4 className="font-bold text-text text-sm mb-2">Nhận xét chung</h4>
+              {isEditing ? (
+                <textarea className="w-full p-3 bg-surface-soft rounded-lg text-xs border border-border min-h-[80px]" placeholder="Nhận xét chung cho cả đồ án..." value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+              ) : (
+                <div className="p-3 bg-surface-soft/50 rounded-lg text-xs italic text-text-soft border border-border-soft">
+                  {isGraded ? feedback || 'Không có nhận xét' : 'Chưa chấm'}
+                </div>
+              )}
+            </div>
+
+            {error && <p className="mt-4 text-xs text-red-500 text-right">{error}</p>}
+
             {isEditing && (
-              <div className="flex justify-end mt-6">
-                <button onClick={handleSave} className="px-8 py-2.5 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg text-sm">
-                  Lưu điểm
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setIsEditing(false)} disabled={saving} className="px-6 py-2.5 rounded-[var(--radius-button)] border border-border text-text-soft font-bold text-sm disabled:opacity-50">
+                  Hủy
+                </button>
+                <button onClick={handleSave} disabled={saving} className="px-8 py-2.5 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg text-sm disabled:opacity-50">
+                  {saving ? 'Đang lưu...' : 'Lưu điểm'}
                 </button>
               </div>
             )}
