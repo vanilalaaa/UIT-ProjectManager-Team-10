@@ -1,4 +1,4 @@
-import type { Course } from '../../mocks/types'
+import type { Course } from '../models'
 
 export type { Course }
 

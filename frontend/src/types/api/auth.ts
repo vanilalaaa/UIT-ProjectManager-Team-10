@@ -1,4 +1,4 @@
-import type { AuthResponse, LoginRequest, Role, UserDto } from '../../mocks/types'
+import type { AuthResponse, LoginRequest, Role, UserDto } from '../models'
 
 export type { AuthResponse, LoginRequest, Role, UserDto }
 

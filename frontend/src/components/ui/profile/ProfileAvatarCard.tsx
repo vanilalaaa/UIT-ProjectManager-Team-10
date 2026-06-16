@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Avatar from '../Avatar'
-import type { UserDto } from '../../../mocks/types'
+import type { UserDto } from '../../../types/models'
 
 export default function ProfileAvatarCard({ user }: { user: UserDto }) {
   const [avatar, setAvatar] = useState('')
