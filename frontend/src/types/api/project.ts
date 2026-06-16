@@ -31,6 +31,7 @@ export type Project = {
   submissions: ProjectSubmissionLite[]
   memberCount: number
   submissionCount: number
+  submissionLocked?: boolean
 }
 
 export type ProjectCreateRequest = {

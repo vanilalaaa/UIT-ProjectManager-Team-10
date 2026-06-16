@@ -2,7 +2,6 @@ import axiosClient from '../lib/api/axiosClient'
 import type { ApiResponse } from '../types/api/common'
 import type {
   Submission,
-  SubmissionCreateRequest,
   SubmissionUpdateRequest,
 } from '../types/api/submission'
 
@@ -13,14 +12,18 @@ export const listProjectSubmissions = (
     .get<ApiResponse<Submission[]>>(`/projects/${projectId}/submissions`)
     .then((r) => r.data)
 
-export const createSubmission = (
+export const createSubmissionFormData = (
   projectId: number | string,
-  payload: SubmissionCreateRequest,
+  formData: FormData,
 ): Promise<ApiResponse<Submission>> =>
   axiosClient
-    .post<ApiResponse<Submission>>(`/projects/${projectId}/submissions`, payload)
+    .post<ApiResponse<Submission>>(`/projects/${projectId}/submissions`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     .then((r) => r.data)
-
+    
 export const updateSubmission = (
   submissionId: number | string,
   payload: SubmissionUpdateRequest,

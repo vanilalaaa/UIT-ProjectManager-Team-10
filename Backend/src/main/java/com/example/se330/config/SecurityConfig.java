@@ -53,6 +53,9 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification")
                         .permitAll()
+                        
+                        .requestMatchers("/files/**").permitAll()
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         .requestMatchers(
@@ -65,11 +68,9 @@ public class SecurityConfig {
                                 "/api/submissions/**")
                         .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
 
-                        // Sinh viên chỉ được xem điểm & nhận xét của nhóm mình
                         .requestMatchers("/api/projects/*/grades/me")
                         .hasRole("STUDENT")
 
-                        // Giảng viên: xem bài nộp, chấm điểm, cập nhật điểm
                         .requestMatchers(
                                 "/api/projects/*/grades",
                                 "/api/grades/**")

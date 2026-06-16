@@ -12,10 +12,12 @@ import com.example.se330.dto.requirement.RubricCriterionResponse;
 import com.example.se330.dto.requirement.SaveRequirementRequest;
 import com.example.se330.entity.Category;
 import com.example.se330.entity.Course;
+import com.example.se330.entity.Project;
 import com.example.se330.entity.Requirement;
 import com.example.se330.entity.RubricCriterion;
 import com.example.se330.repository.CategoryRepository;
 import com.example.se330.repository.CourseRepository;
+import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.RequirementRepository;
 
 @Service
@@ -25,17 +27,19 @@ public class RequirementService {
     private final RequirementRepository requirementRepository;
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
+    private final ProjectRepository projectRepository; 
 
     public RequirementService(
             RequirementRepository requirementRepository,
             CourseRepository courseRepository,
-            CategoryRepository categoryRepository) {
+            CategoryRepository categoryRepository,
+            ProjectRepository projectRepository) { 
         this.requirementRepository = requirementRepository;
         this.courseRepository = courseRepository;
         this.categoryRepository = categoryRepository;
+        this.projectRepository = projectRepository;
     }
 
-    // Mọi thành viên lớp đều xem được barem; chưa đặt thì trả yêu cầu rỗng (200).
     @Transactional(readOnly = true)
     public RequirementResponse getRequirement(Long courseId) {
         return this.requirementRepository.findByCourse_Id(courseId)
@@ -43,7 +47,6 @@ public class RequirementService {
                 .orElseGet(RequirementService::emptyResponse);
     }
 
-    // Chỉ giảng viên của lớp được lưu yêu cầu / barem.
     public RequirementResponse saveRequirement(Long courseId, SaveRequirementRequest req, Long teacherId) {
         Course course = this.courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học"));
@@ -62,9 +65,10 @@ public class RequirementService {
         }
         requirement.setCategory(category);
         requirement.setDescription(req.getDescription());
-        requirement.setDeadline(parseDate(req.getDeadline()));
+        
+        LocalDate newDeadline = parseDate(req.getDeadline());
+        requirement.setDeadline(newDeadline);
 
-        // Thay toàn bộ barem: xóa tiêu chí cũ (orphanRemoval) rồi dựng lại từ payload.
         requirement.getCriteria().clear();
         List<RubricCriterionRequest> incoming = req.getCriteria() != null ? req.getCriteria() : List.of();
         int order = 0;
@@ -77,18 +81,25 @@ public class RequirementService {
                     .build());
         }
 
-        return toResponse(this.requirementRepository.save(requirement));
+        Requirement savedReq = this.requirementRepository.save(requirement);
+
+        if (newDeadline != null) {
+            List<Project> projects = projectRepository.findByCourse(course);
+            if (projects != null && !projects.isEmpty()) {
+                for (Project p : projects) {
+                    p.setEndDate(newDeadline);
+                }
+                projectRepository.saveAll(projects);
+            }
+        }
+
+        return toResponse(savedReq);
     }
 
     private static LocalDate parseDate(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return LocalDate.parse(value);
-        } catch (Exception e) {
-            return null;
-        }
+        if (value == null || value.isBlank()) return null;
+        try { return LocalDate.parse(value); } 
+        catch (Exception e) { return null; }
     }
 
     private RequirementResponse toResponse(Requirement r) {
@@ -111,12 +122,6 @@ public class RequirementService {
     }
 
     private static RequirementResponse emptyResponse() {
-        return RequirementResponse.builder()
-                .categoryId(null)
-                .categoryName("")
-                .description("")
-                .deadline("")
-                .criteria(List.of())
-                .build();
+        return RequirementResponse.builder().categoryId(null).categoryName("").description("").deadline("").criteria(List.of()).build();
     }
 }
