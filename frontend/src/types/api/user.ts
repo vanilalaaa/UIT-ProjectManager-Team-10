@@ -1,5 +1,7 @@
 import type { Role, UserDto } from './auth'
 
+export type { Role } from './auth'
+
 export type AdminUserListItem = UserDto & {
   createdAt?: string
   updatedAt?: string | null

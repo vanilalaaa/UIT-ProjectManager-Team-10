@@ -54,16 +54,6 @@ function BellIcon({ muted = false }: { muted?: boolean }) {
   )
 }
 
-function getInitials(name = '') {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(-2)
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase()
-}
-
 function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const [enabled, setEnabled] = useState<boolean>(() => isNotificationsEnabled())
@@ -182,8 +172,6 @@ function Navbar() {
 
   const displayName = currentUser?.name ?? 'Người dùng'
   const studentCode = currentUser?.uid ?? ''
-  const initials = getInitials(displayName) || 'U'
-
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-4 md:px-6">
       <div className="min-w-0">
