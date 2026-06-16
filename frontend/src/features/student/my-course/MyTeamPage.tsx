@@ -235,6 +235,11 @@ export default function MyTeamPage() {
   const regularMembers = myGroup ? myGroup.members.filter((m) => !m.isLeader) : []
   const displayedSuggestedUsers = showAllInviteMembers ? suggestedUsers : suggestedUsers.slice(0, 3)
   const requestIdentity = (request: TeamMember) => request.uid?.trim() || String(request.userId)
+  const shouldShowProjectPanel = !!myGroup && myGroup.projectStatus !== 'APPROVED'
+  const shouldShowSidebar = isCurrentUserLeader || shouldShowProjectPanel
+  const mainColumnClass = shouldShowSidebar
+    ? 'lg:col-span-7 xl:col-span-7 space-y-6'
+    : 'lg:col-span-10 lg:col-start-2 xl:col-span-8 xl:col-start-3 space-y-6'
   const requestEmail = (request: TeamMember) => request.email?.trim() || 'Chưa có email'
 
   return (
@@ -250,7 +255,7 @@ export default function MyTeamPage() {
         </div>
       ) : (
         <>
-          <div className="lg:col-span-7 xl:col-span-7 space-y-6">
+          <div className={mainColumnClass}>
             <TeamInfoCard
               myGroup={myGroup}
               currentUserId={currentUser.id}
@@ -293,7 +298,8 @@ export default function MyTeamPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 xl:col-span-5 space-y-6">
+          {shouldShowSidebar && (
+            <div className="lg:col-span-5 xl:col-span-5 space-y-6">
             {myGroup.projectStatus === 'APPROVED' ? null : myGroup.projectStatus === 'PENDING' ? (
               <div className="bg-surface rounded-card p-6 shadow-soft border border-border flex flex-col justify-center min-h-[160px]">
                 <h3 className="text-lg font-bold mb-2 text-text">Đề tài đang chờ duyệt</h3>
@@ -314,7 +320,8 @@ export default function MyTeamPage() {
               </div>
             )}
 
-            <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-5">
+            {isCurrentUserLeader && (
+              <div className="rounded-card border border-border bg-surface p-6 shadow-soft space-y-5">
               <h2 className="text-lg font-bold text-text border-b border-border pb-4">Team Requests</h2>
               {teamRequests.length > 0 ? (
                 <div className="space-y-4">
@@ -349,8 +356,10 @@ export default function MyTeamPage() {
               ) : (
                 <div className="text-center py-8 text-text-soft text-sm">Không có lời yêu cầu tham gia nào.</div>
               )}
+              </div>
+            )}
             </div>
-          </div>
+          )}
         </>
       )}
 

@@ -48,8 +48,8 @@ export default function ConfirmDialog({
         </button>
         <button
           type="button"
-          className={`rounded-lg px-4 py-2 text-sm font-semibold text-surface disabled:opacity-60 ${
-            destructive ? 'bg-red-500' : 'bg-primary'
+          className={`rounded-lg px-4 py-2 text-sm font-semibold text-surface shadow-sm transition-colors disabled:opacity-60 ${
+            destructive ? 'bg-rose-600 shadow-rose-100 hover:bg-rose-700' : 'bg-primary hover:bg-primary/90'
           }`}
           disabled={submitting}
           onClick={handleConfirm}
