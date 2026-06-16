@@ -5,7 +5,16 @@ import type {
   ProjectCreateRequest,
   ProjectUpdateRequest,
 } from '../types/api/project'
-import type { ProjectResource } from '../components/ui/student/ProjectResourcesCard'
+import type { ProjectResource, ResourceType } from '../components/ui/student/ProjectResourcesCard'
+
+type ProjectResourceDto = { id: number; type: string; label: string; url: string }
+
+const toResource = (x: ProjectResourceDto): ProjectResource => ({
+  id: String(x.id),
+  type: x.type as ResourceType,
+  label: x.label,
+  url: x.url,
+})
 
 export type ProjectActivity = {
   id: number
@@ -20,11 +29,6 @@ const MOCK_ACTIVITIES: ProjectActivity[] = [
   { id: 2, user: { name: 'Nguyễn Minh An', avatarUrl: null }, action: 'đã chuyển trạng thái đồ án task', target: 'IN_PROGRESS', time: '1 ngày trước' },
   { id: 3, user: { name: 'Lê Hoàng Vy', avatarUrl: null }, action: 'đã chuyển trạng thái Task', target: 'Website quản lý đồ án môn SE330', time: '3 ngày trước' },
   { id: 4, user: { name: 'Sinh viên Trần', avatarUrl: null }, action: 'đã tạo task cho Lê Hoàng Vy', target: 'Thiết kế API danh sách đồ án', time: '2 giờ trước' },
-]
-
-const MOCK_RESOURCES: ProjectResource[] = [
-  { id: 'r1', type: 'GITHUB', label: 'repo nhóm', url: 'https://github.com/example/se330-project' },
-  { id: 'r2', type: 'DRIVE', label: 'Tài liệu chung', url: 'https://drive.google.com/drive/folders/example' },
 ]
 
 const MOCK_DELAY = 300
@@ -92,14 +96,37 @@ export const getProjectById = (projectId: number | string): Promise<Project | nu
     .then((r) => r.data.data)
     .catch(() => null)
 
-// ----- Mock — activity/resources chưa có BE, giữ tới slice sau -----
+export const getProjectResources = (projectId: number | string): Promise<ProjectResource[]> =>
+  axiosClient
+    .get<ApiResponse<ProjectResourceDto[]>>(`/projects/${projectId}/resources`)
+    .then((r) => (r.data.data ?? []).map(toResource))
+
+export const createProjectResource = (
+  projectId: number | string,
+  payload: { type: ResourceType; label: string; url: string },
+  file?: File,
+): Promise<ProjectResource> => {
+  const fd = new FormData()
+  fd.append('type', payload.type)
+  if (payload.label) fd.append('label', payload.label)
+  if (payload.url) fd.append('url', payload.url)
+  if (file) fd.append('file', file)
+  return axiosClient
+    .post<ApiResponse<ProjectResourceDto>>(`/projects/${projectId}/resources`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => toResource(r.data.data))
+}
+
+export const deleteProjectResource = (
+  projectId: number | string,
+  resourceId: number | string,
+): Promise<void> =>
+  axiosClient.delete(`/projects/${projectId}/resources/${resourceId}`).then(() => undefined)
+
+// ----- Mock — activity chưa có BE, giữ tới slice sau -----
 
 export const getProjectActivities = (_projectId: number | string): Promise<ProjectActivity[]> => {
   void _projectId
   return resolveMock(MOCK_ACTIVITIES)
-}
-
-export const getProjectResources = (_projectId: number | string): Promise<ProjectResource[]> => {
-  void _projectId
-  return resolveMock(MOCK_RESOURCES)
 }

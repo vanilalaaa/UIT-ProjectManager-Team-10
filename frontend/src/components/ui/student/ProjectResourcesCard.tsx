@@ -13,7 +13,7 @@ export type ProjectResource = {
 interface ProjectResourcesCardProps {
   resources: ProjectResource[]
   canManage: boolean
-  onAdd: (resource: Omit<ProjectResource, 'id'>) => void
+  onAdd: (resource: Omit<ProjectResource, 'id'>, file?: File) => void
   onRemove: (id: string) => void
 }
 
@@ -59,8 +59,8 @@ export default function ProjectResourcesCard({ resources, canManage, onAdd, onRe
   const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    onAdd({ type: 'FILE', label: file.name, url: URL.createObjectURL(file) })
-    toast.success('Đã thêm tệp vào tài nguyên nhóm.')
+    // url để trống — BE lưu tệp và trả về đường dẫn thật.
+    onAdd({ type: 'FILE', label: file.name, url: '' }, file)
     e.target.value = ''
   }
 
@@ -75,7 +75,6 @@ export default function ProjectResourcesCard({ resources, canManage, onAdd, onRe
       return
     }
     onAdd({ type: draftType, label: draftLabel.trim() || url, url })
-    toast.success('Đã thêm tài nguyên.')
     setDraftUrl('')
     setDraftLabel('')
   }

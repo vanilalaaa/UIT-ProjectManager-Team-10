@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import DueDateCard from '../../../components/ui/student/DueDateCard'
@@ -13,21 +13,17 @@ export default function ProjectSubmit() {
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const fetchProjectData = () => {
-    let isMounted = true
+  const fetchProjectData = useCallback(() => {
     setLoading(true)
     getProjectById(projectId ?? '').then(data => {
-      if (isMounted) {
-        setProject(data)
-        setLoading(false)
-      }
+      setProject(data)
+      setLoading(false)
     })
-    return () => { isMounted = false }
-  }
+  }, [projectId])
 
   useEffect(() => {
     fetchProjectData()
-  }, [projectId])
+  }, [fetchProjectData])
 
   if (loading) {
     return (
@@ -93,8 +89,9 @@ export default function ProjectSubmit() {
       
       toast.success(latestSub ? 'Đã cập nhật bài nộp!' : 'Nộp bài thành công!')
       fetchProjectData() 
-    } catch (err: any) {
-      toast.error(err?.response?.data || 'Có lỗi xảy ra khi xử lý.')
+    } catch (err) {
+      const apiErr = err as { message?: string }
+      toast.error(apiErr?.message || 'Có lỗi xảy ra khi xử lý.')
     } finally {
       setIsSubmitting(false)
     }
