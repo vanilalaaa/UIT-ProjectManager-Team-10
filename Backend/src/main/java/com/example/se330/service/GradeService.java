@@ -1,15 +1,20 @@
+
 package com.example.se330.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.grade.CreateGradeRequest;
+import com.example.se330.dto.grade.CriterionScoreRequest;
+import com.example.se330.dto.grade.CriterionScoreResponse;
 import com.example.se330.dto.grade.GradeResponse;
 import com.example.se330.dto.grade.UpdateGradeRequest;
 import com.example.se330.entity.Grade;
+import com.example.se330.entity.GradeCriterionScore;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
 import com.example.se330.enums.SubmissionStatus;
@@ -50,12 +55,13 @@ public class GradeService {
 
         Grade grade = Grade.builder()
                 .submission(submission)
-                .score(request.getScore())
-                .maxScore(request.getMaxScore())
                 .feedback(request.getFeedback())
                 .gradedBy(teacher)
                 .gradedAt(LocalDateTime.now())
                 .build();
+
+        applyCriterionScores(grade, request.getCriterionScores(),
+                request.getScore(), request.getMaxScore());
 
         submission.setStatus(SubmissionStatus.GRADED);
         submissionRepository.save(submission);
@@ -69,18 +75,63 @@ public class GradeService {
         Grade grade = gradeRepository.findById(gradeId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy điểm"));
 
-        if (request.getScore() != null) {
-            grade.setScore(request.getScore());
-        }
-        if (request.getMaxScore() != null) {
-            grade.setMaxScore(request.getMaxScore());
-        }
         if (request.getFeedback() != null) {
             grade.setFeedback(request.getFeedback());
+        }
+
+        if (request.getCriterionScores() != null) {
+            // Thay thế toàn bộ điểm chi tiết -> tính lại score/maxScore tổng.
+            applyCriterionScores(grade, request.getCriterionScores(),
+                    grade.getScore(), grade.getMaxScore());
+        } else {
+            if (request.getScore() != null) {
+                grade.setScore(request.getScore());
+            }
+            if (request.getMaxScore() != null) {
+                grade.setMaxScore(request.getMaxScore());
+            }
         }
         grade.setGradedAt(LocalDateTime.now());
 
         return toResponse(gradeRepository.save(grade));
+    }
+
+    // Gắn danh sách điểm chi tiết vào grade và tính score/maxScore tổng = tổng các tiêu chí.
+    // Nếu không có chi tiết, giữ điểm tổng theo fallback (giá trị gửi lên / điểm hiện tại).
+    private void applyCriterionScores(Grade grade, List<CriterionScoreRequest> reqScores,
+            Integer fallbackScore, Integer fallbackMaxScore) {
+
+        grade.getCriterionScores().clear();
+
+        if (reqScores == null || reqScores.isEmpty()) {
+            grade.setScore(fallbackScore);
+            grade.setMaxScore(fallbackMaxScore);
+            return;
+        }
+
+        int totalScore = 0;
+        int totalMaxScore = 0;
+        for (CriterionScoreRequest cs : reqScores) {
+            grade.getCriterionScores().add(GradeCriterionScore.builder()
+                    .grade(grade)
+                    .criterionId(cs.getCriterionId())
+                    .criterionName(cs.getName())
+                    .maxScore(cs.getMaxScore())
+                    .score(cs.getScore())
+                    .note(cs.getNote())
+                    .build());
+            totalScore += cs.getScore() != null ? cs.getScore() : 0;
+            totalMaxScore += cs.getMaxScore() != null ? cs.getMaxScore() : 0;
+        }
+        grade.setScore(totalScore);
+        grade.setMaxScore(totalMaxScore);
+    }
+
+    @Transactional(readOnly = true)
+    public GradeResponse getBySubmission(Long submissionId) {
+        return gradeRepository.findBySubmission_Id(submissionId)
+                .map(this::toResponse)
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -111,6 +162,19 @@ public class GradeService {
         Submission submission = grade.getSubmission();
         User gradedBy = grade.getGradedBy();
 
+        List<CriterionScoreResponse> criterionScores = new ArrayList<>();
+        if (grade.getCriterionScores() != null) {
+            for (GradeCriterionScore cs : grade.getCriterionScores()) {
+                criterionScores.add(CriterionScoreResponse.builder()
+                        .criterionId(cs.getCriterionId())
+                        .name(cs.getCriterionName())
+                        .maxScore(cs.getMaxScore())
+                        .score(cs.getScore())
+                        .note(cs.getNote())
+                        .build());
+            }
+        }
+
         return GradeResponse.builder()
                 .id(grade.getId())
                 .submissionId(submission != null ? submission.getId() : null)
@@ -124,6 +188,7 @@ public class GradeService {
                 .gradedAt(grade.getGradedAt())
                 .gradedById(gradedBy != null ? gradedBy.getId() : null)
                 .gradedByName(gradedBy != null ? gradedBy.getName() : null)
+                .criterionScores(criterionScores)
                 .build();
     }
 }

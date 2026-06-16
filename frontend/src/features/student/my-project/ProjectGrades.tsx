@@ -6,6 +6,7 @@ import ScorecardBreakdown, { type ScoreCriteria } from '../../../components/ui/s
 import LecturerFeedbackCard from '../../../components/ui/student/LecturerFeedbackCard'
 import { getProjectById } from '../../../services/project.service'
 import { getRequirement } from '../../../services/requirement.service'
+import { getMyGrade } from '../../../services/grade.service'
 
 const MAX_GRADE = 10
 
@@ -18,9 +19,30 @@ type GradeData = {
   feedback: string
 }
 
-// Hiển thị barem (tiêu chí + thang điểm) giảng viên đã thiết lập cho lớp.
-// Điểm thực tế chờ BE chấm điểm; hiện show trạng thái "chưa chấm".
+// Lấy điểm nhóm mình từ BE (GET /projects/{id}/grades/me). Nếu chưa chấm,
+// vẫn hiển thị barem (tiêu chí + thang điểm) với trạng thái "chưa chấm".
 const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
+  const grade = projectId ? await getMyGrade(projectId) : null
+
+  if (grade) {
+    const criteria: ScoreCriteria[] = grade.criterionScores.map((c) => ({
+      label: c.name,
+      score: c.score,
+      maxScore: c.maxScore,
+      colorClass: 'text-primary',
+      bgFillClass: 'bg-brand-gradient',
+    }))
+    const overall =
+      grade.score != null && grade.maxScore != null && grade.maxScore > 0
+        ? Math.round((grade.score / grade.maxScore) * MAX_GRADE * 10) / 10
+        : null
+    const lecturer: GradeLecturer | null = grade.gradedByName
+      ? { name: grade.gradedByName, avatar: '', department: 'Giảng viên' }
+      : null
+    return { grade: overall, criteria, lecturer, feedback: grade.feedback }
+  }
+
+  // Chưa có điểm: hiển thị barem để sinh viên biết tiêu chí sẽ được chấm.
   const project = await getProjectById(projectId ?? '')
   const courseId = project?.courseId
   const req = courseId != null ? await getRequirement(courseId).catch(() => null) : null
