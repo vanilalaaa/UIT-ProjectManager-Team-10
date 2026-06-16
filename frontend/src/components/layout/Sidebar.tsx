@@ -82,7 +82,7 @@ function Sidebar() {
   }
 
   return (
-    <aside className="shrink-0 border-b border-border bg-surface px-4 py-4 shadow-soft lg:flex lg:min-h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r lg:py-6">
+    <aside className="shrink-0 border-b border-border bg-surface px-4 py-4 shadow-soft lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r lg:py-6">
       <div className="flex items-center justify-between">
         <div className="px-2">
           <NavLink
@@ -112,7 +112,7 @@ function Sidebar() {
       </span>
 
       <div
-        className={`${mobileOpen ? 'flex' : 'hidden'} mt-4 flex-1 flex-col lg:mt-6 lg:flex`}
+        className={`${mobileOpen ? 'flex' : 'hidden'} mt-4 flex-1 flex-col lg:mt-6 lg:flex lg:min-h-0`}
         id="sidebar-nav"
       >
         <nav aria-label="Điều hướng chính" className="flex flex-1 flex-col gap-1">
@@ -131,7 +131,7 @@ function Sidebar() {
         </nav>
 
         <button
-          className="mt-4 flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
+          className="mt-4 flex shrink-0 items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-text-soft transition-colors hover:bg-surface-soft hover:text-text"
           onClick={() => setConfirmLogout(true)}
           type="button"
         >

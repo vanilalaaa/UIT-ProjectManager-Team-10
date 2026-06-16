@@ -73,7 +73,6 @@ export default function CourseMembers() {
                   <UserProfilePopover 
                     user={member}
                     onClose={() => setActivePopoverId(null)}
-                    showInviteButton={true}
                   />
                 </div>
               )}
