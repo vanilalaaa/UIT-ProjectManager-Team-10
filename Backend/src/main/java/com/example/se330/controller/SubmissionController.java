@@ -23,17 +23,22 @@ public class SubmissionController {
     }
 
     @PostMapping(value = "/projects/{id}/submissions", consumes = {"multipart/form-data"})
-    public Submission create(
+    public List<Submission> create(
             @PathVariable Long id,
             @RequestParam("groupId") Long groupId,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "file", required = false) MultipartFile file,
             Authentication authentication
     ) throws IOException {
 
         Long userId = ((com.example.se330.security.CustomUserDetails)
                 authentication.getPrincipal()).getId();
 
-        return submissionService.createSubmission(id, groupId, file, userId);
+        if ((files == null || files.isEmpty()) && file != null) {
+            files = List.of(file);
+        }
+
+        return submissionService.createSubmission(id, groupId, files, userId);
     }
 
     @PutMapping("/submissions/{id}")

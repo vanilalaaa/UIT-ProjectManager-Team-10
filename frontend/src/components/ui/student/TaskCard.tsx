@@ -1,4 +1,5 @@
 import type { Task } from '../../../types/api/task'
+import Avatar from '../Avatar'
 
 // category/commentsCount/attachmentsCount là field UI demo, BE chưa trả.
 type TaskCardData = Task & {
@@ -66,18 +67,13 @@ export default function TaskCard({ task, onDragStart }: TaskCardProps) {
       <hr className="my-4 border-border" />
 
       <div className="flex items-center justify-between">
-        {task.assignee?.avatar ? (
-          <img
-            src={task.assignee.avatar}
-            alt={task.assignee.name}
-            className="size-8 rounded-full object-cover shadow-soft border border-surface"
-            title={task.assignee.name}
-          />
-        ) : (
-          <div className="size-8 rounded-full bg-surface-soft border border-surface flex items-center justify-center text-xs font-bold text-text-soft" title={task.assignee?.name}>
-            {task.assignee?.name?.charAt(0) || '?'}
-          </div>
-        )}
+        <Avatar
+          name={task.assignee?.name || 'User'}
+          avatarUrl={task.assignee?.avatar}
+          sizeClass="size-8"
+          textClass="text-xs"
+          className="shadow-soft border border-surface"
+        />
 
         <span className={`px-3 py-1 text-xs font-bold rounded-full ${priorityStyles[taskPriority] || priorityStyles.Medium}`}>
           {taskPriority}

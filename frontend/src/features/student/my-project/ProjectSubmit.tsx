@@ -5,7 +5,7 @@ import DueDateCard from '../../../components/ui/student/DueDateCard'
 import UploadFilesCard from '../../../components/ui/student/UploadFilesCard'
 import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
-import { createSubmissionFormData, deleteSubmission } from '../../../services/submission.service' 
+import { createSubmissionFormData, deleteSubmission } from '../../../services/submission.service'
 
 export default function ProjectSubmit() {
   const { projectId } = useParams()
@@ -52,43 +52,35 @@ export default function ProjectSubmit() {
   const sortedSubmissions = [...(project.submissions || [])].sort((a, b) =>
     new Date(b.submittedAt || 0).getTime() - new Date(a.submittedAt || 0).getTime()
   )
-  const latestSub = sortedSubmissions[0]
+  const currentSubmissionRows = sortedSubmissions.filter((submission) => submission.groupId === project.groupId)
   
-  const currentSubmission = latestSub ? {
-    id: latestSub.submissionId,
-    name: latestSub.filePath?.split('/').pop() || 'Tệp đính kèm',
-    url: latestSub.filePath?.startsWith('http') ? latestSub.filePath : `http://localhost:8080${latestSub.filePath}`,
-    date: new Date(latestSub.submittedAt || '').toLocaleString('vi-VN'),
-    rawDate: latestSub.submittedAt || undefined
-  } : null
+  const currentSubmissions = currentSubmissionRows.map((submission) => ({
+    id: submission.submissionId,
+    name: submission.filePath?.split('/').pop() || 'Tệp đính kèm',
+    url: submission.filePath?.startsWith('http') ? submission.filePath : `http://localhost:8080${submission.filePath}`,
+    date: new Date(submission.submittedAt || '').toLocaleString('vi-VN'),
+    rawDate: submission.submittedAt || undefined,
+  }))
 
-  const handleSubmit = async (file: File | null) => {
+  const handleSubmit = async (files: File[], deleteIds: number[]) => {
     if (!project.groupId) return toast.error('Nhóm của bạn chưa đăng ký đồ án!')
 
     setIsSubmitting(true)
     try {
-      if (!file) {
-        if (latestSub) {
-          await deleteSubmission(latestSub.submissionId)
-          toast.success('Đã xóa bài nộp. Hệ thống ghi nhận chưa nộp bài!')
-          fetchProjectData()
-        }
-        setIsSubmitting(false)
-        return;
+      if (deleteIds.length > 0) {
+        await Promise.all(deleteIds.map((id) => deleteSubmission(id)))
       }
 
-      if (latestSub) {
-        await deleteSubmission(latestSub.submissionId)
+      if (files && files.length > 0) {
+        const formData = new FormData()
+        files.forEach((file) => formData.append('files', file))
+        formData.append('groupId', project.groupId.toString())
+
+        await createSubmissionFormData(project.projectId, formData)
       }
 
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('groupId', project.groupId.toString())
-
-      await createSubmissionFormData(project.projectId, formData)
-      
-      toast.success(latestSub ? 'Đã cập nhật bài nộp!' : 'Nộp bài thành công!')
-      fetchProjectData() 
+      toast.success('Đã cập nhật bài nộp thành công!')
+      fetchProjectData()
     } catch (err) {
       const apiErr = err as { message?: string }
       toast.error(apiErr?.message || 'Có lỗi xảy ra khi xử lý.')
@@ -98,7 +90,7 @@ export default function ProjectSubmit() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-10"> 
+    <div className="max-w-4xl mx-auto pb-10">
       <div className="mb-8 text-center sm:text-left">
         <h1 className="text-3xl font-bold text-text mb-2">Submission</h1>
         <p className="text-text-soft text-sm">
@@ -111,12 +103,12 @@ export default function ProjectSubmit() {
           dueDate={project.endDate ?? 'Chưa cập nhật'}
           timeRemaining={timeRemaining}
         />
-        
-        <UploadFilesCard 
-          onSubmit={handleSubmit} 
-          isSubmitting={isSubmitting} 
+
+        <UploadFilesCard
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
           isLocked={isLocked}
-          currentSubmission={currentSubmission}
+          currentSubmissions={currentSubmissions}
           dueDate={project.endDate ?? null}
         />
       </div>
