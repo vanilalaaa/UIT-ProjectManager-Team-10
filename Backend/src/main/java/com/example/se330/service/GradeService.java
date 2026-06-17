@@ -16,13 +16,10 @@ import com.example.se330.dto.grade.GradeResponse;
 import com.example.se330.dto.grade.UpdateGradeRequest;
 import com.example.se330.entity.Grade;
 import com.example.se330.entity.GradeCriterionScore;
-import com.example.se330.entity.Project;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
-import com.example.se330.enums.ProjectStatus;
 import com.example.se330.repository.GradeRepository;
 import com.example.se330.repository.GroupMemberRepository;
-import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.UserRepository;
 
@@ -38,7 +35,7 @@ public class GradeService {
     private final SubmissionRepository submissionRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectStatusService projectStatusService;
 
     public GradeResponse createGrade(Long projectId, CreateGradeRequest request, Long teacherId) {
 
@@ -70,32 +67,12 @@ public class GradeService {
                 request.getScore(), request.getMaxScore());
 
         // Đã chấm xong → đồ án của nhóm chuyển sang GRADED.
-        markProjectGraded(submission);
-
-        return toResponse(gradeRepository.save(grade));
+        Grade saved = gradeRepository.save(grade);
+        projectStatusService.refresh(submission.getProject());
+        return toResponse(saved);
     }
 
-    // Có điểm cho bài nộp → đồ án của nhóm chuyển sang GRADED, trừ khi đã ở
-    // trạng thái kết thúc (COMPLETED/CANCELLED) hoặc đã GRADED rồi.
-    private void markProjectGraded(Submission submission) {
-        if (submission == null) {
-            return;
-        }
-        Project project = submission.getProject();
-        if (project == null) {
-            return;
-        }
-        ProjectStatus status = project.getStatus();
-        if (status == ProjectStatus.GRADED
-                || status == ProjectStatus.COMPLETED
-                || status == ProjectStatus.CANCELLED) {
-            return;
-        }
-        project.setStatus(ProjectStatus.GRADED);
-        projectRepository.save(project);
-    }
-
-
+    // Có điểm cho bài nộp → đồ án của nhóm chuyển sang GRADED.
     public GradeResponse updateGrade(Long gradeId, UpdateGradeRequest request) {
 
         Grade grade = gradeRepository.findById(gradeId)
@@ -123,7 +100,7 @@ public class GradeService {
 
         // Sửa điểm trên bài đã/từng chấm cũng đảm bảo đồ án ở trạng thái GRADED
         // (vd. điểm được tạo trước khi có logic chuyển trạng thái).
-        markProjectGraded(grade.getSubmission());
+        projectStatusService.refresh(grade.getSubmission().getProject());
 
         return toResponse(gradeRepository.save(grade));
     }

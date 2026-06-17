@@ -59,7 +59,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/admin/categories')) return 'Quản lý danh mục'
   if (pathname.startsWith('/admin/courses')) return 'Quản lý lớp học'
   if (pathname === '/profile') return 'Cài đặt hồ sơ'
-  return 'EduCollaborate'
+  return 'Quản lý lớp học'
 }
 
 function BellIcon({ muted = false }: { muted?: boolean }) {
