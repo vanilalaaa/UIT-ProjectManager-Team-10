@@ -15,11 +15,14 @@ import com.example.se330.dto.grade.GradeResponse;
 import com.example.se330.dto.grade.UpdateGradeRequest;
 import com.example.se330.entity.Grade;
 import com.example.se330.entity.GradeCriterionScore;
+import com.example.se330.entity.Project;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
+import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.repository.GradeRepository;
 import com.example.se330.repository.GroupMemberRepository;
+import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.UserRepository;
 
@@ -35,6 +38,7 @@ public class GradeService {
     private final SubmissionRepository submissionRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
 
     public GradeResponse createGrade(Long projectId, CreateGradeRequest request, Long teacherId) {
 
@@ -65,6 +69,13 @@ public class GradeService {
 
         submission.setStatus(SubmissionStatus.GRADED);
         submissionRepository.save(submission);
+
+        // Đã chấm xong → đồ án của nhóm chuyển từ IN_PROGRESS sang GRADED.
+        Project project = submission.getProject();
+        if (project != null) {
+            project.setStatus(ProjectStatus.GRADED);
+            projectRepository.save(project);
+        }
 
         return toResponse(gradeRepository.save(grade));
     }
