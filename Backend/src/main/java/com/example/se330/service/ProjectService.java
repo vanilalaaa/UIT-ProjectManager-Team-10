@@ -3,6 +3,7 @@ package com.example.se330.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class ProjectService {
     private final RegistrationRepository registrationRepository;
     private final TaskRepository taskRepository;
     private final SubmissionRepository submissionRepository;
+    private final ProjectStatusService projectStatusService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -47,13 +49,15 @@ public class ProjectService {
             AdminCategoryService adminCategoryService,
             RegistrationRepository registrationRepository,
             TaskRepository taskRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository,
+            ProjectStatusService projectStatusService) {
         this.projectRepository = projectRepository;
         this.courseService = courseService;
         this.adminCategoryService = adminCategoryService;
         this.registrationRepository = registrationRepository;
         this.taskRepository = taskRepository;
         this.submissionRepository = submissionRepository;
+        this.projectStatusService = projectStatusService;
     }
 
     public ProjectResponse createProject(Long courseId, CreateProjectRequest req) {
@@ -64,6 +68,7 @@ public class ProjectService {
         project.setDescription(req.getDescription());
         project.setStartDate(req.getStartDate());
         project.setEndDate(req.getEndDate());
+        project.setSubmissionLocked(isDeadlinePassed(req.getEndDate()));
         project.setStatus(ProjectStatus.AVAILABLE);
 
         Project saved = this.projectRepository.save(project);
@@ -104,6 +109,7 @@ public class ProjectService {
         project.setDescription(req.getDescription());
         project.setStartDate(req.getStartDate());
         project.setEndDate(req.getEndDate());
+        project.setSubmissionLocked(isDeadlinePassed(req.getEndDate()));
 
         if (req.getStatus() != null) {
             project.setStatus(req.getStatus());
@@ -116,6 +122,7 @@ public class ProjectService {
         }
 
         Project updated = this.projectRepository.save(project);
+        projectStatusService.refresh(updated);
         return toResponse(updated);
     }
 
@@ -172,7 +179,6 @@ public class ProjectService {
                     .type(FeedType.SUBMISSION)
                     .referenceId(submission.getId())
                     .title("đã nộp tệp đính kèm")
-                    .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                     .projectId(project.getId())
                     .projectTitle(project.getTitle())
                     .timestamp(submission.getSubmittedAt())
@@ -210,6 +216,8 @@ public class ProjectService {
                 .map(ProjectService::toSubmission)
                 .collect(Collectors.toList());
 
+        ProjectStatus effectiveStatus = projectStatusService.resolve(project);
+
         return ProjectResponse.builder()
                 .projectId(project.getId())
                 .courseId(course != null ? course.getId() : null)
@@ -219,7 +227,7 @@ public class ProjectService {
                 .categoryName(category != null ? category.getName() : null)
                 .title(project.getTitle())
                 .description(project.getDescription())
-                .status(project.getStatus())
+                .status(effectiveStatus)
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
                 .groupId(group != null ? group.getId() : null)
@@ -228,7 +236,12 @@ public class ProjectService {
                 .submissions(submissions)
                 .memberCount(members.size())
                 .submissionCount(submissions.size())
+                .submissionLocked(isDeadlinePassed(project.getEndDate()))
                 .build();
+    }
+
+    private static boolean isDeadlinePassed(LocalDate endDate) {
+        return endDate != null && LocalDate.now().isAfter(endDate);
     }
 
     private ProjectMemberResponse toMember(User user) {
@@ -248,7 +261,6 @@ public class ProjectService {
 
         return ProjectSubmissionResponse.builder()
                 .submissionId(submission.getId())
-                .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                 .submittedAt(submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null)
                 .filePath(submission.getFilePath())
                 .groupId(group != null ? group.getId() : null)

@@ -1,7 +1,11 @@
 package com.example.se330.service;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,17 +73,36 @@ public class RequirementService {
         LocalDate newDeadline = parseDate(req.getDeadline());
         requirement.setDeadline(newDeadline);
 
-        requirement.getCriteria().clear();
+        // Cập nhật barem TẠI CHỖ theo id thay vì xóa sạch rồi tạo lại. Nếu tạo lại,
+        // các tiêu chí cũ nhận criterion_id mới khiến điểm đã chấm (GradeCriterionScore
+        // tham chiếu criterion_id) không còn khớp -> điểm "biến mất" khi chỉ sửa deadline.
         List<RubricCriterionRequest> incoming = req.getCriteria() != null ? req.getCriteria() : List.of();
+        List<RubricCriterion> existing = requirement.getCriteria();
+        Map<Long, RubricCriterion> existingById = existing.stream()
+                .filter(c -> c.getId() != null)
+                .collect(Collectors.toMap(RubricCriterion::getId, c -> c));
+
+        Set<Long> keepIds = new HashSet<>();
         int order = 0;
         for (RubricCriterionRequest c : incoming) {
-            requirement.getCriteria().add(RubricCriterion.builder()
-                    .requirement(requirement)
-                    .name(c.getName())
-                    .maxScore(c.getMaxScore())
-                    .orderIndex(order++)
-                    .build());
+            RubricCriterion target = c.getId() != null ? existingById.get(c.getId()) : null;
+            if (target != null) {
+                // Giữ nguyên criterion_id, chỉ cập nhật nội dung.
+                target.setName(c.getName());
+                target.setMaxScore(c.getMaxScore());
+                target.setOrderIndex(order++);
+                keepIds.add(target.getId());
+            } else {
+                existing.add(RubricCriterion.builder()
+                        .requirement(requirement)
+                        .name(c.getName())
+                        .maxScore(c.getMaxScore())
+                        .orderIndex(order++)
+                        .build());
+            }
         }
+        // Xóa tiêu chí cũ không còn trong barem mới (orphanRemoval=true xóa khỏi DB).
+        existing.removeIf(c -> c.getId() != null && !keepIds.contains(c.getId()));
 
         Requirement savedReq = this.requirementRepository.save(requirement);
 
@@ -88,6 +111,7 @@ public class RequirementService {
             if (projects != null && !projects.isEmpty()) {
                 for (Project p : projects) {
                     p.setEndDate(newDeadline);
+                    p.setSubmissionLocked(isDeadlinePassed(newDeadline));
                 }
                 projectRepository.saveAll(projects);
             }
@@ -100,6 +124,10 @@ public class RequirementService {
         if (value == null || value.isBlank()) return null;
         try { return LocalDate.parse(value); } 
         catch (Exception e) { return null; }
+    }
+
+    private static boolean isDeadlinePassed(LocalDate deadline) {
+        return deadline != null && LocalDate.now().isAfter(deadline);
     }
 
     private RequirementResponse toResponse(Requirement r) {

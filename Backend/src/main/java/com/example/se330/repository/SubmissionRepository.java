@@ -11,6 +11,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     List<Submission> findByProject_Id(Long projectId);
     List<Submission> findByGroup_Id(Long groupId);
+    boolean existsByProject_Id(Long projectId);
     
     Submission findTopByGroup_IdOrderBySubmittedAtDesc(Long groupId);
 }

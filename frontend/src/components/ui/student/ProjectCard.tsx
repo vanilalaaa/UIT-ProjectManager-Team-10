@@ -15,7 +15,11 @@ export default function ProjectCard({
   isTeacherView
 }: ProjectCardProps) {
   const isRegistered = !!groupName
-  const isOverdue = !!project.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < new Date().getTime()
+  const hasSubmission = project.groupId != null
+    ? project.submissions?.some((submission) => submission.groupId === project.groupId)
+    : (project.submissions?.length ?? 0) > 0
+  const deadlinePassed = !!project.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < new Date().getTime()
+  const isOverdue = deadlinePassed && !hasSubmission
 
   return (
     <div className={`flex flex-col rounded-card border-t-4 bg-surface p-5 shadow-soft hover:shadow-card transition-shadow h-full ${isOverdue ? 'border-red-400' : 'border-primary'}`}>

@@ -30,7 +30,6 @@ import com.example.se330.enums.JoinStatus;
 import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
-import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CategoryRepository;
 import com.example.se330.repository.CourseRepository;
@@ -220,11 +219,11 @@ public class DataInitializer implements CommandLineRunner {
                 ProjectStatus.AVAILABLE, today, today.plusMonths(3));
 
         // --- Nộp bài (đã nộp / nộp trễ / đã chấm / chưa nộp) ---
-        submission(pAlpha, gAlpha, SubmissionStatus.SUBMITTED, s.get(0), LocalDateTime.now().minusDays(3),
+        submission(pAlpha, gAlpha, s.get(0), LocalDateTime.now().minusDays(3),
                 "/files/submissions/demo/baocao_alpha.pdf");
-        Submission subGamma = submission(pGamma, gGamma, SubmissionStatus.GRADED, s.get(8), LocalDateTime.now().minusWeeks(1),
+        Submission subGamma = submission(pGamma, gGamma, s.get(8), LocalDateTime.now().minusWeeks(1),
                 "/files/submissions/demo/baocao_gamma.pdf");
-        Submission subDelta = submission(pDelta, gDelta, SubmissionStatus.LATE, s.get(11), LocalDateTime.now().minusDays(2),
+        Submission subDelta = submission(pDelta, gDelta, s.get(11), LocalDateTime.now().minusDays(2),
                 "/files/submissions/demo/baocao_delta.pdf");
         // pEpsilon: chưa nộp bài
 
@@ -311,10 +310,10 @@ public class DataInitializer implements CommandLineRunner {
                 .note(note).build());
     }
 
-    private Submission submission(Project project, Group group, SubmissionStatus status, User submittedBy,
+    private Submission submission(Project project, Group group, User submittedBy,
             LocalDateTime submittedAt, String filePath) {
         return submissionRepository.save(Submission.builder()
-                .project(project).group(group).status(status).submittedBy(submittedBy)
+                .project(project).group(group).submittedBy(submittedBy)
                 .submittedAt(submittedAt).filePath(filePath).build());
     }
 

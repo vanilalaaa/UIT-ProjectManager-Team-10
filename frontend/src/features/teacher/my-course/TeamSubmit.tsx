@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProjectById } from '../../../services/project.service';
-import StatusBadge from '../../../components/ui/student/StatusBadge';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import type { Project } from '../../../types/api/project';
 
@@ -53,7 +52,6 @@ export default function TeamSubmit() {
                 </a>
               </div>
               <div className="flex items-center gap-4">
-                <StatusBadge status={sub.status} />
                 <button
                   onClick={() => setExpandedId(expandedId === sub.submissionId ? null : sub.submissionId)}
                   className="text-xs font-bold text-primary hover:underline"

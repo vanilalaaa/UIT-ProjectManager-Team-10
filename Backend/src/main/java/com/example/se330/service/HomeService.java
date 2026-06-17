@@ -28,7 +28,6 @@ import com.example.se330.enums.GroupMemberStatus;
 import com.example.se330.enums.ProjectStatus;
 import com.example.se330.enums.RegistrationStatus;
 import com.example.se330.enums.Role;
-import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.CourseRepository;
 import com.example.se330.repository.GroupMemberRepository;
@@ -97,7 +96,6 @@ public class HomeService {
                         .type(FeedType.SUBMISSION)
                         .referenceId(submission.getId())
                         .title("Nộp bài cho đồ án: " + project.getTitle())
-                        .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                         .projectId(project.getId())
                         .courseId(project.getCourse() != null ? project.getCourse().getId() : null)
                         .projectTitle(project.getTitle())
@@ -141,7 +139,6 @@ public class HomeService {
 
         Map<String, Long> tasksByStatus = initCounts(TaskStatus.values());
         Map<String, Long> projectsByStatus = initCounts(ProjectStatus.values());
-        Map<String, Long> submissionsByStatus = initCounts(SubmissionStatus.values());
 
         long totalTasks = 0;
         long completedTasks = 0;
@@ -174,11 +171,9 @@ public class HomeService {
 
             for (Submission submission : submissionRepository.findByProject_Id(project.getId())) {
                 totalSubmissions++;
-                if (submission.getStatus() != null) {
-                    submissionsByStatus.merge(submission.getStatus().name(), 1L, Long::sum);
-                    if (submission.getStatus() != SubmissionStatus.GRADED) {
-                        pendingSubmissions++;
-                    }
+                // Bài chưa có điểm = bài chờ chấm.
+                if (submission.getGrade() == null) {
+                    pendingSubmissions++;
                 }
             }
         }
@@ -231,7 +226,6 @@ public class HomeService {
                 .pendingSubmissions(pendingSubmissions)
                 .tasksByStatus(tasksByStatus)
                 .projectsByStatus(projectsByStatus)
-                .submissionsByStatus(submissionsByStatus)
                 .quickStats(quickStats)
                 .build();
     }
@@ -305,7 +299,7 @@ public class HomeService {
             case "pendingGrades": // Bài chờ chấm
                 for (Project project : resolveProjects(user)) {
                     for (Submission s : submissionRepository.findByProject_Id(project.getId())) {
-                        if (s.getStatus() != SubmissionStatus.GRADED) {
+                        if (s.getGrade() == null) {
                             result.add(StatDetailResponse.builder()
                                     .id(s.getId())
                                     .type("SUBMISSION")
@@ -313,7 +307,6 @@ public class HomeService {
                                             ? "Bài nộp của nhóm " + s.getGroup().getName()
                                             : "Bài nộp #" + s.getId())
                                     .subtitle(project.getTitle())
-                                    .status(s.getStatus() != null ? s.getStatus().name() : null)
                                     .timestamp(s.getSubmittedAt())
                                     .build());
                         }

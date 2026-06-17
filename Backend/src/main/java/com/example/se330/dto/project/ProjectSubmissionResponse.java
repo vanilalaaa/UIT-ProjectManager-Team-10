@@ -7,7 +7,6 @@ import lombok.Data;
 @Builder
 public class ProjectSubmissionResponse {
     private Long submissionId;
-    private String status;
     private String submittedAt;
     private String filePath;
     private Long groupId;

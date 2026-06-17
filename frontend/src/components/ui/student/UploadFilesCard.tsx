@@ -5,7 +5,6 @@ type SubmittedFile = {
   url: string
   name: string
   date: string
-  rawDate?: string
 }
 
 interface UploadFilesCardProps {
@@ -13,7 +12,6 @@ interface UploadFilesCardProps {
   isSubmitting?: boolean
   isLocked?: boolean
   currentSubmissions?: SubmittedFile[]
-  dueDate?: string | null
 }
 
 const MAX_FILES = 5
@@ -25,7 +23,6 @@ export default function UploadFilesCard({
   isSubmitting = false,
   isLocked = false,
   currentSubmissions = [],
-  dueDate,
 }: UploadFilesCardProps) {
   const [files, setFiles] = useState<File[]>([])
   const [deleteIds, setDeleteIds] = useState<number[]>([])
@@ -45,7 +42,6 @@ export default function UploadFilesCard({
 
   const keptSubmissions = currentSubmissions.filter((submission) => !deleteIds.includes(submission.id))
   const selectedTotalSize = files.reduce((sum, file) => sum + file.size, 0)
-  const latestSubmission = currentSubmissions[0] ?? null
   const hasChanges = files.length > 0 || deleteIds.length > 0
 
   const formatFileSize = (bytes: number) => {
@@ -141,28 +137,6 @@ export default function UploadFilesCard({
     setError(null)
   }
 
-  const renderEarlyTime = () => {
-    if (!latestSubmission?.rawDate || !dueDate) return null
-    const subTime = new Date(latestSubmission.rawDate).getTime()
-    const dueTime = new Date(`${dueDate}T23:59:59`).getTime()
-    const diff = dueTime - subTime
-    if (diff <= 0) return null
-
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const timeStr = `${d > 0 ? `${d} ngày ` : ''}${h > 0 ? `${h} giờ ` : ''}${m} phút`
-
-    return (
-      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full">
-        <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Nộp sớm: {timeStr}
-      </div>
-    )
-  }
-
   const renderSubmittedList = (editable: boolean) => (
     <div className="space-y-2">
       {currentSubmissions.map((submission) => {
@@ -225,7 +199,6 @@ export default function UploadFilesCard({
         <div className="w-full bg-surface-soft p-5 rounded-xl border border-border space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <p className="text-sm font-bold text-text">{currentSubmissions.length} file đã nộp</p>
-            {renderEarlyTime()}
           </div>
           {renderSubmittedList(false)}
         </div>

@@ -2,6 +2,7 @@ export type ScoreCriteria = {
   label: string
   score: number
   maxScore: number
+  note?: string
   colorClass: string 
   bgFillClass: string
 }
@@ -33,6 +34,11 @@ export default function ScorecardBreakdown({ criteria }: ScorecardBreakdownProps
                     style={{ width: `${percentage}%` }}
                   ></div>
                 </div>
+                {item.note ? (
+                  <div className="mt-2 rounded-lg border border-border bg-surface-soft/60 px-3 py-2 text-xs italic leading-relaxed text-text-soft">
+                    {item.note}
+                  </div>
+                ) : null}
               </div>
             )
           })}

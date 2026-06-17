@@ -8,7 +8,6 @@ export type ProjectMember = {
 
 export type ProjectSubmissionLite = {
   submissionId: number
-  status: string
   submittedAt: string | null
   filePath: string | null
   groupId: number | null
