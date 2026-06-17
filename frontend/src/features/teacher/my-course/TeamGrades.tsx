@@ -87,6 +87,28 @@ export default function TeamGrades() {
     if (num >= 0 && num <= crit.maxScore) setScores((prev) => ({ ...prev, [crit.id]: num }));
   };
 
+  // Chỉ được chấm khi đã qua ngày kết thúc của đồ án, đồng nhất với backend
+  // (GradeService: LocalDate.now().isAfter(endDate)).
+  const deadlinePassed = (() => {
+    if (!project?.endDate) return false;
+    const end = new Date(project.endDate);
+    if (Number.isNaN(end.getTime())) return false;
+    const now = new Date();
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return today.getTime() > endDay.getTime();
+  })();
+
+  const handleStartGrading = () => {
+    // Sửa lại điểm cũ thì luôn cho phép; chỉ chặn khi bắt đầu chấm mà chưa hết hạn.
+    if (!isGraded && !deadlinePassed) {
+      setError('Chưa hết hạn nộp bài, không thể chấm điểm.');
+      return;
+    }
+    setError(null);
+    setIsEditing(true);
+  };
+
   const handleSave = async () => {
     if (!submission) return;
     setSaving(true);
@@ -154,7 +176,7 @@ export default function TeamGrades() {
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xl font-bold">Barem chấm điểm</h3>
               {!isEditing && (
-                <button onClick={() => setIsEditing(true)} className="px-6 py-2 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg">
+                <button onClick={handleStartGrading} className="px-6 py-2 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg">
                   {isGraded ? 'Sửa điểm' : 'Bắt đầu chấm'}
                 </button>
               )}

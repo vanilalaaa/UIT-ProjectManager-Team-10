@@ -1,6 +1,7 @@
 
 package com.example.se330.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,13 @@ public class GradeService {
 
         if (submission.getProject() == null || !submission.getProject().getId().equals(projectId)) {
             throw new IllegalArgumentException("Bài nộp không thuộc project này");
+        }
+
+        // Chỉ được chấm bài khi đã hết hạn deadline (qua ngày kết thúc của đồ án),
+        // đồng nhất với logic tự động khóa nộp bài trong SubmissionDeadlineScheduler.
+        LocalDate endDate = submission.getProject().getEndDate();
+        if (endDate == null || !LocalDate.now().isAfter(endDate)) {
+            throw new IllegalStateException("Chưa hết hạn nộp bài, không thể chấm điểm");
         }
 
         if (gradeRepository.findBySubmission_Id(submission.getId()).isPresent()) {
