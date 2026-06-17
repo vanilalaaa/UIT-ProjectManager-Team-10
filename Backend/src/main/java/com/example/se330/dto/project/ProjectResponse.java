@@ -37,4 +37,5 @@ public class ProjectResponse {
     private List<ProjectSubmissionResponse> submissions;
     private Integer memberCount;
     private Integer submissionCount;
+    private Boolean submissionLocked;
 }

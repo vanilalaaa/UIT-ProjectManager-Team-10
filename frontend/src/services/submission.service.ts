@@ -17,9 +17,9 @@ export const listProjectSubmissions = (
 export const createSubmissionFormData = (
   projectId: number | string,
   formData: FormData,
-): Promise<ApiResponse<Submission[]>> =>
+): Promise<Submission[]> =>
   axiosClient
-    .post<ApiResponse<Submission[]>>(`/projects/${projectId}/submissions`, formData, {
+    .post<Submission[]>(`/projects/${projectId}/submissions`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

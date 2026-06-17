@@ -21,13 +21,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path uploadDir = Paths.get("uploads").toAbsolutePath().normalize();
-        Path backendUploadDir = Paths.get("Backend", "uploads").toAbsolutePath().normalize();
+        Path cwd = Paths.get("").toAbsolutePath().normalize();
+        boolean runningFromBackend = cwd.getFileName() != null
+                && "Backend".equalsIgnoreCase(cwd.getFileName().toString());
+        Path backendUploadDir = (runningFromBackend ? cwd : cwd.resolve("Backend"))
+                .resolve("uploads")
+                .normalize();
+        Path legacyUploadDir = (runningFromBackend && cwd.getParent() != null ? cwd.getParent() : cwd)
+                .resolve("uploads")
+                .normalize();
 
         registry.addResourceHandler("/files/**")
                 .addResourceLocations(
-                        "file:" + uploadDir + "/",
-                        "file:" + backendUploadDir + "/"
+                        backendUploadDir.toUri().toString(),
+                        legacyUploadDir.toUri().toString()
                 );
     }
 }

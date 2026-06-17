@@ -8,6 +8,4 @@ export type SubmissionCreateRequest = {
   note?: string
 }
 
-export type SubmissionUpdateRequest = Partial<SubmissionCreateRequest> & {
-  status?: string
-}
+export type SubmissionUpdateRequest = Partial<SubmissionCreateRequest>
