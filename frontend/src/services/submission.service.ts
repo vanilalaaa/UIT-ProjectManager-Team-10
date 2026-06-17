@@ -1,4 +1,5 @@
 import axiosClient from '../lib/api/axiosClient'
+import type { ApiResponse } from '../types/api/common'
 import type {
   Submission,
   SubmissionUpdateRequest,
@@ -16,9 +17,9 @@ export const listProjectSubmissions = (
 export const createSubmissionFormData = (
   projectId: number | string,
   formData: FormData,
-): Promise<Submission> =>
+): Promise<ApiResponse<Submission[]>> =>
   axiosClient
-    .post<Submission>(`/projects/${projectId}/submissions`, formData, {
+    .post<ApiResponse<Submission[]>>(`/projects/${projectId}/submissions`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -35,5 +36,5 @@ export const updateSubmission = (
 
 export const deleteSubmission = (
   submissionId: number | string,
-): Promise<void> =>
-  axiosClient.delete(`/submissions/${submissionId}`).then(() => undefined)
+): Promise<ApiResponse<void>> =>
+  axiosClient.delete<ApiResponse<void>>(`/submissions/${submissionId}`).then((r) => r.data)

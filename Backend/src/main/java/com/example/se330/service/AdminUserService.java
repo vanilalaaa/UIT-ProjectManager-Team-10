@@ -117,6 +117,17 @@ public class AdminUserService {
         return toUserDto(user);
     }
 
+    public UserDto resetPassword(Long id, String newPassword) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        User saved = userRepository.save(user);
+        return toUserDto(saved);
+    }
+
     private UserDto toUserDto(User user) {
         return UserDto.builder()
                 .id(user.getId())

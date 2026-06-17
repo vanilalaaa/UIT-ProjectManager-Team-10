@@ -5,17 +5,22 @@ import AdminToolbar from './components/AdminToolbar'
 import AdminPagination from './components/AdminPagination'
 import { AdminEmpty, AdminError, AdminLoading } from './components/AdminStates'
 import UserFormModal from './users/UserFormModal'
+import Modal from '../../components/ui/Modal'
 import { useAdminUsers } from './hooks/useAdminUsers'
 import type { ApiError } from '../../lib/api/axiosClient'
-import type { AdminUserListItem, Role } from '../../types/api/user'
+import type { AdminUserListItem } from '../../types/api/user'
+import type { Role } from '../../types/api/auth'
 
 const ROLES: ReadonlyArray<Role | ''> = ['', 'ADMIN', 'TEACHER', 'STUDENT']
 
 export default function ManageUsersPage() {
-  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus } =
+  const { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus, resetPassword } =
     useAdminUsers()
   const [editing, setEditing] = useState<AdminUserListItem | null>(null)
   const [openForm, setOpenForm] = useState(false)
+  const [resetting, setResetting] = useState<AdminUserListItem | null>(null)
+  const [newPwd, setNewPwd] = useState('')
+  const [savingPwd, setSavingPwd] = useState(false)
 
   const handleToggleActive = async (user: AdminUserListItem) => {
     try {
@@ -25,6 +30,27 @@ export default function ManageUsersPage() {
       if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
         toast.error(apiErr?.message ?? 'Không cập nhật được trạng thái.')
       }
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetting) return
+    if (newPwd.trim().length < 6) {
+      toast.error('Mật khẩu tối thiểu 6 ký tự.')
+      return
+    }
+    setSavingPwd(true)
+    try {
+      await resetPassword(resetting.id, newPwd.trim())
+      setResetting(null)
+      setNewPwd('')
+    } catch (err) {
+      const apiErr = err as ApiError
+      if (apiErr?.status !== 0 && apiErr?.status !== 401 && apiErr?.status !== 403) {
+        toast.error(apiErr?.message ?? 'Không đặt lại được mật khẩu.')
+      }
+    } finally {
+      setSavingPwd(false)
     }
   }
 
@@ -143,6 +169,16 @@ export default function ManageUsersPage() {
                           >
                             {user.isActive ? 'Khoá' : 'Mở khoá'}
                           </button>
+                          <button
+                            className="rounded-md border border-border px-3 py-1 text-xs hover:bg-surface-soft"
+                            onClick={() => {
+                              setResetting(user)
+                              setNewPwd('')
+                            }}
+                            type="button"
+                          >
+                            Đặt lại MK
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -169,6 +205,45 @@ export default function ManageUsersPage() {
         onCreate={create}
         onUpdate={update}
       />
+
+      <Modal
+        open={!!resetting}
+        title={`Đặt lại mật khẩu — ${resetting?.name ?? ''}`}
+        onClose={() => setResetting(null)}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-soft">
+            Nhập mật khẩu mới cho{' '}
+            <span className="font-semibold text-text">{resetting?.email}</span>.
+          </p>
+          <input
+            type="text"
+            value={newPwd}
+            onChange={(e) => setNewPwd(e.target.value)}
+            placeholder="Mật khẩu mới (tối thiểu 6 ký tự)"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-surface-soft"
+              disabled={savingPwd}
+              onClick={() => setResetting(null)}
+            >
+              Huỷ
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-surface disabled:opacity-60"
+              disabled={savingPwd}
+              onClick={handleResetPassword}
+            >
+              {savingPwd ? 'Đang lưu…' : 'Đặt lại'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

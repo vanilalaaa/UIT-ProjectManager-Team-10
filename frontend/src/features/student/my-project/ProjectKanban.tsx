@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import TaskCard from '../../../components/ui/student/TaskCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CreateTaskModal from '../../../components/ui/student/CreateTaskModal'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import type { Task, UserLite, BoardGroup, NewTaskInput } from '../../../types/api/task'
 import {
   getProjectBoard,
@@ -27,6 +28,7 @@ export default function ProjectKanban() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -85,12 +87,15 @@ export default function ProjectKanban() {
     })
   }
 
-  const handleDeleteTask = (taskId: number) => {
-    if (!confirm('Xác nhận xóa Task này khỏi hệ thống?')) return
+  const handleDeleteTask = () => {
+    if (!deleteTarget) return
+    const taskId = deleteTarget.taskId
     const snapshot = tasks
     setTasks(prev => prev.filter(t => t.taskId !== taskId))
-    deleteTask(taskId)
-      .then(() => toast.success('Đã xóa Task.'))
+    return deleteTask(taskId)
+      .then(() => {
+        toast.success(`Đã xóa Task "${deleteTarget.title}".`)
+      })
       .catch(() => {
         setTasks(snapshot)
         toast.error('Không xóa được Task.')
@@ -172,8 +177,8 @@ export default function ProjectKanban() {
                   />
                   {isLeader && (
                     <button
-                      onClick={() => handleDeleteTask(task.taskId)}
-                      className="absolute -top-2 -right-2 size-6 bg-warning text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+                      onClick={() => setDeleteTarget(task)}
+                      className="absolute -top-2 -right-2 z-10 flex size-7 items-center justify-center rounded-full bg-rose-600 text-white opacity-0 shadow-md shadow-rose-200 ring-2 ring-surface transition-all hover:bg-rose-700 group-hover:opacity-100"
                       title="Xóa Task"
                     >
                       <svg className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -199,6 +204,21 @@ export default function ProjectKanban() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateTask}
         members={currentGroup.members}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa Task"
+        description={
+          deleteTarget
+            ? `Bạn có chắc chắn muốn xóa Task "${deleteTarget.title}" khỏi hệ thống không?`
+            : undefined
+        }
+        confirmLabel="Xóa Task"
+        cancelLabel="Giữ lại"
+        destructive
+        onConfirm={handleDeleteTask}
+        onClose={() => setDeleteTarget(null)}
       />
     </div>
   )

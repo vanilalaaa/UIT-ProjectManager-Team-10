@@ -5,6 +5,7 @@ import {
   createUser,
   listUsers,
   patchUser,
+  resetUserPassword,
   updateUser,
 } from '../../../services/admin/user.service'
 import type { ApiError } from '../../../lib/api/axiosClient'
@@ -83,5 +84,10 @@ export function useAdminUsers() {
     [refetch],
   )
 
-  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus }
+  const resetPassword = useCallback(async (id: number | string, newPassword: string) => {
+    await resetUserPassword(id, newPassword)
+    toast.success('Đã đặt lại mật khẩu.')
+  }, [])
+
+  return { data, isLoading, error, query, setQuery, refetch, create, update, toggleStatus, resetPassword }
 }
