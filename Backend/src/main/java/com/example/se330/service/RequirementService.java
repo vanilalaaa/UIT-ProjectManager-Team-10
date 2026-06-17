@@ -111,6 +111,7 @@ public class RequirementService {
             if (projects != null && !projects.isEmpty()) {
                 for (Project p : projects) {
                     p.setEndDate(newDeadline);
+                    p.setSubmissionLocked(isDeadlinePassed(newDeadline));
                 }
                 projectRepository.saveAll(projects);
             }
@@ -123,6 +124,10 @@ public class RequirementService {
         if (value == null || value.isBlank()) return null;
         try { return LocalDate.parse(value); } 
         catch (Exception e) { return null; }
+    }
+
+    private static boolean isDeadlinePassed(LocalDate deadline) {
+        return deadline != null && LocalDate.now().isAfter(deadline);
     }
 
     private RequirementResponse toResponse(Requirement r) {

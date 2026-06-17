@@ -49,12 +49,7 @@ public class GradeService {
             throw new IllegalArgumentException("Bài nộp không thuộc project này");
         }
 
-        // Chỉ được chấm bài khi đã hết hạn deadline (qua ngày kết thúc của đồ án),
-        // đồng nhất với logic tự động khóa nộp bài trong SubmissionDeadlineScheduler.
-        LocalDate endDate = submission.getProject().getEndDate();
-        if (endDate == null || !LocalDate.now().isAfter(endDate)) {
-            throw new IllegalStateException("Chưa hết hạn nộp bài, không thể chấm điểm");
-        }
+        ensureDeadlinePassed(submission);
 
         if (gradeRepository.findBySubmission_Id(submission.getId()).isPresent()) {
             throw new IllegalStateException(
@@ -106,6 +101,8 @@ public class GradeService {
         Grade grade = gradeRepository.findById(gradeId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy điểm"));
 
+        ensureDeadlinePassed(grade.getSubmission());
+
         if (request.getFeedback() != null) {
             grade.setFeedback(request.getFeedback());
         }
@@ -129,6 +126,17 @@ public class GradeService {
         markProjectGraded(grade.getSubmission());
 
         return toResponse(gradeRepository.save(grade));
+    }
+
+    private void ensureDeadlinePassed(Submission submission) {
+        if (submission == null || submission.getProject() == null) {
+            throw new IllegalArgumentException("Bài nộp không hợp lệ");
+        }
+
+        LocalDate endDate = submission.getProject().getEndDate();
+        if (endDate == null || !LocalDate.now().isAfter(endDate)) {
+            throw new IllegalStateException("Chưa hết hạn nộp bài, không thể chấm điểm");
+        }
     }
 
     // Gắn danh sách điểm chi tiết vào grade và tính score/maxScore tổng = tổng các tiêu chí.

@@ -1,13 +1,10 @@
 package com.example.se330.service;
 
 import com.example.se330.dto.submission.UpdateSubmissionRequest;
-import com.example.se330.entity.*;
-import com.example.se330.repository.*;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
-import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.SubmissionRepository;
@@ -40,7 +37,6 @@ public class SubmissionService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
 
-    private static final String UPLOAD_DIR = "uploads/submissions/";
     private static final int MAX_FILES = 5;
     private static final long MAX_TOTAL_SIZE = 50L * 1024L * 1024L;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "docx", "zip", "rar");
@@ -55,7 +51,7 @@ public class SubmissionService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy project"));
 
-        if (isSubmissionLocked(project)) {
+        if (refreshSubmissionLock(project)) {
             throw new IllegalStateException("Đã hết hạn nộp bài. Bài nộp đã bị khóa.");
         }
 
@@ -65,8 +61,10 @@ public class SubmissionService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
 
-        Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
-        Files.createDirectories(uploadPath);
+        Path uploadPath = getSubmissionUploadRoot();
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
 
         String uniqueFolder = "group_" + group.getId() + "_" + System.currentTimeMillis();
         Path submissionFolder = uploadPath.resolve(uniqueFolder);
@@ -75,29 +73,10 @@ public class SubmissionService {
             Files.createDirectories(submissionFolder);
         }
 
-        String originalFileName = file.getOriginalFilename();
-        Path filePath = submissionFolder.resolve(originalFileName);
-        
-        try {
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace(); 
-            throw new IOException("Lỗi không thể lưu file vào ổ cứng: " + e.getMessage());
-        }
-
-        Submission submission = Submission.builder()
-                .filePath("/files/submissions/" + uniqueFolder + "/" + originalFileName)
-                .project(project)
-                .group(group)
-                .submittedBy(user)
-                .submittedAt(LocalDateTime.now())
-                .build();
-
-        return submissionRepository.save(submission);
-        Files.createDirectories(submissionFolder);
-
         LocalDateTime submittedAt = LocalDateTime.now();
         Set<String> usedNames = new HashSet<>();
+        
+        // Xử lý lưu trữ đa tệp (Multiple files) và tạo thực thể Submission tương ứng
         List<Submission> submissions = files.stream().map(file -> {
             try {
                 String storedFileName = storeSubmissionFile(file, submissionFolder, usedNames);
@@ -106,11 +85,11 @@ public class SubmissionService {
                         .project(project)
                         .group(group)
                         .submittedBy(user)
-                        .status(SubmissionStatus.SUBMITTED)
+                        // Thuộc tính status đã được loại bỏ
                         .submittedAt(submittedAt)
                         .build();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Lỗi lưu tệp tin: " + e.getMessage(), e);
             }
         }).toList();
 
@@ -121,7 +100,9 @@ public class SubmissionService {
         Submission sub = submissionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
 
-        if (request.getFilePath() != null) sub.setFilePath(request.getFilePath());
+        if (request.getFilePath() != null) {
+            sub.setFilePath(request.getFilePath());
+        }
 
         return submissionRepository.save(sub);
     }
@@ -133,9 +114,31 @@ public class SubmissionService {
     }
 
     public boolean isSubmissionLocked(Project project) {
-        if (project.isSubmissionLocked()) return true;
+        return shouldLockSubmission(project);
+    }
+
+    public boolean refreshSubmissionLock(Project project) {
+        boolean locked = shouldLockSubmission(project);
+        if (project.isSubmissionLocked() != locked) {
+            project.setSubmissionLocked(locked);
+            projectRepository.save(project);
+        }
+        return locked;
+    }
+
+    private boolean shouldLockSubmission(Project project) {
+        if (project == null) return true;
         LocalDate endDate = project.getEndDate();
         return endDate != null && LocalDateTime.now().isAfter(endDate.atTime(LocalTime.MAX));
+    }
+
+    private Path getSubmissionUploadRoot() {
+        Path cwd = Paths.get("").toAbsolutePath().normalize();
+        Path backendDir = cwd.getFileName() != null
+                && "Backend".equalsIgnoreCase(cwd.getFileName().toString())
+                        ? cwd
+                        : cwd.resolve("Backend");
+        return backendDir.resolve("uploads").resolve("submissions").normalize();
     }
 
     private void validateFiles(List<MultipartFile> files) {
@@ -162,12 +165,14 @@ public class SubmissionService {
     private String storeSubmissionFile(MultipartFile file, Path submissionFolder, Set<String> usedNames) throws IOException {
         String originalFileName = uniqueFileName(sanitizeFileName(file.getOriginalFilename()), usedNames);
         Path filePath = submissionFolder.resolve(originalFileName);
+        
         file.transferTo(filePath.toFile());
+        
         if (!Files.exists(filePath) || Files.size(filePath) != file.getSize()) {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         }
         if (!Files.exists(filePath)) {
-            throw new IOException("Khong the luu file nop bai: " + originalFileName);
+            throw new IOException("Không thể lưu file nộp bài: " + originalFileName);
         }
         return originalFileName;
     }

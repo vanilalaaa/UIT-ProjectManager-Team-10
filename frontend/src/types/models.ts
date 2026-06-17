@@ -108,7 +108,6 @@ export type Registration = {
 export type Submission = {
   submissionId: number
   submittedAt: DateTimeString
-  status: string
   filePath: string
   project: Project | null
   group: Group | null

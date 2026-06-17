@@ -3,6 +3,7 @@ package com.example.se330.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -64,6 +65,7 @@ public class ProjectService {
         project.setDescription(req.getDescription());
         project.setStartDate(req.getStartDate());
         project.setEndDate(req.getEndDate());
+        project.setSubmissionLocked(isDeadlinePassed(req.getEndDate()));
         project.setStatus(ProjectStatus.AVAILABLE);
 
         Project saved = this.projectRepository.save(project);
@@ -104,6 +106,7 @@ public class ProjectService {
         project.setDescription(req.getDescription());
         project.setStartDate(req.getStartDate());
         project.setEndDate(req.getEndDate());
+        project.setSubmissionLocked(isDeadlinePassed(req.getEndDate()));
 
         if (req.getStatus() != null) {
             project.setStatus(req.getStatus());
@@ -227,7 +230,12 @@ public class ProjectService {
                 .submissions(submissions)
                 .memberCount(members.size())
                 .submissionCount(submissions.size())
+                .submissionLocked(isDeadlinePassed(project.getEndDate()))
                 .build();
+    }
+
+    private static boolean isDeadlinePassed(LocalDate endDate) {
+        return endDate != null && LocalDate.now().isAfter(endDate);
     }
 
     private ProjectMemberResponse toMember(User user) {
