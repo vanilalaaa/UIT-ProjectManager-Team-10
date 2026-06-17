@@ -36,6 +36,7 @@ public class SubmissionService {
     private final ProjectRepository projectRepository;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final ProjectStatusService projectStatusService;
 
     private static final int MAX_FILES = 5;
     private static final long MAX_TOTAL_SIZE = 50L * 1024L * 1024L;
@@ -93,7 +94,9 @@ public class SubmissionService {
             }
         }).toList();
 
-        return submissionRepository.saveAll(submissions);
+        List<Submission> savedSubmissions = submissionRepository.saveAll(submissions);
+        projectStatusService.refresh(project);
+        return savedSubmissions;
     }
 
     public Submission updateSubmission(Long id, UpdateSubmissionRequest request) {
@@ -110,7 +113,10 @@ public class SubmissionService {
     public void deleteSubmission(Long id) {
         Submission sub = submissionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
+        Project project = sub.getProject();
         submissionRepository.delete(sub);
+        submissionRepository.flush();
+        projectStatusService.refresh(project);
     }
 
     public boolean isSubmissionLocked(Project project) {

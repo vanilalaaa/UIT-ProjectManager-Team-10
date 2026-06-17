@@ -24,8 +24,11 @@ type GradeData = {
 // vẫn hiển thị barem (tiêu chí + thang điểm) với trạng thái "chưa chấm".
 const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeData> => {
   const project = projectId ? await getProjectById(projectId) : null
+  const hasSubmission = project?.groupId != null
+    ? project.submissions?.some((submission) => submission.groupId === project.groupId)
+    : (project?.submissions?.length ?? 0) > 0
   const overdue =
-    !!project?.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < Date.now()
+    !!project?.endDate && new Date(`${project.endDate}T23:59:59`).getTime() < Date.now() && !hasSubmission
   const grade = projectId ? await getMyGrade(projectId) : null
 
   if (grade) {
@@ -33,6 +36,7 @@ const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeDa
       label: c.name,
       score: c.score,
       maxScore: c.maxScore,
+      note: c.note,
       colorClass: 'text-primary',
       bgFillClass: 'bg-brand-gradient',
     }))

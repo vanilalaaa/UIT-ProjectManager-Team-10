@@ -11,4 +11,5 @@ import com.example.se330.entity.Grade;
 public interface GradeRepository extends JpaRepository<Grade, Long> {
 
     Optional<Grade> findBySubmission_Id(Long submissionId);
+    boolean existsBySubmission_Project_Id(Long projectId);
 }
