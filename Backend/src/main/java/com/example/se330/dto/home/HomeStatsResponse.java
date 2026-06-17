@@ -23,7 +23,6 @@ public class HomeStatsResponse {
 
     private Map<String, Long> tasksByStatus;
     private Map<String, Long> projectsByStatus;
-    private Map<String, Long> submissionsByStatus;
 
     // Quick stats theo role cho thẻ tổng quan ở Home (key khớp FE QuickStats).
     private Map<String, Long> quickStats;

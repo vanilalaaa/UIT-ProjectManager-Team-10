@@ -172,7 +172,6 @@ public class ProjectService {
                     .type(FeedType.SUBMISSION)
                     .referenceId(submission.getId())
                     .title("đã nộp tệp đính kèm")
-                    .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                     .projectId(project.getId())
                     .projectTitle(project.getTitle())
                     .timestamp(submission.getSubmittedAt())
@@ -248,7 +247,6 @@ public class ProjectService {
 
         return ProjectSubmissionResponse.builder()
                 .submissionId(submission.getId())
-                .status(submission.getStatus() != null ? submission.getStatus().name() : null)
                 .submittedAt(submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null)
                 .filePath(submission.getFilePath())
                 .groupId(group != null ? group.getId() : null)

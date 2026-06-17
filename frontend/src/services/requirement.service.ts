@@ -48,12 +48,20 @@ const fromResponse = (r: RequirementResponse): ProjectRequirement => ({
   })),
 })
 
-// PUT thay toàn bộ barem nên không gửi id (BE tự sinh lại).
+// Gửi kèm id (số) của tiêu chí cũ để BE cập nhật TẠI CHỖ, không sinh criterion_id
+// mới -> điểm đã chấm (tham chiếu criterion_id) không bị mất khi sửa deadline/barem.
+// Tiêu chí mới (id dạng "crit_...") không có id số nên BE sẽ tạo mới.
 const toRequest = (req: ProjectRequirement) => ({
   categoryId: req.categoryId,
   description: req.description,
   deadline: req.deadline,
-  criteria: req.criteria.map((c) => ({ name: c.name, maxScore: c.maxScore })),
+  criteria: req.criteria.map((c) => {
+    const numericId = Number(c.id)
+    const hasNumericId = c.id !== '' && Number.isInteger(numericId)
+    return hasNumericId
+      ? { id: numericId, name: c.name, maxScore: c.maxScore }
+      : { name: c.name, maxScore: c.maxScore }
+  }),
 })
 
 export const getRequirement = (courseId: number | string): Promise<ProjectRequirement> =>

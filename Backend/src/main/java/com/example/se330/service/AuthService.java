@@ -266,7 +266,8 @@ public class AuthService {
                 if (request.getFirstName() != null) profile.setFirstName(request.getFirstName());
                 if (request.getLastName() != null) profile.setLastName(request.getLastName());
                 if (request.getSummary() != null) profile.setSummary(request.getSummary());
-                if (request.getAvatarUrl() != null) profile.setAvatarUrl(request.getAvatarUrl());
+                if (request.getAvatarUrl() != null)
+                        profile.setAvatarUrl(request.getAvatarUrl().isBlank() ? null : request.getAvatarUrl());
 
                 user.setUpdatedAt(LocalDateTime.now());
                 userRepository.save(user);

@@ -55,9 +55,17 @@ export default function TeamGrades() {
           const nextScores: Record<string, number> = {};
           const nextNotes: Record<string, string> = {};
           grade.criterionScores.forEach((cs) => {
-            if (cs.criterionId != null) {
-              nextScores[String(cs.criterionId)] = cs.score;
-              nextNotes[String(cs.criterionId)] = cs.note;
+            // Khớp điểm đã chấm với tiêu chí hiện tại theo id; nếu barem từng bị lưu lại
+            // (criterion_id đổi) thì khớp theo tên để điểm không bị "biến mất".
+            const byId =
+              cs.criterionId != null
+                ? crits.find((c) => c.id === String(cs.criterionId))
+                : undefined;
+            const match = byId ?? crits.find((c) => c.name === cs.name);
+            const key = match?.id ?? (cs.criterionId != null ? String(cs.criterionId) : null);
+            if (key != null) {
+              nextScores[key] = cs.score;
+              nextNotes[key] = cs.note;
             }
           });
           setScores(nextScores);
@@ -85,6 +93,28 @@ export default function TeamGrades() {
   const handleScoreChange = (crit: RubricCriterion, value: string) => {
     const num = value === '' ? 0 : Number(value);
     if (num >= 0 && num <= crit.maxScore) setScores((prev) => ({ ...prev, [crit.id]: num }));
+  };
+
+  // Chỉ được chấm khi đã qua ngày kết thúc của đồ án, đồng nhất với backend
+  // (GradeService: LocalDate.now().isAfter(endDate)).
+  const deadlinePassed = (() => {
+    if (!project?.endDate) return false;
+    const end = new Date(project.endDate);
+    if (Number.isNaN(end.getTime())) return false;
+    const now = new Date();
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return today.getTime() > endDay.getTime();
+  })();
+
+  const handleStartGrading = () => {
+    // Sửa lại điểm cũ thì luôn cho phép; chỉ chặn khi bắt đầu chấm mà chưa hết hạn.
+    if (!isGraded && !deadlinePassed) {
+      setError('Chưa hết hạn nộp bài, không thể chấm điểm.');
+      return;
+    }
+    setError(null);
+    setIsEditing(true);
   };
 
   const handleSave = async () => {
@@ -154,7 +184,7 @@ export default function TeamGrades() {
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xl font-bold">Barem chấm điểm</h3>
               {!isEditing && (
-                <button onClick={() => setIsEditing(true)} className="px-6 py-2 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg">
+                <button onClick={handleStartGrading} className="px-6 py-2 rounded-[var(--radius-button)] bg-brand-gradient text-white font-bold shadow-lg">
                   {isGraded ? 'Sửa điểm' : 'Bắt đầu chấm'}
                 </button>
               )}

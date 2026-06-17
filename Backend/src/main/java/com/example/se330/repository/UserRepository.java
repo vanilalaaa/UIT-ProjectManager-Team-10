@@ -40,12 +40,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
         Page<User> searchUsers(@Param("role") Role role, @Param("search") String search, Pageable pageable);
 
-        @Query("SELECT p FROM Project p " +
+        @Query("SELECT DISTINCT p FROM Project p " +
                         "JOIN p.registrations rp " + // Link sang RegisterProject
                         "JOIN rp.group g " + // Link sang Group
                         "JOIN g.members gm " + // Link sang GroupMember
                         "JOIN gm.user u " + // Link sang User
                         // Chỉ thành viên ACTIVE mới truy cập được đồ án của nhóm; INVITED/PENDING thì chưa.
-                        "WHERE u = :user AND gm.status = com.example.se330.enums.GroupMemberStatus.ACTIVE")
+                        // Chỉ project mà nhóm đã được DUYỆT (APPROVED) mới hiện ra; PENDING/REJECTED/CANCELLED thì không.
+                        "WHERE u = :user " +
+                        "AND gm.status = com.example.se330.enums.GroupMemberStatus.ACTIVE " +
+                        "AND rp.status = com.example.se330.enums.RegistrationStatus.APPROVED")
         List<Project> findProjectsByUser(@Param("user") User user);
 }
