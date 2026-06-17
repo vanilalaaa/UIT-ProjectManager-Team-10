@@ -2,7 +2,6 @@ package com.example.se330.service;
 
 import com.example.se330.dto.submission.UpdateSubmissionRequest;
 import com.example.se330.entity.*;
-import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +78,6 @@ public class SubmissionService {
                 .project(project)
                 .group(group)
                 .submittedBy(user)
-                .status(SubmissionStatus.SUBMITTED)
                 .submittedAt(LocalDateTime.now())
                 .build();
 
@@ -91,7 +89,6 @@ public class SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
 
         if (request.getFilePath() != null) sub.setFilePath(request.getFilePath());
-        if (request.getStatus() != null) sub.setStatus(request.getStatus());
 
         return submissionRepository.save(sub);
     }
@@ -100,13 +97,6 @@ public class SubmissionService {
         Submission sub = submissionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
         submissionRepository.delete(sub);
-    }
-
-    public Submission markLateIfNeeded(Submission submission, LocalDateTime deadline) {
-        if (submission.getSubmittedAt().isAfter(deadline)) {
-            submission.setStatus(SubmissionStatus.LATE);
-        }
-        return submission;
     }
 
     public boolean isSubmissionLocked(Project project) {

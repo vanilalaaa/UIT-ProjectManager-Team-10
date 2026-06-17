@@ -19,7 +19,6 @@ import com.example.se330.entity.Project;
 import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
 import com.example.se330.enums.ProjectStatus;
-import com.example.se330.enums.SubmissionStatus;
 import com.example.se330.repository.GradeRepository;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.ProjectRepository;
@@ -67,17 +66,30 @@ public class GradeService {
         applyCriterionScores(grade, request.getCriterionScores(),
                 request.getScore(), request.getMaxScore());
 
-        submission.setStatus(SubmissionStatus.GRADED);
-        submissionRepository.save(submission);
-
-        // Đã chấm xong → đồ án của nhóm chuyển từ IN_PROGRESS sang GRADED.
-        Project project = submission.getProject();
-        if (project != null) {
-            project.setStatus(ProjectStatus.GRADED);
-            projectRepository.save(project);
-        }
+        // Đã chấm xong → đồ án của nhóm chuyển sang GRADED.
+        markProjectGraded(submission);
 
         return toResponse(gradeRepository.save(grade));
+    }
+
+    // Có điểm cho bài nộp → đồ án của nhóm chuyển sang GRADED, trừ khi đã ở
+    // trạng thái kết thúc (COMPLETED/CANCELLED) hoặc đã GRADED rồi.
+    private void markProjectGraded(Submission submission) {
+        if (submission == null) {
+            return;
+        }
+        Project project = submission.getProject();
+        if (project == null) {
+            return;
+        }
+        ProjectStatus status = project.getStatus();
+        if (status == ProjectStatus.GRADED
+                || status == ProjectStatus.COMPLETED
+                || status == ProjectStatus.CANCELLED) {
+            return;
+        }
+        project.setStatus(ProjectStatus.GRADED);
+        projectRepository.save(project);
     }
 
 
@@ -103,6 +115,10 @@ public class GradeService {
             }
         }
         grade.setGradedAt(LocalDateTime.now());
+
+        // Sửa điểm trên bài đã/từng chấm cũng đảm bảo đồ án ở trạng thái GRADED
+        // (vd. điểm được tạo trước khi có logic chuyển trạng thái).
+        markProjectGraded(grade.getSubmission());
 
         return toResponse(gradeRepository.save(grade));
     }
@@ -150,6 +166,9 @@ public class GradeService {
 
         List<Submission> submissions = submissionRepository.findByProject_Id(projectId);
 
+        // Một nhóm có thể có nhiều bài nộp. Điểm tổng lấy theo bài đã được chấm, ưu tiên
+        // lần chấm mới nhất (gradedAt), để không phụ thuộc vào thứ tự trả về của truy vấn.
+        Grade best = null;
         for (Submission submission : submissions) {
             if (submission.getGroup() == null) {
                 continue;
@@ -161,12 +180,30 @@ public class GradeService {
                 continue;
             }
             Grade grade = gradeRepository.findBySubmission_Id(submission.getId()).orElse(null);
-            if (grade != null) {
-                return toResponse(grade);
+            if (grade != null && isBetterGrade(grade, best)) {
+                best = grade;
             }
         }
 
+        if (best != null) {
+            return toResponse(best);
+        }
+
         throw new EntityNotFoundException("Chưa có điểm cho bài nộp của bạn trong project này");
+    }
+
+    // So sánh để chọn điểm "đúng" hiển thị làm điểm tổng: lấy lần chấm mới nhất
+    // (gradedAt lớn hơn).
+    private boolean isBetterGrade(Grade candidate, Grade current) {
+        if (current == null) {
+            return true;
+        }
+        LocalDateTime candidateAt = candidate.getGradedAt();
+        LocalDateTime currentAt = current.getGradedAt();
+        if (candidateAt == null || currentAt == null) {
+            return candidateAt != null;
+        }
+        return candidateAt.isAfter(currentAt);
     }
 
     private GradeResponse toResponse(Grade grade) {
