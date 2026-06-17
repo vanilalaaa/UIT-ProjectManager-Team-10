@@ -55,9 +55,17 @@ export default function TeamGrades() {
           const nextScores: Record<string, number> = {};
           const nextNotes: Record<string, string> = {};
           grade.criterionScores.forEach((cs) => {
-            if (cs.criterionId != null) {
-              nextScores[String(cs.criterionId)] = cs.score;
-              nextNotes[String(cs.criterionId)] = cs.note;
+            // Khớp điểm đã chấm với tiêu chí hiện tại theo id; nếu barem từng bị lưu lại
+            // (criterion_id đổi) thì khớp theo tên để điểm không bị "biến mất".
+            const byId =
+              cs.criterionId != null
+                ? crits.find((c) => c.id === String(cs.criterionId))
+                : undefined;
+            const match = byId ?? crits.find((c) => c.name === cs.name);
+            const key = match?.id ?? (cs.criterionId != null ? String(cs.criterionId) : null);
+            if (key != null) {
+              nextScores[key] = cs.score;
+              nextNotes[key] = cs.note;
             }
           });
           setScores(nextScores);
