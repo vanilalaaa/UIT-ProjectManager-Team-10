@@ -18,13 +18,18 @@ export default function ProfileAvatarCard({ user, newAvatar, onAvatarChange }: P
     e.target.value = ''
   }
 
+  // '' = đánh dấu xóa avatar, base64 = ảnh mới, null = không thay đổi
+  const markedForDeletion = newAvatar === ''
+  const hasNewUpload = !!newAvatar
+  const displayAvatarUrl = markedForDeletion ? null : (newAvatar || user.avatarUrl)
+
   return (
     <div className="glass-panel rounded-[var(--radius-card)] p-8 flex flex-col items-center text-center">
-      <Avatar 
-        name={user.name} 
-        avatarUrl={newAvatar || user.avatarUrl}
-        sizeClass="size-32 mb-4 border-4 border-surface shadow-md" 
-        textClass="text-5xl" 
+      <Avatar
+        name={user.name}
+        avatarUrl={displayAvatarUrl}
+        sizeClass="size-32 mb-4 border-4 border-surface shadow-md"
+        textClass="text-5xl"
       />
 
       <h2 className="text-xl font-bold text-text mb-1">{user.name}</h2>
@@ -32,20 +37,41 @@ export default function ProfileAvatarCard({ user, newAvatar, onAvatarChange }: P
 
       <div className="flex items-center gap-3 w-full justify-center">
         <input type="file" id="avatar-upload" hidden accept="image/*" onChange={handleFileChange} />
-        
-        <label 
-          htmlFor="avatar-upload" 
+
+        <label
+          htmlFor="avatar-upload"
           className="cursor-pointer bg-brand-gradient flex items-center gap-2 rounded-button px-5 py-2.5 text-sm font-semibold text-surface shadow-soft hover:opacity-90 transition-opacity"
         >
           Upload New
         </label>
-        
-        {newAvatar && (
-          <button 
-            onClick={() => onAvatarChange(null)} 
+
+        {/* Hoàn tác ảnh vừa chọn */}
+        {hasNewUpload && (
+          <button
+            onClick={() => onAvatarChange(null)}
             className="cursor-pointer bg-surface-soft hover:bg-border-soft text-text-soft px-5 py-2 rounded-button text-sm font-semibold transition-colors"
           >
             Remove
+          </button>
+        )}
+
+        {/* Xóa avatar hiện tại đã lưu */}
+        {!hasNewUpload && !markedForDeletion && user.avatarUrl && (
+          <button
+            onClick={() => onAvatarChange('')}
+            className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2 rounded-button text-sm font-semibold transition-colors"
+          >
+            Xóa avatar
+          </button>
+        )}
+
+        {/* Hoàn tác việc xóa */}
+        {markedForDeletion && (
+          <button
+            onClick={() => onAvatarChange(null)}
+            className="cursor-pointer bg-surface-soft hover:bg-border-soft text-text-soft px-5 py-2 rounded-button text-sm font-semibold transition-colors"
+          >
+            Hoàn tác
           </button>
         )}
       </div>

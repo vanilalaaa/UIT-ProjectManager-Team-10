@@ -56,7 +56,7 @@ export default function GeneralDetailsForm({ user, newAvatar, onUpdated }: Props
         firstName: values.firstName,
         lastName: values.lastName,
         summary: values.summary || '',
-        avatarUrl: newAvatar || undefined, 
+        avatarUrl: newAvatar === null ? undefined : newAvatar, // '' = xóa avatar
       }
       const res = await updateMe(payload)
       

@@ -5,8 +5,6 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
-// DTO phẳng khớp type FE ProjectRequirement. deadline là chuỗi "YYYY-MM-DD"
-// (hoặc "" khi chưa đặt) để dùng trực tiếp cho <input type="date">.
 @Data
 @Builder
 public class RequirementResponse {

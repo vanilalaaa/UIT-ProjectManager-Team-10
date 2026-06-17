@@ -1,6 +1,8 @@
 package com.example.se330.service;
 
 import com.example.se330.dto.submission.UpdateSubmissionRequest;
+import com.example.se330.entity.*;
+import com.example.se330.repository.*;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Submission;
@@ -68,6 +70,30 @@ public class SubmissionService {
 
         String uniqueFolder = "group_" + group.getId() + "_" + System.currentTimeMillis();
         Path submissionFolder = uploadPath.resolve(uniqueFolder);
+        
+        if (!Files.exists(submissionFolder)) {
+            Files.createDirectories(submissionFolder);
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        Path filePath = submissionFolder.resolve(originalFileName);
+        
+        try {
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace(); 
+            throw new IOException("Lỗi không thể lưu file vào ổ cứng: " + e.getMessage());
+        }
+
+        Submission submission = Submission.builder()
+                .filePath("/files/submissions/" + uniqueFolder + "/" + originalFileName)
+                .project(project)
+                .group(group)
+                .submittedBy(user)
+                .submittedAt(LocalDateTime.now())
+                .build();
+
+        return submissionRepository.save(submission);
         Files.createDirectories(submissionFolder);
 
         LocalDateTime submittedAt = LocalDateTime.now();
@@ -96,7 +122,6 @@ public class SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
 
         if (request.getFilePath() != null) sub.setFilePath(request.getFilePath());
-        if (request.getStatus() != null) sub.setStatus(request.getStatus());
 
         return submissionRepository.save(sub);
     }
@@ -105,13 +130,6 @@ public class SubmissionService {
         Submission sub = submissionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
         submissionRepository.delete(sub);
-    }
-
-    public Submission markLateIfNeeded(Submission submission, LocalDateTime deadline) {
-        if (submission.getSubmittedAt().isAfter(deadline)) {
-            submission.setStatus(SubmissionStatus.LATE);
-        }
-        return submission;
     }
 
     public boolean isSubmissionLocked(Project project) {
