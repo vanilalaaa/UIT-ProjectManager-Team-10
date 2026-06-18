@@ -1,5 +1,6 @@
 package com.example.se330.dto.grade;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,8 +15,8 @@ public class GradeResponse {
     private Long submissionId;
     private Long projectId;
     private Long groupId;
-    private Integer score;
-    private Integer maxScore;
+    private BigDecimal score;
+    private BigDecimal maxScore;
     private String feedback;
     private LocalDateTime gradedAt;
     private Long gradedById;

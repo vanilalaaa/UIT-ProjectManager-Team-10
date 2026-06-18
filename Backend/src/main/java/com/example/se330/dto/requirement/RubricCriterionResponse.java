@@ -1,5 +1,6 @@
 package com.example.se330.dto.requirement;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import lombok.Builder;
@@ -10,6 +11,6 @@ import lombok.Data;
 public class RubricCriterionResponse {
     private Long id;
     private String name;
-    private Integer maxScore;
+    private BigDecimal maxScore;
     private List<RequirementFileResponse> files;
 }

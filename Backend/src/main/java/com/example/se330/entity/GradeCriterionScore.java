@@ -1,5 +1,7 @@
 package com.example.se330.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,10 +34,11 @@ public class GradeCriterionScore {
     @Column(name = "criterion_name")
     private String criterionName;
 
-    @Column(name = "max_score")
-    private Integer maxScore;
+    @Column(name = "max_score", precision = 6, scale = 2)
+    private BigDecimal maxScore;
 
-    private Integer score;
+    @Column(precision = 6, scale = 2)
+    private BigDecimal score;
 
     @Column(length = 1000)
     private String note;

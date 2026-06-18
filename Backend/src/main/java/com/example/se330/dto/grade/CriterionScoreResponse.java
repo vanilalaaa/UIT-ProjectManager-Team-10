@@ -1,5 +1,7 @@
 package com.example.se330.dto.grade;
 
+import java.math.BigDecimal;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,7 +11,7 @@ public class CriterionScoreResponse {
 
     private Long criterionId;
     private String name;
-    private Integer maxScore;
-    private Integer score;
+    private BigDecimal maxScore;
+    private BigDecimal score;
     private String note;
 }

@@ -1,5 +1,6 @@
 package com.example.se330.config;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,10 +50,7 @@ import com.example.se330.util.TeacherCodeGenerator;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Khởi tạo schema migration + tài khoản gốc + danh mục, và seed dữ liệu DEMO
- * phong phú (idempotent qua marker sv1@uit.edu.vn) để chạy thử mọi tình huống.
- */
+
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
@@ -110,11 +108,7 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Demo data: 1 admin + 5 GV + 20 SV + lớp/nhóm/đồ án/nộp bài/điểm/task/thông báo
-    // đủ các trạng thái. Tài khoản demo: gv1..gv5@uit.edu.vn, sv1..sv20@uit.edu.vn
-    // (mật khẩu 123123). admin dùng lại admin@gmail.com.
-    // ---------------------------------------------------------------------
+
     private void seedDemoData() {
         if (userRepository.findByEmail("sv1@gm.uit.edu.vn").isPresent()) {
             return; // đã seed
@@ -372,7 +366,7 @@ public class DataInitializer implements CommandLineRunner {
         int order = 0;
         for (int i = 0; i + 1 < critPairs.length; i += 2) {
             r.getCriteria().add(RubricCriterion.builder()
-                    .requirement(r).name((String) critPairs[i]).maxScore((Integer) critPairs[i + 1]).orderIndex(order++).build());
+                    .requirement(r).name((String) critPairs[i]).maxScore(BigDecimal.valueOf((Integer) critPairs[i + 1])).orderIndex(order++).build());
         }
         requirementRepository.save(r);
     }
@@ -417,11 +411,13 @@ public class DataInitializer implements CommandLineRunner {
 
     private void grade(Submission submission, int score, int maxScore, String feedback, User gradedBy,
             String[] names, int[] scores, int[] maxScores) {
-        Grade g = Grade.builder().submission(submission).score(score).maxScore(maxScore).feedback(feedback)
+        Grade g = Grade.builder().submission(submission).score(BigDecimal.valueOf(score))
+                .maxScore(BigDecimal.valueOf(maxScore)).feedback(feedback)
                 .gradedBy(gradedBy).gradedAt(LocalDateTime.now()).build();
         for (int i = 0; i < names.length; i++) {
             g.getCriterionScores().add(GradeCriterionScore.builder()
-                    .grade(g).criterionName(names[i]).score(scores[i]).maxScore(maxScores[i]).build());
+                    .grade(g).criterionName(names[i]).score(BigDecimal.valueOf(scores[i]))
+                    .maxScore(BigDecimal.valueOf(maxScores[i])).build());
         }
         gradeRepository.save(g);
     }

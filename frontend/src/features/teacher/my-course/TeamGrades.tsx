@@ -9,6 +9,7 @@ import {
   type CriterionScorePayload,
 } from '../../../services/grade.service';
 import type { Project, ProjectSubmissionLite } from '../../../types/api/project';
+import { formatScore } from '../../../utils/number';
 
 export default function TeamGrades() {
   const { courseId, projectId } = useParams<{ courseId: string; projectId: string }>();
@@ -173,7 +174,7 @@ export default function TeamGrades() {
                   <circle cx="80" cy="80" r="72" className="stroke-surface-soft" strokeWidth="12" fill="none" />
                   <circle cx="80" cy="80" r="72" className="stroke-primary" strokeWidth="12" fill="none" strokeDasharray={452} strokeDashoffset={452 - (452 * overall) / 10} strokeLinecap="round" />
                 </svg>
-                <span className="absolute text-4xl font-extrabold text-brand-gradient">{overall.toFixed(1)}</span>
+                <span className="absolute text-4xl font-extrabold text-brand-gradient">{formatScore(overall)}</span>
               </div>
             ) : (
               <div className="size-40 flex items-center justify-center border-4 border-dashed border-surface-soft rounded-full text-text-soft">Chưa chấm</div>
@@ -201,6 +202,7 @@ export default function TeamGrades() {
                           type="number"
                           min={0}
                           max={crit.maxScore}
+                          step="any"
                           className="w-14 h-7 text-right bg-surface-soft rounded border border-border px-2 text-xs"
                           value={scores[crit.id] || 0}
                           onChange={(e) => handleScoreChange(crit, e.target.value)}

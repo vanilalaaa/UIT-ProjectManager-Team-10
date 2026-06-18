@@ -42,7 +42,7 @@ const fetchStudentGrade = async (projectId: string | undefined): Promise<GradeDa
     }))
     const overall =
       grade.score != null && grade.maxScore != null && grade.maxScore > 0
-        ? Math.round((grade.score / grade.maxScore) * MAX_GRADE * 10) / 10
+        ? (grade.score / grade.maxScore) * MAX_GRADE
         : null
     const lecturer: GradeLecturer | null = grade.gradedByName
       ? { name: grade.gradedByName, avatar: '', department: 'Giảng viên' }

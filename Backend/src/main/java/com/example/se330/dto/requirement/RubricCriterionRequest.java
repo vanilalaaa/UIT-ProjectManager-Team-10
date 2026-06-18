@@ -1,5 +1,7 @@
 package com.example.se330.dto.requirement;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 
 @Data
@@ -8,5 +10,5 @@ public class RubricCriterionRequest {
     // giữ nguyên criterion_id để điểm đã chấm (GradeCriterionScore) không bị mất.
     private Long id;
     private String name;
-    private Integer maxScore;
+    private BigDecimal maxScore;
 }

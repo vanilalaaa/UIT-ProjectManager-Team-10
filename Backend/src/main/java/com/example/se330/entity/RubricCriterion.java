@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +31,8 @@ public class RubricCriterion {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "max_score")
-    private Integer maxScore;
+    @Column(name = "max_score", precision = 6, scale = 2)
+    private BigDecimal maxScore;
 
     @Column(name = "order_index")
     private Integer orderIndex;

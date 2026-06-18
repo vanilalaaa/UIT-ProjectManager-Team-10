@@ -1,3 +1,5 @@
+import { formatScore } from '../../utils/number'
+
 interface OverallGradeCardProps {
   grade: number | null
   maxGrade: number
@@ -14,7 +16,7 @@ export default function OverallGradeCard({ grade, maxGrade, status }: OverallGra
       <h2 className="text-lg font-bold text-text mb-6">Overall Grade</h2>
       
       <div className={`size-32 rounded-full border-[10px] ${circleColor} flex flex-col items-center justify-center mb-6`}>
-        <span className="text-3xl font-bold">{hasGrade ? grade : '?'}</span>
+        <span className="text-3xl font-bold">{hasGrade ? formatScore(grade) : '?'}</span>
         <span className="text-sm font-semibold text-text-soft">/ {maxGrade}</span>
       </div>
 

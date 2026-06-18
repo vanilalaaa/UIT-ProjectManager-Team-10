@@ -1,3 +1,5 @@
+import { formatScore } from '../../../utils/number'
+
 export type ScoreCriteria = {
   label: string
   score: number
@@ -25,7 +27,7 @@ export default function ScorecardBreakdown({ criteria }: ScorecardBreakdownProps
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-bold text-text">{item.label}</span>
                   <span className={`text-sm font-bold ${item.colorClass}`}>
-                    {item.score.toFixed(1)} / {item.maxScore}
+                    {formatScore(item.score)} / {item.maxScore}
                   </span>
                 </div>
                 <div className="w-full bg-surface-soft rounded-full h-2.5 overflow-hidden flex">

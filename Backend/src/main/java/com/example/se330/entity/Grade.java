@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,11 @@ public class Grade {
     @JoinColumn(name = "submission_id")
     private Submission submission;
 
-    private Integer score;
+    @Column(precision = 6, scale = 2)
+    private BigDecimal score;
 
-    @Column(name = "max_score")
-    private Integer maxScore;
+    @Column(name = "max_score", precision = 6, scale = 2)
+    private BigDecimal maxScore;
 
     @Column(name = "feedback")
     private String feedback;

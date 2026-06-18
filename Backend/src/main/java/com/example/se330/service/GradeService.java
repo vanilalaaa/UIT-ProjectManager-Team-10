@@ -1,6 +1,7 @@
 
 package com.example.se330.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -119,7 +120,7 @@ public class GradeService {
     // Gắn danh sách điểm chi tiết vào grade và tính score/maxScore tổng = tổng các tiêu chí.
     // Nếu không có chi tiết, giữ điểm tổng theo fallback (giá trị gửi lên / điểm hiện tại).
     private void applyCriterionScores(Grade grade, List<CriterionScoreRequest> reqScores,
-            Integer fallbackScore, Integer fallbackMaxScore) {
+            BigDecimal fallbackScore, BigDecimal fallbackMaxScore) {
 
         grade.getCriterionScores().clear();
 
@@ -129,8 +130,8 @@ public class GradeService {
             return;
         }
 
-        int totalScore = 0;
-        int totalMaxScore = 0;
+        BigDecimal totalScore = BigDecimal.ZERO;
+        BigDecimal totalMaxScore = BigDecimal.ZERO;
         for (CriterionScoreRequest cs : reqScores) {
             grade.getCriterionScores().add(GradeCriterionScore.builder()
                     .grade(grade)
@@ -140,8 +141,8 @@ public class GradeService {
                     .score(cs.getScore())
                     .note(cs.getNote())
                     .build());
-            totalScore += cs.getScore() != null ? cs.getScore() : 0;
-            totalMaxScore += cs.getMaxScore() != null ? cs.getMaxScore() : 0;
+            totalScore = totalScore.add(cs.getScore() != null ? cs.getScore() : BigDecimal.ZERO);
+            totalMaxScore = totalMaxScore.add(cs.getMaxScore() != null ? cs.getMaxScore() : BigDecimal.ZERO);
         }
         grade.setScore(totalScore);
         grade.setMaxScore(totalMaxScore);
