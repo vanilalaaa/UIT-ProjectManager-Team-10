@@ -1,6 +1,7 @@
 import axiosClient from '../lib/api/axiosClient'
 import type { ApiResponse } from '../types/api/common'
 import type {
+  GroupTaskReport,
   Submission,
   SubmissionUpdateRequest,
 } from '../types/api/submission'
@@ -38,3 +39,11 @@ export const deleteSubmission = (
   submissionId: number | string,
 ): Promise<ApiResponse<void>> =>
   axiosClient.delete<ApiResponse<void>>(`/submissions/${submissionId}`).then((r) => r.data)
+
+// Báo cáo công việc theo nhóm/thành viên — endpoint này bọc trong ApiResponse.
+export const getSubmissionReport = (
+  projectId: number | string,
+): Promise<GroupTaskReport[]> =>
+  axiosClient
+    .get<ApiResponse<GroupTaskReport[]>>(`/projects/${projectId}/submissions/report`)
+    .then((r) => r.data.data ?? [])
