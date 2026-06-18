@@ -141,6 +141,7 @@ public class DataInitializer implements CommandLineRunner {
         Category webCat = cat("Web App");
         Category aiCat = cat("Research");
         LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
 
         // --- Lớp học (có lớp đang mở, lớp đã quá hạn) ---
         Course c1 = course("SE330O11", "Lập trình Web nâng cao - SE330.O11", t.get(0), today.minusMonths(1), today.plusMonths(2));
@@ -225,7 +226,9 @@ public class DataInitializer implements CommandLineRunner {
                 "/files/submissions/demo/baocao_gamma.pdf");
         Submission subDelta = submission(pDelta, gDelta, s.get(11), LocalDateTime.now().minusDays(2),
                 "/files/submissions/demo/baocao_delta.pdf");
-        // pEpsilon: chưa nộp bài
+        // Nhóm Epsilon nộp bài (nộp trễ) → xuất hiện trong báo cáo với thành viên bị trừ 30%.
+        submission(pEpsilon, gEpsilon, s.get(14), LocalDateTime.now().minusDays(1),
+                "/files/submissions/demo/baocao_epsilon.pdf");
 
         // --- Điểm (đã chấm có nhận xét / nộp rồi nhưng chưa chấm) ---
         grade(subGamma, 8, 10, "Làm tốt, UI đẹp. Cần bổ sung unit test.", t.get(1),
@@ -234,14 +237,108 @@ public class DataInitializer implements CommandLineRunner {
                 new String[] { "Dữ liệu", "Mô hình", "Đánh giá" }, new int[] { 2, 2, 2 }, new int[] { 3, 4, 3 });
         // subAlpha: đã nộp nhưng chưa chấm
 
-        // --- Task (đủ TODO/IN_PROGRESS/REVIEW/DONE/BLOCKED) ---
-        task(pAlpha, gAlpha, "Thiết kế cơ sở dữ liệu", "ERD + script khởi tạo.", TaskStatus.DONE, s.get(1), s.get(0));
-        task(pAlpha, gAlpha, "Cài đặt API mượn/trả", "REST API Spring Boot.", TaskStatus.IN_PROGRESS, s.get(2), s.get(0));
-        task(pAlpha, gAlpha, "Giao diện danh sách sách", "React + Tailwind.", TaskStatus.REVIEW, s.get(1), s.get(0));
-        task(pAlpha, gAlpha, "Viết báo cáo cuối kỳ", "Tổng hợp tài liệu.", TaskStatus.TODO, s.get(0), s.get(0));
-        task(pAlpha, gAlpha, "Sửa lỗi đăng nhập JWT", "Bị chặn do thiếu refresh token.", TaskStatus.BLOCKED, s.get(2), s.get(0));
-        task(pGamma, gGamma, "Tích hợp biểu đồ chi tiêu", "Chart.js.", TaskStatus.DONE, s.get(9), s.get(8));
-        task(pGamma, gGamma, "Viết unit test service", "JUnit + Mockito.", TaskStatus.TODO, s.get(10), s.get(8));
+        // --- Task: nhiều task có deadline + mốc thời gian thực tế để báo cáo công việc
+        // hiển thị phong phú (đúng hạn / trễ hạn / quá hạn chưa xong, thời gian TB/task).
+        // Quy ước thời gian: created = lúc tạo, deadline = hạn chót, updated = lúc hoàn thành.
+
+        // === Nhóm Alpha (pAlpha) — leader Bảo(0), Cúc(1), Dũng(2) ===
+        // s0: 4 đúng hạn + 1 trễ + 1 đang làm
+        task(pAlpha, gAlpha, "Thiết kế cơ sở dữ liệu", "ERD + script khởi tạo.", TaskStatus.DONE, s.get(0), s.get(0),
+                now.minusDays(25), now.minusDays(15), now.minusDays(17));
+        task(pAlpha, gAlpha, "Cài đặt API mượn/trả sách", "REST API Spring Boot.", TaskStatus.DONE, s.get(0), s.get(0),
+                now.minusDays(22), now.minusDays(12), now.minusDays(13));
+        task(pAlpha, gAlpha, "Tích hợp xác thực JWT", "Access + refresh token.", TaskStatus.DONE, s.get(0), s.get(0),
+                now.minusDays(18), now.minusDays(9), now.minusDays(11));
+        task(pAlpha, gAlpha, "Viết tài liệu API (Swagger)", "Mô tả endpoint.", TaskStatus.DONE, s.get(0), s.get(0),
+                now.minusDays(14), now.minusDays(6), now.minusDays(7));
+        task(pAlpha, gAlpha, "Tối ưu truy vấn báo cáo", "Index + phân trang.", TaskStatus.DONE, s.get(0), s.get(0),
+                now.minusDays(12), now.minusDays(5), now.minusDays(2)); // trễ 3 ngày
+        task(pAlpha, gAlpha, "Chuẩn bị slide demo", "Slide trình bày cuối kỳ.", TaskStatus.IN_PROGRESS, s.get(0), s.get(0),
+                now.minusDays(4), now.plusDays(3), now.minusDays(1));
+        // s1: 4 đúng hạn + 1 quá hạn chưa xong
+        task(pAlpha, gAlpha, "Giao diện danh sách sách", "React + Tailwind.", TaskStatus.DONE, s.get(1), s.get(0),
+                now.minusDays(24), now.minusDays(14), now.minusDays(16));
+        task(pAlpha, gAlpha, "Giao diện chi tiết & mượn sách", "Trang chi tiết sách.", TaskStatus.DONE, s.get(1), s.get(0),
+                now.minusDays(20), now.minusDays(10), now.minusDays(12));
+        task(pAlpha, gAlpha, "Trang quản lý độc giả", "CRUD độc giả.", TaskStatus.DONE, s.get(1), s.get(0),
+                now.minusDays(16), now.minusDays(7), now.minusDays(8));
+        task(pAlpha, gAlpha, "Tối ưu giao diện mobile", "Responsive layout.", TaskStatus.DONE, s.get(1), s.get(0),
+                now.minusDays(10), now.minusDays(3), now.minusDays(4));
+        task(pAlpha, gAlpha, "Kiểm thử giao diện E2E", "Cypress test.", TaskStatus.TODO, s.get(1), s.get(0),
+                now.minusDays(8), now.minusDays(1), now.minusDays(1)); // quá hạn chưa xong
+        // s2: 1 đúng hạn + 1 trễ + 1 quá hạn (BLOCKED) + 1 đang chờ
+        task(pAlpha, gAlpha, "Thiết kế ERD chi tiết", "Quan hệ bảng đầy đủ.", TaskStatus.DONE, s.get(2), s.get(0),
+                now.minusDays(23), now.minusDays(13), now.minusDays(15));
+        task(pAlpha, gAlpha, "Cài đặt module thống kê", "Báo cáo mượn/trả.", TaskStatus.DONE, s.get(2), s.get(0),
+                now.minusDays(15), now.minusDays(7), now.minusDays(3)); // trễ 4 ngày
+        task(pAlpha, gAlpha, "Sửa lỗi phân quyền", "Chặn do thiếu role guard.", TaskStatus.BLOCKED, s.get(2), s.get(0),
+                now.minusDays(9), now.minusDays(2), now.minusDays(1)); // quá hạn chưa xong
+        task(pAlpha, gAlpha, "Viết unit test repository", "JUnit + Mockito.", TaskStatus.TODO, s.get(2), s.get(0),
+                now.minusDays(3), now.plusDays(5), now.minusDays(1));
+
+        // === Nhóm Gamma (pGamma) — leader Khoa(8), Lan(9), Minh(10) ===
+        task(pGamma, gGamma, "Thiết kế CSDL thu chi", "Bảng giao dịch + danh mục.", TaskStatus.DONE, s.get(8), s.get(8),
+                now.minusDays(21), now.minusDays(12), now.minusDays(14));
+        task(pGamma, gGamma, "API ghi nhận giao dịch", "Thêm/sửa/xóa giao dịch.", TaskStatus.DONE, s.get(8), s.get(8),
+                now.minusDays(17), now.minusDays(8), now.minusDays(9));
+        task(pGamma, gGamma, "Tích hợp biểu đồ chi tiêu", "Chart.js.", TaskStatus.DONE, s.get(8), s.get(8),
+                now.minusDays(12), now.minusDays(4), now.minusDays(5));
+        task(pGamma, gGamma, "Báo cáo theo tháng (PDF)", "Xuất PDF.", TaskStatus.IN_PROGRESS, s.get(8), s.get(8),
+                now.minusDays(5), now.plusDays(4), now.minusDays(1));
+        task(pGamma, gGamma, "Giao diện nhập giao dịch", "Form nhập liệu.", TaskStatus.DONE, s.get(9), s.get(8),
+                now.minusDays(19), now.minusDays(10), now.minusDays(11));
+        task(pGamma, gGamma, "Màn hình tổng quan", "Dashboard thu chi.", TaskStatus.DONE, s.get(9), s.get(8),
+                now.minusDays(14), now.minusDays(6), now.minusDays(7));
+        task(pGamma, gGamma, "Lọc giao dịch theo danh mục", "Bộ lọc + tìm kiếm.", TaskStatus.DONE, s.get(9), s.get(8),
+                now.minusDays(9), now.minusDays(2), now.minusDays(3));
+        task(pGamma, gGamma, "Đồng bộ dữ liệu offline", "Local cache.", TaskStatus.TODO, s.get(9), s.get(8),
+                now.minusDays(7), now.minusDays(1), now.minusDays(1)); // quá hạn chưa xong
+        task(pGamma, gGamma, "Viết unit test service", "JUnit + Mockito.", TaskStatus.DONE, s.get(10), s.get(8),
+                now.minusDays(13), now.minusDays(6), now.minusDays(2)); // trễ 4 ngày
+        task(pGamma, gGamma, "Tài liệu hướng dẫn sử dụng", "User guide.", TaskStatus.DONE, s.get(10), s.get(8),
+                now.minusDays(8), now.minusDays(1), now.minusDays(2));
+        task(pGamma, gGamma, "Kiểm thử API Postman", "Bộ test collection.", TaskStatus.IN_PROGRESS, s.get(10), s.get(8),
+                now.minusDays(4), now.plusDays(3), now.minusDays(1));
+
+        // === Nhóm Delta (pDelta, quá hạn) — leader Nga(11), Phong(12), Quỳnh(13) ===
+        task(pDelta, gDelta, "Thu thập dữ liệu khuôn mặt", "Bộ ảnh huấn luyện.", TaskStatus.DONE, s.get(11), s.get(11),
+                now.minusDays(30), now.minusDays(20), now.minusDays(22));
+        task(pDelta, gDelta, "Tiền xử lý ảnh", "Chuẩn hóa, augmentation.", TaskStatus.DONE, s.get(11), s.get(11),
+                now.minusDays(25), now.minusDays(16), now.minusDays(18));
+        task(pDelta, gDelta, "Huấn luyện mô hình CNN", "Train + tuning.", TaskStatus.DONE, s.get(11), s.get(11),
+                now.minusDays(20), now.minusDays(12), now.minusDays(8)); // trễ 4 ngày
+        task(pDelta, gDelta, "Đánh giá độ chính xác", "Confusion matrix.", TaskStatus.DONE, s.get(11), s.get(11),
+                now.minusDays(14), now.minusDays(8), now.minusDays(3)); // trễ 5 ngày
+        task(pDelta, gDelta, "Pipeline nhận diện", "Đầu vào → kết quả.", TaskStatus.DONE, s.get(12), s.get(11),
+                now.minusDays(22), now.minusDays(13), now.minusDays(15));
+        task(pDelta, gDelta, "Tích hợp camera điểm danh", "Realtime camera.", TaskStatus.DONE, s.get(12), s.get(11),
+                now.minusDays(16), now.minusDays(9), now.minusDays(5)); // trễ 4 ngày
+        task(pDelta, gDelta, "Tối ưu tốc độ nhận diện", "Giảm latency.", TaskStatus.BLOCKED, s.get(12), s.get(11),
+                now.minusDays(10), now.minusDays(3), now.minusDays(1)); // quá hạn chưa xong
+        task(pDelta, gDelta, "Giao diện điểm danh", "Màn hình điểm danh.", TaskStatus.DONE, s.get(13), s.get(11),
+                now.minusDays(18), now.minusDays(9), now.minusDays(10));
+        task(pDelta, gDelta, "Xuất báo cáo điểm danh", "Excel/PDF.", TaskStatus.DONE, s.get(13), s.get(11),
+                now.minusDays(12), now.minusDays(6), now.minusDays(2)); // trễ 4 ngày
+        task(pDelta, gDelta, "Viết báo cáo đồ án", "Tổng hợp tài liệu.", TaskStatus.TODO, s.get(13), s.get(11),
+                now.minusDays(6), now.minusDays(2), now.minusDays(1)); // quá hạn chưa xong
+
+        // === Nhóm Epsilon (pEpsilon) — leader Sơn(14), Trang(15) — nộp trễ nên bị trừ 30% ===
+        // s14: 2 đúng hạn + 2 trễ deadline → bị trừ 30% đóng góp
+        task(pEpsilon, gEpsilon, "Thiết kế màn chơi 2D", "Tilemap + level design.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(20), now.minusDays(11), now.minusDays(13));
+        task(pEpsilon, gEpsilon, "Cơ chế nhân vật chính", "Di chuyển, nhảy, va chạm.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(16), now.minusDays(8), now.minusDays(9));
+        task(pEpsilon, gEpsilon, "Hệ thống kẻ địch & AI", "Tuần tra, tấn công.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(12), now.minusDays(5), now.minusDays(2)); // trễ 3 ngày
+        task(pEpsilon, gEpsilon, "Tối ưu hiệu năng game", "Object pooling.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(8), now.minusDays(3), now.plusDays(0)); // trễ 3 ngày
+        // s15: 2 đúng hạn + 1 quá hạn chưa xong → bị trừ 30% đóng góp
+        task(pEpsilon, gEpsilon, "Âm thanh & hiệu ứng", "SFX + nhạc nền.", TaskStatus.DONE, s.get(15), s.get(14),
+                now.minusDays(18), now.minusDays(10), now.minusDays(11));
+        task(pEpsilon, gEpsilon, "Giao diện menu & HUD", "Màn hình chính, điểm số.", TaskStatus.DONE, s.get(15), s.get(14),
+                now.minusDays(13), now.minusDays(6), now.minusDays(7));
+        task(pEpsilon, gEpsilon, "Lưu/đọc tiến trình chơi", "Save game.", TaskStatus.IN_PROGRESS, s.get(15), s.get(14),
+                now.minusDays(7), now.minusDays(2), now.minusDays(1)); // quá hạn chưa xong
 
         // --- Thông báo (duyệt / từ chối kèm nhận xét; đã đọc / chưa đọc) ---
         notify(s.get(0), "APPROVED", "đã duyệt đề tài \"Website quản lý thư viện\"",
@@ -329,10 +426,11 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void task(Project project, Group group, String title, String desc, TaskStatus status,
-            User assignedTo, User createdBy) {
+            User assignedTo, User createdBy, LocalDateTime createdAt, LocalDateTime deadline, LocalDateTime updatedAt) {
         taskRepository.save(Task.builder()
                 .title(title).description(desc).status(status).assignedTo(assignedTo).createdBy(createdBy)
-                .group(group).project(project).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build());
+                .group(group).project(project).deadline(deadline)
+                .createdAt(createdAt).updatedAt(updatedAt).build());
     }
 
     private void notify(User recipient, String type, String title, String message, Long courseId, Long projectId, boolean read) {
