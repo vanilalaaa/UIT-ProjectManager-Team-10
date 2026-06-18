@@ -78,15 +78,28 @@ export default function ProjectKanban() {
       return
     }
 
+    // Task đang chờ kiểm tra: chỉ leader/người kiểm tra mới được duyệt/trả lại
+    // (BE cũng chặn). Người thực hiện duyệt review trong popup chi tiết.
+    const isReviewer = isLeader || taskToMove.validator?.id === currentUser.id
+    if (taskToMove.status === 'REVIEW' && newStatus !== 'REVIEW' && !isReviewer) {
+      toast.error('Chỉ leader hoặc người kiểm tra mới được duyệt/trả lại task đang chờ kiểm tra.')
+      return
+    }
+
     if (taskToMove.status === newStatus) return
     const prevStatus = taskToMove.status
 
     setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: newStatus } : t))
 
-    updateTaskStatus(taskId, { status: newStatus }).catch(() => {
-      setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: prevStatus } : t))
-      toast.error('Không cập nhật được trạng thái Task.')
-    })
+    updateTaskStatus(taskId, { status: newStatus })
+      .then(res => {
+        // Đồng bộ lại task (vd nhận xét/notify) từ phản hồi BE.
+        setTasks(prev => prev.map(t => t.taskId === taskId ? { ...res.data, priority: t.priority } : t))
+      })
+      .catch((err: { message?: string }) => {
+        setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: prevStatus } : t))
+        toast.error(err?.message || 'Không cập nhật được trạng thái Task.')
+      })
   }
 
   const handleDeleteTask = () => {

@@ -14,11 +14,9 @@ export const listTaskResources = (taskId: number | string): Promise<TaskResource
 export const uploadTaskFile = (
   taskId: number | string,
   file: File,
-  label?: string,
 ): Promise<TaskResource> => {
   const fd = new FormData()
   fd.append('file', file)
-  if (label) fd.append('label', label)
   return axiosClient
     .post<ApiResponse<TaskResource>>(`/tasks/${taskId}/resources`, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },

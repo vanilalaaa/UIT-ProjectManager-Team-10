@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import Modal from '../Modal'
 import Avatar from '../Avatar'
@@ -55,19 +55,11 @@ export default function TaskDetailModal({
   const [assigneeId, setAssigneeId] = useState('')
   const [validatorId, setValidatorId] = useState('')
 
-  // Thêm tài nguyên + nhận xét review
+  // Thêm tài nguyên + nhận xét review. Ô nhận xét luôn bắt đầu trống để người
+  // kiểm tra không vô tình gửi lại nhận xét cũ; nhận xét trước hiển thị riêng.
   const [linkUrl, setLinkUrl] = useState('')
-  const [reviewNote, setReviewNote] = useState(task?.comment ?? '')
+  const [reviewNote, setReviewNote] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Lấy lại tài nguyên mới nhất từ server khi mở (chạy 1 lần cho mỗi task).
-  useEffect(() => {
-    if (!task) return
-    listTaskResources(task.taskId)
-      .then(setResources)
-      .catch(() => undefined)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   if (!current) return null
 
@@ -125,13 +117,14 @@ export default function TaskDetailModal({
       payload.deadline = `${deadline}T23:59:00`
     }
     if (canManageRoles) {
+      // 0 = gỡ bỏ (BE coi null là "không đổi"); chỉ gửi khi thực sự thay đổi.
       const newAssignee = assigneeId ? Number(assigneeId) : null
       const newValidator = validatorId ? Number(validatorId) : null
-      if (newAssignee && newAssignee !== (current.assignee?.id ?? null)) {
-        payload.assignedToId = newAssignee
+      if (newAssignee !== (current.assignee?.id ?? null)) {
+        payload.assignedToId = newAssignee ?? 0
       }
       if (newValidator !== (current.validator?.id ?? null)) {
-        payload.validatorId = newValidator
+        payload.validatorId = newValidator ?? 0
       }
     }
 
@@ -437,14 +430,21 @@ export default function TaskDetailModal({
             {(canSubmitReview || showReviewBox) && (
               <div className="border-t border-border pt-4 space-y-3">
                 {canSubmitReview && (
-                  <button
-                    type="button"
-                    onClick={handleSubmitReview}
-                    disabled={busy}
-                    className="w-full bg-primary hover:bg-primary/95 text-surface font-semibold px-5 py-2.5 rounded-button shadow-soft transition-colors text-sm disabled:opacity-60"
-                  >
-                    Gửi kiểm tra
-                  </button>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleSubmitReview}
+                      disabled={busy || resources.length === 0}
+                      className="w-full bg-primary hover:bg-primary/95 text-surface font-semibold px-5 py-2.5 rounded-button shadow-soft transition-colors text-sm disabled:opacity-60"
+                    >
+                      Gửi kiểm tra
+                    </button>
+                    {resources.length === 0 && (
+                      <p className="mt-1.5 text-center text-xs text-text-soft">
+                        Hãy đính kèm ít nhất một tệp hoặc liên kết trước khi gửi kiểm tra.
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {showReviewBox && (
