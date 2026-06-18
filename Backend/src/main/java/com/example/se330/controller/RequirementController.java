@@ -1,8 +1,12 @@
 package com.example.se330.controller;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,14 +24,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.se330.dto.ApiResponse;
 import com.example.se330.dto.requirement.RequirementFileResponse;
+import com.example.se330.dto.requirement.RequirementLinkRequest;
 import com.example.se330.dto.requirement.RequirementResponse;
 import com.example.se330.dto.requirement.SaveRequirementRequest;
 import com.example.se330.security.CustomUserDetails;
 import com.example.se330.service.RequirementFileService;
 import com.example.se330.service.RequirementService;
 
-// Yêu cầu đồ án + barem + tài liệu đính kèm của 1 lớp.
-// GET: mọi user đã đăng nhập (SV xem/tải). PUT/upload/xóa: giảng viên của lớp.
 @RestController
 @RequestMapping("/courses/{courseId}/requirement")
 public class RequirementController {
@@ -57,23 +60,54 @@ public class RequirementController {
         return ApiResponse.success(resp, "Lưu yêu cầu đồ án thành công.");
     }
 
-    // ----- Tài liệu yêu cầu (tệp đính kèm) -----
-
     @GetMapping("/files")
-    public ResponseEntity<ApiResponse<List<RequirementFileResponse>>> listFiles(@PathVariable Long courseId) {
-        return ApiResponse.success(requirementFileService.list(courseId), "Lấy tài liệu yêu cầu thành công.");
+    public ResponseEntity<ApiResponse<List<RequirementFileResponse>>> listFiles(
+            @PathVariable Long courseId,
+            @RequestParam(required = false) Long criterionId,
+            @RequestParam(required = false) Long submissionRequirementId) {
+        List<RequirementFileResponse> files = submissionRequirementId != null
+                ? requirementFileService.listBySubmissionRequirement(courseId, submissionRequirementId)
+                : criterionId != null
+                        ? requirementFileService.listByCriterion(courseId, criterionId)
+                        : requirementFileService.list(courseId);
+        return ApiResponse.success(files, "Lấy tài liệu yêu cầu thành công.");
     }
 
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     @PostMapping(value = "/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<RequirementFileResponse>> addFile(
             @PathVariable Long courseId,
+            @RequestParam(required = false) Long criterionId,
+            @RequestParam(required = false) Long submissionRequirementId,
             @RequestParam(required = false) String label,
             @RequestParam MultipartFile file,
             Authentication authentication) throws IOException {
         return ApiResponse.success(
-                requirementFileService.add(courseId, label, file, currentUserId(authentication)),
+                requirementFileService.add(
+                        courseId,
+                        criterionId,
+                        submissionRequirementId,
+                        label,
+                        file,
+                        currentUserId(authentication)),
                 "Đã tải lên tài liệu.");
+    }
+
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    @PostMapping("/links")
+    public ResponseEntity<ApiResponse<RequirementFileResponse>> addLink(
+            @PathVariable Long courseId,
+            @RequestBody RequirementLinkRequest req,
+            Authentication authentication) {
+        return ApiResponse.success(
+                requirementFileService.addLink(
+                        courseId,
+                        req.getCriterionId(),
+                        req.getSubmissionRequirementId(),
+                        req.getLabel(),
+                        req.getUrl(),
+                        currentUserId(authentication)),
+                "Đã thêm liên kết.");
     }
 
     @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
@@ -84,6 +118,22 @@ public class RequirementController {
             Authentication authentication) {
         requirementFileService.delete(courseId, fileId, currentUserId(authentication));
         return ApiResponse.success("Đã xóa tài liệu.");
+    }
+
+    @GetMapping("/files/{fileId}/download")
+    public ResponseEntity<Resource> downloadFile(
+            @PathVariable Long courseId,
+            @PathVariable Long fileId) {
+        RequirementFileService.RequirementFileDownload download = requirementFileService.download(courseId, fileId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(download.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .body(download.resource());
     }
 
     private Long currentUserId(Authentication authentication) {

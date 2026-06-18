@@ -41,5 +41,10 @@ public class Requirement {
     @OneToMany(mappedBy = "requirement", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("orderIndex ASC")
     @Builder.Default
+    private List<RequirementSubmissionRequirement> submissionRequirements = new ArrayList<>();
+
+    @OneToMany(mappedBy = "requirement", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("orderIndex ASC")
+    @Builder.Default
     private List<RubricCriterion> criteria = new ArrayList<>();
 }

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getProjectById } from '../../../services/project.service';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 import type { Project } from '../../../types/api/project';
+import SubmissionReport from './SubmissionReport';
 
 export default function TeamSubmit() {
   const { projectId } = useParams();
@@ -82,6 +83,8 @@ export default function TeamSubmit() {
           </div>
         );
       })}
+
+      <SubmissionReport projectId={projectId ?? ''} />
     </div>
   );
 }

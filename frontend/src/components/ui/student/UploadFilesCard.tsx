@@ -5,13 +5,15 @@ type SubmittedFile = {
   url: string
   name: string
   date: string
+  submissionRequirementId?: number | null
 }
 
 interface UploadFilesCardProps {
-  onSubmit: (files: File[], deleteIds: number[]) => void
+  onSubmit: (files: File[], deleteIds: number[], linkUrl?: string, linkLabel?: string) => void
   isSubmitting?: boolean
   isLocked?: boolean
   currentSubmissions?: SubmittedFile[]
+  title?: string
 }
 
 const MAX_FILES = 5
@@ -23,9 +25,12 @@ export default function UploadFilesCard({
   isSubmitting = false,
   isLocked = false,
   currentSubmissions = [],
+  title,
 }: UploadFilesCardProps) {
   const [files, setFiles] = useState<File[]>([])
   const [deleteIds, setDeleteIds] = useState<number[]>([])
+  const [linkLabel, setLinkLabel] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -36,13 +41,16 @@ export default function UploadFilesCard({
       setIsEditing(false)
       setFiles([])
       setDeleteIds([])
+      setLinkLabel('')
+      setLinkUrl('')
       setError(null)
     }
   }, [currentSubmissions.length])
 
   const keptSubmissions = currentSubmissions.filter((submission) => !deleteIds.includes(submission.id))
   const selectedTotalSize = files.reduce((sum, file) => sum + file.size, 0)
-  const hasChanges = files.length > 0 || deleteIds.length > 0
+  const hasLink = linkUrl.trim().length > 0
+  const hasChanges = files.length > 0 || deleteIds.length > 0 || hasLink
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -127,6 +135,8 @@ export default function UploadFilesCard({
     setIsEditing(false)
     setFiles([])
     setDeleteIds([])
+    setLinkLabel('')
+    setLinkUrl('')
     setError(null)
   }
 
@@ -134,6 +144,8 @@ export default function UploadFilesCard({
     setIsEditing(true)
     setFiles([])
     setDeleteIds([])
+    setLinkLabel('')
+    setLinkUrl('')
     setError(null)
   }
 
@@ -193,7 +205,7 @@ export default function UploadFilesCard({
       <div className="bg-surface border border-primary/20 rounded-[18px] p-6 shadow-soft transition-all">
         <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
           <span className="size-2 rounded-full bg-secondary animate-pulse block"></span>
-          Bài đã nộp
+          {title ?? 'Bài đã nộp'}
         </h2>
 
         <div className="w-full bg-surface-soft p-5 rounded-xl border border-border space-y-3">
@@ -220,7 +232,7 @@ export default function UploadFilesCard({
   return (
     <div className={`bg-surface border rounded-[18px] p-6 shadow-soft transition-colors ${isLocked ? 'border-warning/50 bg-warning-soft/10 opacity-70' : 'border-border'}`}>
       <h2 className={`text-base font-bold mb-4 ${isLocked ? 'text-warning' : 'text-text'}`}>
-        {isLocked ? 'Bài nộp đã khóa' : (isEditing ? 'Cập nhật bài nộp' : 'Upload Files')}
+        {isLocked ? 'Bài nộp đã khóa' : (isEditing ? 'Cập nhật bài nộp' : (title ?? 'Upload Files'))}
       </h2>
 
       {isEditing && currentSubmissions.length > 0 && (
@@ -300,7 +312,23 @@ export default function UploadFilesCard({
         )}
       </div>
 
-      {!isLocked && (isEditing || files.length > 0) && (
+      {!isLocked && (
+        <div className="mt-4 rounded-xl border border-border bg-surface-soft p-4">
+          <label className="block text-sm font-bold text-text mb-2">Nộp link</label>
+          <input
+            type="url"
+            value={linkUrl}
+            onChange={(e) => {
+              setError(null)
+              setLinkUrl(e.target.value)
+            }}
+            placeholder="https://github.com/... hoặc link Google Drive"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text outline-none transition-colors focus:border-primary"
+          />
+        </div>
+      )}
+
+      {!isLocked && (isEditing || files.length > 0 || hasLink) && (
         <div className="mt-6 flex justify-end gap-3">
           {isEditing && (
             <button onClick={resetEditing} className="px-6 py-2.5 rounded-full font-semibold text-sm text-text-soft hover:bg-surface-soft transition-all">
@@ -309,7 +337,7 @@ export default function UploadFilesCard({
           )}
 
           <button
-            onClick={() => onSubmit(files, deleteIds)}
+            onClick={() => onSubmit(files, deleteIds, linkUrl.trim() || undefined)}
             disabled={!hasChanges || isSubmitting}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-soft
               ${isSubmitting || !hasChanges
