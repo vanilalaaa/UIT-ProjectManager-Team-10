@@ -4,6 +4,7 @@ import com.example.se330.dto.task.BoardGroupResponse;
 import com.example.se330.dto.task.BoardResponse;
 import com.example.se330.dto.task.CreateTaskRequest;
 import com.example.se330.dto.task.TaskResponse;
+import com.example.se330.dto.task.TaskResourceResponse;
 import com.example.se330.dto.task.UpdateTaskRequest;
 import com.example.se330.dto.task.UserLiteResponse;
 import com.example.se330.entity.Group;
@@ -18,6 +19,7 @@ import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.TaskRepository;
+import com.example.se330.repository.TaskResourceRepository;
 import com.example.se330.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class TaskService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final TaskResourceRepository taskResourceRepository;
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getProjectTasks(Long projectId, Long assigneeId, TaskStatus status) {
@@ -123,6 +126,12 @@ public class TaskService {
                     .orElseThrow(() -> new EntityNotFoundException("Group not found"));
         }
 
+        User validator = null;
+        if (request.getValidatorId() != null) {
+            validator = userRepository.findById(request.getValidatorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Validator not found"));
+        }
+
         if (request.getDeadline() != null && request.getDeadline().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Deadline must be greater than now");
         }
@@ -133,6 +142,8 @@ public class TaskService {
                 .status(request.getStatus() != null ? request.getStatus() : TaskStatus.TODO)
                 .deadline(request.getDeadline())
                 .assignedTo(assignedUser)
+                .validator(validator)
+                .source(request.getSource())
                 .createdBy(createdBy)
                 .group(group)
                 .project(project)
@@ -142,10 +153,26 @@ public class TaskService {
         return toResponse(taskRepository.save(task));
     }
 
-    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request) {
+    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request, Long currentUserId) {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        boolean isLeader = task.getGroup() != null
+                && task.getGroup().getLeader() != null
+                && task.getGroup().getLeader().getId().equals(currentUser.getId());
+        boolean isValidator = task.getValidator() != null
+                && task.getValidator().getId().equals(currentUser.getId());
+        boolean isAssigned = task.getAssignedTo() != null
+                && task.getAssignedTo().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isAdmin && !isLeader && !isValidator && !isAssigned) {
+            throw new RuntimeException("Bạn không có quyền chỉnh sửa task này.");
+        }
 
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
@@ -163,9 +190,23 @@ public class TaskService {
             task.setDeadline(request.getDeadline());
         }
         if (request.getAssignedToId() != null) {
+            if (!isLeader && !isAdmin) {
+                throw new RuntimeException("Chỉ leader mới được thay đổi người thực hiện task.");
+            }
             User assignedUser = userRepository.findById(request.getAssignedToId())
                     .orElseThrow(() -> new EntityNotFoundException("Assigned user not found"));
             task.setAssignedTo(assignedUser);
+        }
+        if (request.getValidatorId() != null) {
+            if (!isLeader && !isAdmin) {
+                throw new RuntimeException("Chỉ leader mới được thay đổi người kiểm tra task.");
+            }
+            User validator = userRepository.findById(request.getValidatorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Validator not found"));
+            task.setValidator(validator);
+        }
+        if (request.getSource() != null) {
+            task.setSource(request.getSource());
         }
 
         task.setUpdatedAt(LocalDateTime.now());
@@ -220,8 +261,19 @@ public class TaskService {
                 .description(task.getDescription())
                 .status(task.getStatus() != null ? task.getStatus().name() : null)
                 .assignee(toUserLite(task.getAssignedTo()))
+                .validator(toUserLite(task.getValidator()))
                 .createdBy(toUserLite(task.getCreatedBy()))
                 .groupId(task.getGroup() != null ? task.getGroup().getId() : null)
+                .source(task.getSource())
+                .resources(taskResourceRepository.findByTask_IdOrderByIdDesc(task.getId()).stream()
+                        .map(r -> TaskResourceResponse.builder()
+                                .id(r.getId())
+                                .type(r.getType())
+                                .label(r.getLabel())
+                                .url(r.getUrl())
+                                .createdAt(r.getCreatedAt() != null ? r.getCreatedAt().toString() : null)
+                                .build())
+                        .toList())
                 .deadline(task.getDeadline() != null ? task.getDeadline().toString() : null)
                 .createdAt(task.getCreatedAt() != null ? task.getCreatedAt().toString() : null)
                 .updatedAt(task.getUpdatedAt() != null ? task.getUpdatedAt().toString() : null)

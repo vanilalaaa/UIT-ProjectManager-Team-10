@@ -54,9 +54,11 @@ public class TaskController {
     @PutMapping("/tasks/{id}")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @PathVariable Long id,
-            @RequestBody UpdateTaskRequest request) {
+            @RequestBody UpdateTaskRequest request,
+            Authentication authentication) {
 
-        return ApiResponse.success(taskService.updateTask(id, request), "Cập nhật task thành công.");
+        Long currentUserId = currentUserId(authentication);
+        return ApiResponse.success(taskService.updateTask(id, request, currentUserId), "Cập nhật task thành công.");
     }
 
     @PatchMapping("/tasks/{id}/status")
