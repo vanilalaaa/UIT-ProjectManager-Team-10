@@ -22,10 +22,10 @@ interface TaskDetailModalProps {
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   TODO: { label: 'Cần làm', cls: 'bg-surface-soft text-text-soft' },
-  IN_PROGRESS: { label: 'Đang làm', cls: 'bg-accent-soft text-accent' },
+  IN_PROGRESS: { label: 'Đang làm', cls: 'bg-sky-100 text-sky-700' },
   REVIEW: { label: 'Chờ kiểm tra', cls: 'bg-primary-soft text-primary' },
   DONE: { label: 'Hoàn thành', cls: 'bg-secondary-soft text-secondary' },
-  BLOCKED: { label: 'Tạm dừng', cls: 'bg-warning-soft text-warning' },
+  BLOCKED: { label: 'Tạm dừng', cls: 'bg-amber-100 text-amber-700' },
 }
 
 const apiMessage = (e: unknown, fallback: string) =>
@@ -464,7 +464,7 @@ export default function TaskDetailModal({
                         type="button"
                         onClick={() => handleReviewDecision(false)}
                         disabled={busy}
-                        className="rounded-button border border-warning/40 bg-warning-soft/40 px-5 py-2.5 text-sm font-semibold text-warning hover:bg-warning-soft transition-colors disabled:opacity-60"
+                        className="rounded-button border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-60"
                       >
                         Yêu cầu chỉnh sửa
                       </button>
