@@ -20,6 +20,7 @@ export type MemberTaskReport = {
   leader: boolean
   assignedTasks: number
   completedTasks: number
+  lateTasks: number
   completionRate: number
   avgCompletionDays: number | null
 }
@@ -29,7 +30,9 @@ export type GroupTaskReport = {
   groupName: string | null
   totalTasks: number
   completedTasks: number
+  lateTasks: number
   completionRate: number
+  avgCompletionDays: number | null
   memberCount: number
   members: MemberTaskReport[]
 }

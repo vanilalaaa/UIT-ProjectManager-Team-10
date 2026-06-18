@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +32,9 @@ public class SubmissionReportService {
 
     private final SubmissionRepository submissionRepository;
     private final TaskRepository taskRepository;
+
+    // Trễ deadline: trừ 30% trên phần trăm đóng góp (completionRate) của thành viên.
+    private static final double LATE_PENALTY_RATE = 0.30;
 
     public List<GroupTaskReport> getReport(Long projectId) {
 
@@ -53,18 +57,19 @@ public class SubmissionReportService {
     private GroupTaskReport buildGroupReport(Long projectId, Group group) {
 
         List<Task> tasks = taskRepository.findByProject_IdAndGroup_Id(projectId, group.getId());
+        LocalDateTime now = LocalDateTime.now();
 
         long totalTasks = tasks.size();
-        long groupCompleted = tasks.stream()
-                .filter(t -> t.getStatus() == TaskStatus.DONE)
-                .count();
+        // Task trễ deadline KHÔNG được tính là hoàn thành.
+        long groupCompleted = tasks.stream().filter(this::isCompletedOnTime).count();
+        long groupLate = tasks.stream().filter(t -> isLate(t, now)).count();
 
         List<MemberTaskReport> memberReports = new ArrayList<>();
         for (GroupMember gm : group.getMembers()) {
             if (gm.getStatus() != GroupMemberStatus.ACTIVE || gm.getUser() == null) {
                 continue;
             }
-            memberReports.add(buildMemberReport(gm, tasks));
+            memberReports.add(buildMemberReport(gm, tasks, now));
         }
 
         return GroupTaskReport.builder()
@@ -72,13 +77,15 @@ public class SubmissionReportService {
                 .groupName(group.getName())
                 .totalTasks(totalTasks)
                 .completedTasks(groupCompleted)
+                .lateTasks(groupLate)
                 .completionRate(percentage(groupCompleted, totalTasks))
+                .avgCompletionDays(avgCompletionDays(tasks))
                 .memberCount(memberReports.size())
                 .members(memberReports)
                 .build();
     }
 
-    private MemberTaskReport buildMemberReport(GroupMember gm, List<Task> groupTasks) {
+    private MemberTaskReport buildMemberReport(GroupMember gm, List<Task> groupTasks, LocalDateTime now) {
 
         User user = gm.getUser();
 
@@ -87,26 +94,15 @@ public class SubmissionReportService {
                         && t.getAssignedTo().getId().equals(user.getId()))
                 .toList();
 
-        List<Task> completed = assigned.stream()
-                .filter(t -> t.getStatus() == TaskStatus.DONE)
-                .toList();
-
+        // Chỉ những task hoàn thành ĐÚNG HẠN mới được tính là hoàn thành.
         long assignedCount = assigned.size();
-        long completedCount = completed.size();
+        long completedCount = assigned.stream().filter(this::isCompletedOnTime).count();
+        long lateCount = assigned.stream().filter(t -> isLate(t, now)).count();
 
-        // Số ngày hoàn thành ≈ khoảng cách từ lúc tạo task tới lần cập nhật cuối (khi
-        // chuyển sang DONE). Chỉ tính các task DONE có đủ mốc thời gian hợp lệ.
-        List<Long> minutesToComplete = completed.stream()
-                .filter(t -> t.getCreatedAt() != null && t.getUpdatedAt() != null)
-                .map(t -> Duration.between(t.getCreatedAt(), t.getUpdatedAt()).toMinutes())
-                .filter(m -> m >= 0)
-                .toList();
-
-        Double avgDays = null;
-        if (!minutesToComplete.isEmpty()) {
-            double avgMinutes = minutesToComplete.stream()
-                    .mapToLong(Long::longValue).average().orElse(0);
-            avgDays = Math.round(avgMinutes / 1440.0 * 10.0) / 10.0;
+        // Phần trăm đóng góp của thành viên; nếu có bất kỳ task trễ deadline thì trừ 30%.
+        double completionRate = percentage(completedCount, assignedCount);
+        if (lateCount > 0) {
+            completionRate = Math.round(completionRate * (1 - LATE_PENALTY_RATE) * 10.0) / 10.0;
         }
 
         String avatar = user.getUserProfile() != null
@@ -121,9 +117,51 @@ public class SubmissionReportService {
                 .leader(Boolean.TRUE.equals(gm.getIsLeader()))
                 .assignedTasks(assignedCount)
                 .completedTasks(completedCount)
-                .completionRate(percentage(completedCount, assignedCount))
-                .avgCompletionDays(avgDays)
+                .lateTasks(lateCount)
+                .completionRate(completionRate)
+                .avgCompletionDays(avgCompletionDays(assigned))
                 .build();
+    }
+
+    // Hoàn thành đúng hạn: đã DONE và (không có deadline hoặc nộp xong trước/đúng deadline).
+    private boolean isCompletedOnTime(Task t) {
+        if (t.getStatus() != TaskStatus.DONE) {
+            return false;
+        }
+        if (t.getDeadline() == null) {
+            return true;
+        }
+        LocalDateTime finishedAt = t.getUpdatedAt();
+        return finishedAt == null || !finishedAt.isAfter(t.getDeadline());
+    }
+
+    // Trễ deadline: task DONE nhưng hoàn thành sau deadline, hoặc chưa xong mà đã quá deadline.
+    private boolean isLate(Task t, LocalDateTime now) {
+        if (t.getDeadline() == null) {
+            return false;
+        }
+        if (t.getStatus() == TaskStatus.DONE) {
+            LocalDateTime finishedAt = t.getUpdatedAt();
+            return finishedAt != null && finishedAt.isAfter(t.getDeadline());
+        }
+        return now.isAfter(t.getDeadline());
+    }
+
+    // Thời gian hoàn thành trung bình (ngày) ≈ khoảng cách từ lúc tạo task tới lần cập nhật
+    // cuối, chỉ tính các task hoàn thành ĐÚNG HẠN có đủ mốc thời gian hợp lệ.
+    private Double avgCompletionDays(List<Task> tasks) {
+        List<Long> minutesToComplete = tasks.stream()
+                .filter(this::isCompletedOnTime)
+                .filter(t -> t.getCreatedAt() != null && t.getUpdatedAt() != null)
+                .map(t -> Duration.between(t.getCreatedAt(), t.getUpdatedAt()).toMinutes())
+                .filter(m -> m >= 0)
+                .toList();
+        if (minutesToComplete.isEmpty()) {
+            return null;
+        }
+        double avgMinutes = minutesToComplete.stream()
+                .mapToLong(Long::longValue).average().orElse(0);
+        return Math.round(avgMinutes / 1440.0 * 10.0) / 10.0;
     }
 
     private double percentage(long part, long total) {

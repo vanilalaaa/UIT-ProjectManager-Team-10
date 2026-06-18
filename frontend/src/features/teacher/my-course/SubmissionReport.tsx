@@ -19,7 +19,7 @@ function ProgressBar({ value }: { value: number }) {
 function MemberRow({ member }: { member: MemberTaskReport }) {
   return (
     <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 text-xs">
-      <div className="col-span-4 min-w-0">
+      <div className="col-span-3 min-w-0">
         <div className="flex items-center gap-2">
           <p className="font-bold text-text truncate">{member.name ?? 'Chưa có tên'}</p>
           {member.leader && (
@@ -36,15 +36,22 @@ function MemberRow({ member }: { member: MemberTaskReport }) {
 
       <div className="col-span-2 text-center">
         <p className="font-bold text-text">{member.completedTasks}/{member.assignedTasks}</p>
-        <p className="text-text-soft">task</p>
+        <p className="text-text-soft">task đúng hạn</p>
       </div>
 
-      <div className="col-span-4">
+      <div className="col-span-3">
         <div className="flex items-center justify-between mb-1">
           <span className="text-text-soft">Hoàn thành</span>
           <span className="font-bold text-text">{member.completionRate}%</span>
         </div>
         <ProgressBar value={member.completionRate} />
+      </div>
+
+      <div className="col-span-2 text-center">
+        <p className={`font-bold ${member.lateTasks > 0 ? 'text-rose-500' : 'text-text'}`}>
+          {member.lateTasks}
+        </p>
+        <p className="text-text-soft">lần trễ</p>
       </div>
 
       <div className="col-span-2 text-center">
@@ -69,7 +76,15 @@ function GroupCard({ group }: { group: GroupTaskReport }) {
           <div className="text-right">
             <p className="text-xs text-text-soft">Tiến độ nhóm</p>
             <p className="font-bold text-text">
-              {group.completedTasks}/{group.totalTasks} task • {group.completionRate}%
+              {group.completedTasks}/{group.totalTasks} task đúng hạn • {group.completionRate}%
+            </p>
+            <p className="text-xs text-text-soft mt-0.5">
+              {group.lateTasks > 0 ? (
+                <span className="text-rose-500 font-bold">{group.lateTasks} lần trễ deadline</span>
+              ) : (
+                <span>Không trễ deadline</span>
+              )}
+              {group.avgCompletionDays != null && ` • TB ${group.avgCompletionDays} ngày/task`}
             </p>
           </div>
         </div>
@@ -83,9 +98,10 @@ function GroupCard({ group }: { group: GroupTaskReport }) {
       ) : (
         <>
           <div className="grid grid-cols-12 gap-3 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-text-soft border-b border-border">
-            <div className="col-span-4">Thành viên</div>
+            <div className="col-span-3">Thành viên</div>
             <div className="col-span-2 text-center">Task</div>
-            <div className="col-span-4">Tỷ lệ hoàn thành</div>
+            <div className="col-span-3">Tỷ lệ hoàn thành</div>
+            <div className="col-span-2 text-center">Trễ deadline</div>
             <div className="col-span-2 text-center">Thời gian</div>
           </div>
           <div className="divide-y divide-border">
@@ -129,7 +145,9 @@ export default function SubmissionReport({ projectId }: Props) {
       <div>
         <h2 className="text-xl font-bold text-text">Báo cáo công việc nhóm</h2>
         <p className="text-xs text-text-soft mt-1">
-          Thống kê số task được giao, tỷ lệ hoàn thành và thời gian hoàn thành trung bình của từng thành viên.
+          Thống kê số task được giao, tỷ lệ hoàn thành (task trễ deadline không được tính,
+          và thành viên có task trễ bị trừ 30% tỷ lệ đóng góp), số lần trễ deadline
+          và thời gian hoàn thành trung bình của từng thành viên.
         </p>
       </div>
       {reports.map((group) => (
