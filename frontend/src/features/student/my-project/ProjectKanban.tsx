@@ -180,12 +180,10 @@ export default function ProjectKanban() {
               onDrop={(e) => onDrop(e, col.id)}
               className="flex flex-col gap-4 min-h-[300px] w-full min-w-[280px] max-w-[350px]"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2.5">
-                  <span className={`size-2.5 rounded-full ${col.dot}`}></span>
-                  <h3 className={`font-bold text-[17px] ${col.text}`}>{col.title}</h3>
-                </div>
-                <span className="bg-surface-soft text-text-soft text-xs font-bold px-2.5 py-0.5 rounded-full border border-border">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className={`size-2.5 rounded-full ${col.dot}`}></span>
+                <h3 className={`font-bold text-[17px] ${col.text}`}>{col.title}</h3>
+                <span className={`min-w-[30px] text-center text-base font-extrabold px-2.5 py-0.5 rounded-full bg-surface-soft border border-border ${col.text}`}>
                   {colTasks.length}
                 </span>
               </div>
