@@ -7,17 +7,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.se330.dto.requirement.RequirementResponse;
+import com.example.se330.dto.requirement.RequirementFileResponse;
 import com.example.se330.dto.requirement.RubricCriterionRequest;
 import com.example.se330.dto.requirement.RubricCriterionResponse;
 import com.example.se330.dto.requirement.SaveRequirementRequest;
+import com.example.se330.dto.requirement.SubmissionRequirementRequest;
+import com.example.se330.dto.requirement.SubmissionRequirementResponse;
 import com.example.se330.entity.Category;
 import com.example.se330.entity.Course;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Requirement;
+import com.example.se330.entity.RequirementSubmissionRequirement;
 import com.example.se330.entity.RubricCriterion;
 import com.example.se330.repository.CategoryRepository;
 import com.example.se330.repository.CourseRepository;
@@ -32,6 +37,9 @@ public class RequirementService {
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
     private final ProjectRepository projectRepository; 
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     public RequirementService(
             RequirementRepository requirementRepository,
@@ -72,6 +80,37 @@ public class RequirementService {
         
         LocalDate newDeadline = parseDate(req.getDeadline());
         requirement.setDeadline(newDeadline);
+
+        List<SubmissionRequirementRequest> incomingSubmissionRequirements =
+                req.getSubmissionRequirements() != null ? req.getSubmissionRequirements() : List.of();
+        List<RequirementSubmissionRequirement> existingSubmissionRequirements =
+                requirement.getSubmissionRequirements();
+        Map<Long, RequirementSubmissionRequirement> existingSubmissionById = existingSubmissionRequirements.stream()
+                .filter(item -> item.getId() != null)
+                .collect(Collectors.toMap(RequirementSubmissionRequirement::getId, item -> item));
+
+        Set<Long> keepSubmissionIds = new HashSet<>();
+        int submissionOrder = 0;
+        for (SubmissionRequirementRequest item : incomingSubmissionRequirements) {
+            if (item == null || item.getContent() == null || item.getContent().isBlank()) {
+                continue;
+            }
+            RequirementSubmissionRequirement target =
+                    item.getId() != null ? existingSubmissionById.get(item.getId()) : null;
+            if (target != null) {
+                target.setContent(item.getContent().trim());
+                target.setOrderIndex(submissionOrder++);
+                keepSubmissionIds.add(target.getId());
+            } else {
+                existingSubmissionRequirements.add(RequirementSubmissionRequirement.builder()
+                        .requirement(requirement)
+                        .content(item.getContent().trim())
+                        .orderIndex(submissionOrder++)
+                        .build());
+            }
+        }
+        existingSubmissionRequirements.removeIf(
+                item -> item.getId() != null && !keepSubmissionIds.contains(item.getId()));
 
         // Cập nhật barem TẠI CHỖ theo id thay vì xóa sạch rồi tạo lại. Nếu tạo lại,
         // các tiêu chí cũ nhận criterion_id mới khiến điểm đã chấm (GradeCriterionScore
@@ -137,6 +176,28 @@ public class RequirementService {
                         .id(c.getId())
                         .name(c.getName())
                         .maxScore(c.getMaxScore())
+                        .files(c.getFiles() == null ? List.of() : c.getFiles().stream()
+                                .map(f -> RequirementFileResponse.builder()
+                                        .id(f.getId())
+                                        .criterionId(c.getId())
+                                        .label(f.getLabel())
+                                        .url(fileUrl(f))
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
+        List<SubmissionRequirementResponse> submissionRequirements = r.getSubmissionRequirements().stream()
+                .map(item -> SubmissionRequirementResponse.builder()
+                        .id(item.getId())
+                        .content(item.getContent())
+                        .files(item.getFiles() == null ? List.of() : item.getFiles().stream()
+                                .map(f -> RequirementFileResponse.builder()
+                                        .id(f.getId())
+                                        .submissionRequirementId(item.getId())
+                                        .label(f.getLabel())
+                                        .url(fileUrl(f))
+                                        .build())
+                                .toList())
                         .build())
                 .toList();
 
@@ -146,10 +207,26 @@ public class RequirementService {
                 .description(r.getDescription() != null ? r.getDescription() : "")
                 .deadline(r.getDeadline() != null ? r.getDeadline().toString() : "")
                 .criteria(criteria)
+                .submissionRequirements(submissionRequirements)
                 .build();
     }
 
+    private String fileUrl(com.example.se330.entity.RequirementFile f) {
+        if (f.getUrl() == null || !f.getUrl().contains("/files/requirements/")) {
+            return f.getUrl();
+        }
+        Long courseId = f.getCourse() != null ? f.getCourse().getId() : null;
+        return baseUrl + "/api/courses/" + courseId + "/requirement/files/" + f.getId() + "/download";
+    }
+
     private static RequirementResponse emptyResponse() {
-        return RequirementResponse.builder().categoryId(null).categoryName("").description("").deadline("").criteria(List.of()).build();
+        return RequirementResponse.builder()
+                .categoryId(null)
+                .categoryName("")
+                .description("")
+                .deadline("")
+                .criteria(List.of())
+                .submissionRequirements(List.of())
+                .build();
     }
 }

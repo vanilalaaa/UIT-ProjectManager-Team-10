@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         // Tệp tĩnh tải lên (tài nguyên nhóm, bài nộp) — mở để mở/tải trực tiếp.
                         .requestMatchers("/files/**").permitAll()
+                        .requestMatchers("/api/courses/*/requirement/files/*/download").permitAll()
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",

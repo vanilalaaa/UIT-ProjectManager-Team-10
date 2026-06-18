@@ -12,4 +12,5 @@ public class SaveRequirementRequest {
     private String description;
     private String deadline;
     private List<RubricCriterionRequest> criteria;
+    private List<SubmissionRequirementRequest> submissionRequirements;
 }

@@ -99,6 +99,7 @@ public class DataInitializer implements CommandLineRunner {
         // ddl-auto=update không thêm giá trị enum mới (REVIEW/INVITED/PENDING) → đổi
         // sang VARCHAR để nhận mọi giá trị (an toàn, giữ nguyên dữ liệu).
         widenStatusColumns();
+        ensureSubmissionRequirementSchema();
 
         backfillUids();
 
@@ -480,6 +481,108 @@ public class DataInitializer implements CommandLineRunner {
                 jdbc.execute("ALTER TABLE `" + table + "` MODIFY COLUMN status VARCHAR(30)");
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    private void ensureSubmissionRequirementSchema() {
+        try {
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS requirement_submission_requirements (
+                        submission_requirement_id BIGINT NOT NULL AUTO_INCREMENT,
+                        requirement_id BIGINT NULL,
+                        content VARCHAR(500) NULL,
+                        order_index INT NULL,
+                        PRIMARY KEY (submission_requirement_id)
+                    )
+                    """);
+        } catch (Exception ignored) {
+        }
+
+        if (tableExists("requirement_submission_requirements")
+                && !columnExists("requirement_submission_requirements", "submission_requirement_id")) {
+            dropForeignKeys("requirement_submission_requirements");
+            try {
+                jdbc.execute("ALTER TABLE requirement_submission_requirements DROP PRIMARY KEY");
+            } catch (Exception ignored) {
+            }
+            try {
+                jdbc.execute("""
+                        ALTER TABLE requirement_submission_requirements
+                        ADD COLUMN submission_requirement_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST
+                        """);
+            } catch (Exception e) {
+                System.out.println("Không nâng được bảng requirement_submission_requirements: " + e.getMessage());
+            }
+            try {
+                jdbc.execute("""
+                        ALTER TABLE requirement_submission_requirements
+                        ADD INDEX idx_req_submission_req_requirement (requirement_id)
+                        """);
+            } catch (Exception ignored) {
+            }
+            try {
+                jdbc.execute("""
+                        ALTER TABLE requirement_submission_requirements
+                        ADD CONSTRAINT fk_req_submission_req_requirement
+                        FOREIGN KEY (requirement_id) REFERENCES requirements(requirement_id)
+                        """);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (tableExists("requirement_files") && !columnExists("requirement_files", "submission_requirement_id")) {
+            try {
+                jdbc.execute("ALTER TABLE requirement_files ADD COLUMN submission_requirement_id BIGINT NULL");
+            } catch (Exception ignored) {
+            }
+        }
+        if (tableExists("submissions") && !columnExists("submissions", "submission_requirement_id")) {
+            try {
+                jdbc.execute("ALTER TABLE submissions ADD COLUMN submission_requirement_id BIGINT NULL");
+            } catch (Exception ignored) {
+            }
+        }
+        if (tableExists("submissions") && !columnExists("submissions", "label")) {
+            try {
+                jdbc.execute("ALTER TABLE submissions ADD COLUMN label VARCHAR(255) NULL");
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private boolean tableExists(String table) {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+                Integer.class,
+                table);
+        return count != null && count > 0;
+    }
+
+    private boolean columnExists(String table, String column) {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS "
+                        + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                Integer.class,
+                table,
+                column);
+        return count != null && count > 0;
+    }
+
+    private void dropForeignKeys(String table) {
+        try {
+            List<String> constraints = jdbc.queryForList(
+                    "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE "
+                            + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? "
+                            + "AND REFERENCED_TABLE_NAME IS NOT NULL",
+                    String.class,
+                    table);
+            for (String constraint : constraints) {
+                try {
+                    jdbc.execute("ALTER TABLE `" + table + "` DROP FOREIGN KEY `" + constraint + "`");
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
         }
     }
 

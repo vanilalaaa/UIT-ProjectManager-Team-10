@@ -26,6 +26,14 @@ public class RequirementFile {
     @JoinColumn(name = "course_id")
     private Course course;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criterion_id")
+    private RubricCriterion criterion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submission_requirement_id")
+    private RequirementSubmissionRequirement submissionRequirement;
+
     private String label;
 
     @Column(columnDefinition = "TEXT")

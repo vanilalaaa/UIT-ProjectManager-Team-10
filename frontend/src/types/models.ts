@@ -109,6 +109,7 @@ export type Submission = {
   submissionId: number
   submittedAt: DateTimeString
   filePath: string
+  submissionRequirementId: number | null
   project: Project | null
   group: Group | null
   grade: unknown | null
