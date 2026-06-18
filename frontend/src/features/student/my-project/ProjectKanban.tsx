@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import TaskCard from '../../../components/ui/student/TaskCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CreateTaskModal from '../../../components/ui/student/CreateTaskModal'
+import TaskDetailModal from '../../../components/ui/student/TaskDetailModal'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import type { Task, UserLite, BoardGroup, NewTaskInput } from '../../../types/api/task'
 import {
@@ -29,6 +30,7 @@ export default function ProjectKanban() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -100,6 +102,11 @@ export default function ProjectKanban() {
         setTasks(snapshot)
         toast.error('Không xóa được Task.')
       })
+  }
+
+  const handleTaskUpdated = (updated: Task) => {
+    setTasks(prev => prev.map(t => t.taskId === updated.taskId ? updated : t))
+    setSelectedTask(updated)
   }
 
   const handleCreateTask = (form: NewTaskInput) => {
@@ -175,6 +182,7 @@ export default function ProjectKanban() {
                   <TaskCard
                     task={task}
                     onDragStart={(e) => onDragStart(e, task.taskId)}
+                    onOpen={() => setSelectedTask(task)}
                   />
                   {isLeader && (
                     <button
@@ -205,6 +213,16 @@ export default function ProjectKanban() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateTask}
         members={currentGroup.members}
+      />
+
+      <TaskDetailModal
+        key={selectedTask?.taskId ?? 'none'}
+        open={!!selectedTask}
+        task={selectedTask}
+        group={currentGroup}
+        currentUser={currentUser}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={handleTaskUpdated}
       />
 
       <ConfirmDialog
