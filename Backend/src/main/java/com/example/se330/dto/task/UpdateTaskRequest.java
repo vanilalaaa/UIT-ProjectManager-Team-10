@@ -21,4 +21,6 @@ public class UpdateTaskRequest {
     private TaskStatus status;
 
     private LocalDateTime deadline;
+
+    private String comment;
 }

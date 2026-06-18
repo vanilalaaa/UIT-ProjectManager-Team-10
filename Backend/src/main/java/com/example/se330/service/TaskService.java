@@ -208,6 +208,12 @@ public class TaskService {
         if (request.getSource() != null) {
             task.setSource(request.getSource());
         }
+        if (request.getComment() != null) {
+            if (!isLeader && !isValidator && !isAdmin) {
+                throw new RuntimeException("Chỉ leader hoặc validator mới được thêm đánh giá cho task.");
+            }
+            task.setComment(request.getComment());
+        }
 
         task.setUpdatedAt(LocalDateTime.now());
 
@@ -277,6 +283,7 @@ public class TaskService {
                 .deadline(task.getDeadline() != null ? task.getDeadline().toString() : null)
                 .createdAt(task.getCreatedAt() != null ? task.getCreatedAt().toString() : null)
                 .updatedAt(task.getUpdatedAt() != null ? task.getUpdatedAt().toString() : null)
+                .comment(task.getComment())
                 .build();
     }
 

@@ -23,4 +23,5 @@ public class TaskResponse {
     private String deadline;
     private String createdAt;
     private String updatedAt;
+    private String comment;
 }
