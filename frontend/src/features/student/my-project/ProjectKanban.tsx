@@ -108,6 +108,7 @@ export default function ProjectKanban() {
       title: form.title,
       description: form.description,
       assignedToId: form.assignedToId,
+      validatorId: form.validatorId ?? null,
       groupId: currentGroup.groupId,
       deadline: form.deadline,
     })

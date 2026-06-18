@@ -19,6 +19,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
   const [description, setDescription] = useState('')
   const [deadline, setDeadline] = useState('')
   const [assigneeId, setAssigneeId] = useState<string>('')
+  const [validatorId, setValidatorId] = useState<string>('')
   const [priority, setPriority] = useState<TaskPriority>('Medium')
 
   if (!isOpen) return null
@@ -35,6 +36,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
       description,
       deadline: `${deadline}T23:59:00`,
       assignedToId: assignedUser.id,
+      validatorId: validatorId ? Number(validatorId) : null,
       priority,
     })
 
@@ -42,6 +44,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
     setDescription('')
     setDeadline('')
     setAssigneeId('')
+    setValidatorId('')
     setPriority('Medium')
     onClose()
   }
@@ -105,6 +108,21 @@ export default function CreateTaskModal({ isOpen, onClose, onSubmit, members }: 
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-text-soft uppercase mb-1.5">Người kiểm tra</label>
+            <select
+              className="w-full border border-border rounded-lg bg-surface px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
+              value={validatorId}
+              onChange={(e) => setValidatorId(e.target.value)}
+            >
+              <option value="">-- Không chỉ định --</option>
+              {members.filter(m => m.id.toString() !== assigneeId).map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-text-soft">Người duyệt kết quả khi task được đưa vào kiểm tra.</p>
           </div>
 
           <div>
