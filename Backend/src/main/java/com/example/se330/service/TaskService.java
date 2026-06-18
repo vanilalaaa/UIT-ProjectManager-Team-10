@@ -9,6 +9,7 @@ import com.example.se330.dto.task.UpdateTaskRequest;
 import com.example.se330.dto.task.UserLiteResponse;
 import com.example.se330.entity.Group;
 import com.example.se330.entity.GroupMember;
+import com.example.se330.entity.Notification;
 import com.example.se330.entity.Project;
 import com.example.se330.entity.Task;
 import com.example.se330.entity.User;
@@ -17,6 +18,7 @@ import com.example.se330.enums.Role;
 import com.example.se330.enums.TaskStatus;
 import com.example.se330.repository.GroupMemberRepository;
 import com.example.se330.repository.GroupRepository;
+import com.example.se330.repository.NotificationRepository;
 import com.example.se330.repository.ProjectRepository;
 import com.example.se330.repository.TaskRepository;
 import com.example.se330.repository.TaskResourceRepository;
@@ -27,7 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +45,7 @@ public class TaskService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final TaskResourceRepository taskResourceRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getProjectTasks(Long projectId, Long assigneeId, TaskStatus status) {
@@ -174,6 +180,8 @@ public class TaskService {
             throw new RuntimeException("Bạn không có quyền chỉnh sửa task này.");
         }
 
+        TaskStatus oldStatus = task.getStatus();
+
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
         }
@@ -181,6 +189,12 @@ public class TaskService {
             task.setDescription(request.getDescription());
         }
         if (request.getStatus() != null) {
+            // Task đang chờ kiểm tra (REVIEW) → chỉ leader/validator/admin được duyệt
+            // hoặc trả lại để chỉnh sửa; người thực hiện chỉ được gửi đi kiểm tra.
+            if (oldStatus == TaskStatus.REVIEW && request.getStatus() != TaskStatus.REVIEW
+                    && !isLeader && !isValidator && !isAdmin) {
+                throw new RuntimeException("Chỉ leader hoặc người kiểm tra mới được duyệt/từ chối task đang chờ kiểm tra.");
+            }
             task.setStatus(request.getStatus());
         }
         if (request.getDeadline() != null) {
@@ -217,7 +231,9 @@ public class TaskService {
 
         task.setUpdatedAt(LocalDateTime.now());
 
-        return toResponse(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        notifyTaskTransition(saved, oldStatus, currentUser);
+        return toResponse(saved);
     }
 
     public TaskResponse updateTaskStatus(Long taskId, TaskStatus status) {
@@ -258,6 +274,76 @@ public class TaskService {
         }
 
         taskRepository.delete(task);
+    }
+
+    // Thông báo theo chuyển trạng thái của task:
+    //  - chuyển sang REVIEW  → báo người kiểm tra + leader (task chờ duyệt)
+    //  - REVIEW → DONE       → báo người thực hiện (đã được duyệt, kèm nhận xét)
+    //  - REVIEW → IN_PROGRESS/TODO → báo người thực hiện (cần chỉnh sửa, kèm nhận xét)
+    private void notifyTaskTransition(Task task, TaskStatus oldStatus, User actor) {
+        TaskStatus newStatus = task.getStatus();
+        if (newStatus == null || newStatus == oldStatus) {
+            return;
+        }
+
+        Project project = task.getProject();
+        Long projectId = project != null ? project.getId() : null;
+        Long courseId = project != null && project.getCourse() != null ? project.getCourse().getId() : null;
+        String taskTitle = task.getTitle();
+        String actorName = actor != null ? actor.getName() : "Thành viên";
+        String review = task.getComment();
+
+        if (newStatus == TaskStatus.REVIEW) {
+            User leader = task.getGroup() != null ? task.getGroup().getLeader() : null;
+            notifyDistinct(Arrays.asList(task.getValidator(), leader), actor,
+                    "TASK_REVIEW_REQUESTED",
+                    "Task chờ kiểm tra: " + taskTitle,
+                    actorName + " đã gửi task \"" + taskTitle + "\" để kiểm tra.",
+                    courseId, projectId);
+        } else if (oldStatus == TaskStatus.REVIEW && newStatus == TaskStatus.DONE) {
+            notifyDistinct(Arrays.asList(task.getAssignedTo()), actor,
+                    "TASK_APPROVED",
+                    "Task đã được duyệt: " + taskTitle,
+                    review != null && !review.isBlank() ? review
+                            : actorName + " đã duyệt task \"" + taskTitle + "\" của bạn.",
+                    courseId, projectId);
+        } else if (oldStatus == TaskStatus.REVIEW
+                && (newStatus == TaskStatus.IN_PROGRESS || newStatus == TaskStatus.TODO)) {
+            notifyDistinct(Arrays.asList(task.getAssignedTo()), actor,
+                    "TASK_REJECTED",
+                    "Task cần chỉnh sửa: " + taskTitle,
+                    review != null && !review.isBlank() ? review
+                            : actorName + " yêu cầu chỉnh sửa lại task \"" + taskTitle + "\".",
+                    courseId, projectId);
+        }
+    }
+
+    // Gửi cùng một thông báo tới nhiều người, bỏ qua null, bỏ qua chính người thao tác
+    // và không gửi trùng (leader trùng validator).
+    private void notifyDistinct(List<User> recipients, User actor, String type, String title,
+            String message, Long courseId, Long projectId) {
+        Set<Long> seen = new HashSet<>();
+        for (User recipient : recipients) {
+            if (recipient == null) {
+                continue;
+            }
+            if (actor != null && recipient.getId().equals(actor.getId())) {
+                continue;
+            }
+            if (!seen.add(recipient.getId())) {
+                continue;
+            }
+            notificationRepository.save(Notification.builder()
+                    .recipient(recipient)
+                    .type(type)
+                    .title(title)
+                    .message(message)
+                    .courseId(courseId)
+                    .projectId(projectId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
     }
 
     private TaskResponse toResponse(Task task) {
