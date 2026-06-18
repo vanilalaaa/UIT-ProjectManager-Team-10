@@ -24,6 +24,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,21 +54,30 @@ public class SubmissionService {
             Long groupId,
             Long submissionRequirementId,
             List<MultipartFile> files,
+            String linkUrl,
+            String linkLabel,
             Long userId) throws IOException {
-        validateFiles(files);
+        boolean hasFiles = files != null && !files.isEmpty();
+        boolean hasLink = linkUrl != null && !linkUrl.isBlank();
+        if (!hasFiles && !hasLink) {
+            throw new IllegalArgumentException("Vui long chon it nhat mot file hoac nhap link nop bai.");
+        }
+        if (hasFiles) {
+            validateFiles(files);
+        }
 
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy project"));
+                .orElseThrow(() -> new EntityNotFoundException("Khong tim thay project"));
 
         if (refreshSubmissionLock(project)) {
-            throw new IllegalStateException("Đã hết hạn nộp bài. Bài nộp đã bị khóa.");
+            throw new IllegalStateException("Da het han nop bai. Bai nop da bi khoa.");
         }
 
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy nhóm"));
+                .orElseThrow(() -> new EntityNotFoundException("Khong tim thay nhom"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new EntityNotFoundException("Khong tim thay nguoi dung"));
 
         if (submissionRequirementId != null) {
             boolean belongsToCourse = submissionRequirementRepository.findById(submissionRequirementId)
@@ -77,7 +87,7 @@ public class SubmissionService {
                             && item.getRequirement().getCourse().getId().equals(project.getCourse().getId()))
                     .orElse(false);
             if (!belongsToCourse) {
-                throw new IllegalArgumentException("Yêu cầu nộp bài không thuộc lớp của đồ án này.");
+                throw new IllegalArgumentException("Yeu cau nop bai khong thuoc lop cua do an nay.");
             }
         }
 
@@ -88,31 +98,47 @@ public class SubmissionService {
 
         String uniqueFolder = "group_" + group.getId() + "_" + System.currentTimeMillis();
         Path submissionFolder = uploadPath.resolve(uniqueFolder);
-        
         if (!Files.exists(submissionFolder)) {
             Files.createDirectories(submissionFolder);
         }
 
         LocalDateTime submittedAt = LocalDateTime.now();
         Set<String> usedNames = new HashSet<>();
-        
-        // Xử lý lưu trữ đa tệp (Multiple files) và tạo thực thể Submission tương ứng
-        List<Submission> submissions = files.stream().map(file -> {
-            try {
-                String storedFileName = storeSubmissionFile(file, submissionFolder, usedNames);
-                return Submission.builder()
-                        .filePath("/files/submissions/" + uniqueFolder + "/" + storedFileName)
-                        .submissionRequirementId(submissionRequirementId)
-                        .project(project)
-                        .group(group)
-                        .submittedBy(user)
-                        // Thuộc tính status đã được loại bỏ
-                        .submittedAt(submittedAt)
-                        .build();
-            } catch (IOException e) {
-                throw new RuntimeException("Lỗi lưu tệp tin: " + e.getMessage(), e);
-            }
-        }).toList();
+        List<Submission> submissions = new ArrayList<>();
+
+        if (hasFiles) {
+            submissions.addAll(files.stream().map(file -> {
+                try {
+                    String storedFileName = storeSubmissionFile(file, submissionFolder, usedNames);
+                    return Submission.builder()
+                            .filePath("/files/submissions/" + uniqueFolder + "/" + storedFileName)
+                            .submissionRequirementId(submissionRequirementId)
+                            .project(project)
+                            .group(group)
+                            .submittedBy(user)
+                            .submittedAt(submittedAt)
+                            .build();
+                } catch (IOException e) {
+                    throw new RuntimeException("Loi luu tep tin: " + e.getMessage(), e);
+                }
+            }).toList());
+        }
+
+        if (hasLink) {
+            String resolvedLinkUrl = normalizeUrl(linkUrl.trim());
+            String resolvedLinkLabel = linkLabel == null || linkLabel.isBlank()
+                    ? resolvedLinkUrl
+                    : linkLabel.trim();
+            submissions.add(Submission.builder()
+                    .filePath(resolvedLinkUrl)
+                    .label(resolvedLinkLabel)
+                    .submissionRequirementId(submissionRequirementId)
+                    .project(project)
+                    .group(group)
+                    .submittedBy(user)
+                    .submittedAt(submittedAt)
+                    .build());
+        }
 
         List<Submission> savedSubmissions = submissionRepository.saveAll(submissions);
         projectStatusService.refresh(project);
@@ -121,7 +147,7 @@ public class SubmissionService {
 
     public Submission updateSubmission(Long id, UpdateSubmissionRequest request) {
         Submission sub = submissionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
+                .orElseThrow(() -> new EntityNotFoundException("Khong tim thay bai nop"));
 
         if (request.getFilePath() != null) {
             sub.setFilePath(request.getFilePath());
@@ -132,7 +158,7 @@ public class SubmissionService {
 
     public void deleteSubmission(Long id) {
         Submission sub = submissionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài nộp"));
+                .orElseThrow(() -> new EntityNotFoundException("Khong tim thay bai nop"));
         Project project = sub.getProject();
         submissionRepository.delete(sub);
         submissionRepository.flush();
@@ -169,36 +195,36 @@ public class SubmissionService {
 
     private void validateFiles(List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng chọn ít nhất một file.");
+            throw new IllegalArgumentException("Vui long chon it nhat mot file.");
         }
         if (files.size() > MAX_FILES) {
-            throw new IllegalArgumentException("Chỉ được nộp tối đa " + MAX_FILES + " file.");
+            throw new IllegalArgumentException("Chi duoc nop toi da " + MAX_FILES + " file.");
         }
 
         long totalSize = files.stream().mapToLong(MultipartFile::getSize).sum();
         if (totalSize > MAX_TOTAL_SIZE) {
-            throw new IllegalArgumentException("Tổng dung lượng file không được vượt quá 50MB.");
+            throw new IllegalArgumentException("Tong dung luong file khong duoc vuot qua 50MB.");
         }
 
         boolean hasInvalidType = files.stream()
                 .map(file -> getExtension(file.getOriginalFilename()))
                 .anyMatch(extension -> !ALLOWED_EXTENSIONS.contains(extension));
         if (hasInvalidType) {
-            throw new IllegalArgumentException("Chỉ chấp nhận định dạng PDF, DOCX, ZIP hoặc RAR.");
+            throw new IllegalArgumentException("Chi chap nhan dinh dang PDF, DOCX, ZIP hoac RAR.");
         }
     }
 
     private String storeSubmissionFile(MultipartFile file, Path submissionFolder, Set<String> usedNames) throws IOException {
         String originalFileName = uniqueFileName(sanitizeFileName(file.getOriginalFilename()), usedNames);
         Path filePath = submissionFolder.resolve(originalFileName);
-        
+
         file.transferTo(filePath.toFile());
-        
+
         if (!Files.exists(filePath) || Files.size(filePath) != file.getSize()) {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         }
         if (!Files.exists(filePath)) {
-            throw new IOException("Không thể lưu file nộp bài: " + originalFileName);
+            throw new IOException("Khong the luu file nop bai: " + originalFileName);
         }
         return originalFileName;
     }
@@ -217,6 +243,13 @@ public class SubmissionService {
             return "";
         }
         return sanitizedName.substring(dotIndex + 1).toLowerCase();
+    }
+
+    private String normalizeUrl(String url) {
+        if (url.matches("(?i)^https?://.+")) {
+            return url;
+        }
+        return "https://" + url;
     }
 
     private String uniqueFileName(String fileName, Set<String> usedNames) {

@@ -30,6 +30,9 @@ public class Submission {
     @Column(name = "file_path")
     private String filePath;
 
+    @Column(name = "label")
+    private String label;
+
     @Column(name = "submission_requirement_id")
     private Long submissionRequirementId;
 

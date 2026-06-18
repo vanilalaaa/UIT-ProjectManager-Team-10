@@ -10,6 +10,7 @@ export type ProjectSubmissionLite = {
   submissionId: number
   submittedAt: string | null
   filePath: string | null
+  label: string | null
   submissionRequirementId: number | null
   groupId: number | null
   groupName: string | null

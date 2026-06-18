@@ -124,7 +124,12 @@ export default function ProjectSubmit() {
     submissionRequirementId: submission.submissionRequirementId,
   }))
 
-  const handleSubmit = async (files: File[], deleteIds: number[], submissionRequirementId?: string | number | null) => {
+  const handleSubmit = async (
+    files: File[],
+    deleteIds: number[],
+    submissionRequirementId?: string | number | null,
+    linkUrl?: string,
+  ) => {
     if (!project.groupId) return toast.error('Nhóm của bạn chưa đăng ký đồ án!')
 
     setIsSubmitting(true)
@@ -133,12 +138,15 @@ export default function ProjectSubmit() {
         await Promise.all(deleteIds.map((id) => deleteSubmission(id)))
       }
 
-      if (files && files.length > 0) {
+      if ((files && files.length > 0) || linkUrl?.trim()) {
         const formData = new FormData()
         files.forEach((file) => formData.append('files', file))
         formData.append('groupId', project.groupId.toString())
         if (submissionRequirementId != null) {
           formData.append('submissionRequirementId', String(submissionRequirementId))
+        }
+        if (linkUrl?.trim()) {
+          formData.append('linkUrl', linkUrl.trim())
         }
 
         await createSubmissionFormData(project.projectId, formData)
@@ -206,7 +214,7 @@ export default function ProjectSubmit() {
                   </div>
 
                   <UploadFilesCard
-                    onSubmit={(files, deleteIds) => handleSubmit(files, deleteIds, requirement.id)}
+                    onSubmit={(files, deleteIds, linkUrl) => handleSubmit(files, deleteIds, requirement.id, linkUrl)}
                     isSubmitting={isSubmitting}
                     isLocked={isLocked}
                     currentSubmissions={requirementSubmissions}
@@ -218,7 +226,7 @@ export default function ProjectSubmit() {
           </div>
         ) : (
           <UploadFilesCard
-            onSubmit={handleSubmit}
+            onSubmit={(files, deleteIds, linkUrl) => handleSubmit(files, deleteIds, null, linkUrl)}
             isSubmitting={isSubmitting}
             isLocked={isLocked}
             currentSubmissions={currentSubmissions}
