@@ -7,9 +7,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class RubricCriterionResponse {
+public class SubmissionRequirementResponse {
     private Long id;
-    private String name;
-    private Integer maxScore;
+    private String content;
     private List<RequirementFileResponse> files;
 }

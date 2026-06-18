@@ -13,4 +13,5 @@ public class RequirementResponse {
     private String description;
     private String deadline;
     private List<RubricCriterionResponse> criteria;
+    private List<SubmissionRequirementResponse> submissionRequirements;
 }

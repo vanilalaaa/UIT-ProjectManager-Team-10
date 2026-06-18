@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RequirementFileResponse {
     private Long id;
+    private Long criterionId;
+    private Long submissionRequirementId;
     private String label;
     private String url;
 }
