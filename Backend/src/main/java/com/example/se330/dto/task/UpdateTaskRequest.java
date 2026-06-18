@@ -14,6 +14,10 @@ public class UpdateTaskRequest {
 
     private Long assignedToId;
 
+    private Long validatorId;
+
+    private String source;
+
     private TaskStatus status;
 
     private LocalDateTime deadline;
