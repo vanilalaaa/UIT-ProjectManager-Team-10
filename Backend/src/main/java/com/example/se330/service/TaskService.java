@@ -203,21 +203,30 @@ public class TaskService {
             }
             task.setDeadline(request.getDeadline());
         }
+        // id = 0 là quy ước "gỡ bỏ" (id thật bắt đầu từ 1) vì null = "không đổi".
         if (request.getAssignedToId() != null) {
             if (!isLeader && !isAdmin) {
                 throw new RuntimeException("Chỉ leader mới được thay đổi người thực hiện task.");
             }
-            User assignedUser = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() -> new EntityNotFoundException("Assigned user not found"));
-            task.setAssignedTo(assignedUser);
+            if (request.getAssignedToId() == 0L) {
+                task.setAssignedTo(null);
+            } else {
+                User assignedUser = userRepository.findById(request.getAssignedToId())
+                        .orElseThrow(() -> new EntityNotFoundException("Assigned user not found"));
+                task.setAssignedTo(assignedUser);
+            }
         }
         if (request.getValidatorId() != null) {
             if (!isLeader && !isAdmin) {
                 throw new RuntimeException("Chỉ leader mới được thay đổi người kiểm tra task.");
             }
-            User validator = userRepository.findById(request.getValidatorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Validator not found"));
-            task.setValidator(validator);
+            if (request.getValidatorId() == 0L) {
+                task.setValidator(null);
+            } else {
+                User validator = userRepository.findById(request.getValidatorId())
+                        .orElseThrow(() -> new EntityNotFoundException("Validator not found"));
+                task.setValidator(validator);
+            }
         }
         if (request.getSource() != null) {
             task.setSource(request.getSource());
@@ -236,7 +245,9 @@ public class TaskService {
         return toResponse(saved);
     }
 
-    public TaskResponse updateTaskStatus(Long taskId, TaskStatus status) {
+    // Đổi trạng thái nhanh (kéo–thả Kanban). Cùng luật duyệt + thông báo như
+    // updateTask để mọi lối đổi trạng thái đều nhất quán.
+    public TaskResponse updateTaskStatus(Long taskId, TaskStatus status, Long currentUserId) {
 
         if (status == null) {
             throw new RuntimeException("Status cannot be null");
@@ -244,11 +255,28 @@ public class TaskService {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        boolean isLeader = task.getGroup() != null
+                && task.getGroup().getLeader() != null
+                && task.getGroup().getLeader().getId().equals(currentUser.getId());
+        boolean isValidator = task.getValidator() != null
+                && task.getValidator().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        TaskStatus oldStatus = task.getStatus();
+        if (oldStatus == TaskStatus.REVIEW && status != TaskStatus.REVIEW
+                && !isLeader && !isValidator && !isAdmin) {
+            throw new RuntimeException("Chỉ leader hoặc người kiểm tra mới được duyệt/từ chối task đang chờ kiểm tra.");
+        }
 
         task.setStatus(status);
         task.setUpdatedAt(LocalDateTime.now());
 
-        return toResponse(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        notifyTaskTransition(saved, oldStatus, currentUser);
+        return toResponse(saved);
     }
 
     // Leader của nhóm hoặc ADMIN mới được xóa.

@@ -64,9 +64,12 @@ public class TaskController {
     @PatchMapping("/tasks/{id}/status")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
             @PathVariable Long id,
-            @RequestBody UpdateTaskStatusRequest request) {
+            @RequestBody UpdateTaskStatusRequest request,
+            Authentication authentication) {
 
-        return ApiResponse.success(taskService.updateTaskStatus(id, request.getStatus()), "Cập nhật trạng thái thành công.");
+        return ApiResponse.success(
+                taskService.updateTaskStatus(id, request.getStatus(), currentUserId(authentication)),
+                "Cập nhật trạng thái thành công.");
     }
 
     // Service tự enforce leader/ADMIN — chỉ cần đăng nhập là gọi được.
