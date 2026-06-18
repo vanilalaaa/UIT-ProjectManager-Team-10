@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -104,6 +104,15 @@ function LoginPage() {
                 {errors.password.message}
               </p>
             ) : null}
+          </div>
+
+          <div className="text-right">
+            <Link
+              className="text-sm font-medium text-primary hover:underline"
+              to="/forgot-password"
+            >
+              Quên mật khẩu?
+            </Link>
           </div>
 
           <button

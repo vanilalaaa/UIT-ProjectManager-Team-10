@@ -1,5 +1,6 @@
 package com.example.se330.service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,8 +17,10 @@ import com.example.se330.dto.auth.ChangePasswordRequest;
 import com.example.se330.dto.auth.LoginRequest;
 import com.example.se330.dto.auth.RegisterRequest;
 import com.example.se330.dto.auth.ResetPasswordRequest;
+import com.example.se330.entity.PasswordResetOTP;
 import com.example.se330.entity.User;
 import com.example.se330.entity.UserProfile;
+import com.example.se330.repository.PasswordResetOTPRepository;
 import com.example.se330.repository.UserRepository;
 import com.example.se330.security.JwtService;
 import com.example.se330.util.StudentCodeGenerator;
@@ -30,6 +33,9 @@ public class AuthService {
         private final PasswordEncoder passwordEncoder;
         private final AuthenticationManager authenticationManager;
         private final StudentCodeGenerator studentCodeGenerator;
+        private final PasswordResetOTPRepository passwordResetOTPRepository;
+
+        private static final SecureRandom OTP_RANDOM = new SecureRandom();
 
         public AuthService(
                         UserRepository userRepository,
@@ -37,13 +43,15 @@ public class AuthService {
                         JwtService jwtService,
                         PasswordEncoder passwordEncoder,
                         AuthenticationManager authenticationManager,
-                        StudentCodeGenerator studentCodeGenerator) {
+                        StudentCodeGenerator studentCodeGenerator,
+                        PasswordResetOTPRepository passwordResetOTPRepository) {
                 this.userRepository = userRepository;
                 this.emailService = emailService;
                 this.jwtService = jwtService;
                 this.passwordEncoder = passwordEncoder;
                 this.authenticationManager = authenticationManager;
                 this.studentCodeGenerator = studentCodeGenerator;
+                this.passwordResetOTPRepository = passwordResetOTPRepository;
         }
 
         public AuthResponse register(RegisterRequest request) {
@@ -180,41 +188,49 @@ public class AuthService {
                         return;
                 }
 
-                String resetToken = jwtService.generateResetPasswordToken(email);
+                // Sinh OTP 6 số và thay thế OTP cũ (nếu có) của email này
+                String otp = generateOtp();
 
-                user.setResetPasswordToken(resetToken);
+                passwordResetOTPRepository.deleteByEmail(email);
 
-                user.setResetPasswordTokenExpiry(
-                                LocalDateTime.now().plusHours(1));
+                PasswordResetOTP resetOtp = PasswordResetOTP.builder()
+                                .email(email)
+                                .otp(otp)
+                                .expiredAt(LocalDateTime.now().plusMinutes(10))
+                                .build();
 
-                userRepository.save(user);
+                passwordResetOTPRepository.save(resetOtp);
 
-                emailService.sendPasswordResetEmail(
-                                email,
-                                resetToken);
+                emailService.sendPasswordResetOtpEmail(email, otp);
         }
 
         public void resetPassword(ResetPasswordRequest request) {
 
-                User user = userRepository
-                                .findByResetPasswordToken(request.getToken())
-                                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+                PasswordResetOTP resetOtp = passwordResetOTPRepository
+                                .findByEmailAndOtp(request.getEmail(), request.getOtp())
+                                .orElseThrow(() -> new RuntimeException("Invalid OTP"));
 
-                if (user.getResetPasswordTokenExpiry()
-                                .isBefore(LocalDateTime.now())) {
-
-                        throw new RuntimeException(
-                                        "Reset token has expired");
+                if (resetOtp.getExpiredAt().isBefore(LocalDateTime.now())) {
+                        passwordResetOTPRepository.delete(resetOtp);
+                        throw new RuntimeException("OTP has expired");
                 }
+
+                User user = userRepository.findByEmail(request.getEmail())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
                 user.setPassword(
                                 passwordEncoder.encode(
                                                 request.getNewPassword()));
-
-                user.setResetPasswordToken(null);
-                user.setResetPasswordTokenExpiry(null);
+                user.setUpdatedAt(LocalDateTime.now());
 
                 userRepository.save(user);
+
+                // OTP chỉ dùng được một lần
+                passwordResetOTPRepository.delete(resetOtp);
+        }
+
+        private String generateOtp() {
+                return String.format("%06d", OTP_RANDOM.nextInt(1_000_000));
         }
 
         public void changePassword(

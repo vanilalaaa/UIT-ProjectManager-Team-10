@@ -19,6 +19,7 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 
 // ── Auth pages ────────────────────────────────────────────────────────────────
 import LoginPage from './features/auth/LoginPage'
+import ForgotPasswordPage from './features/auth/ForgotPasswordPage'
 import ForbiddenPage from './features/auth/ForbiddenPage'
 
 // ── Shared ────────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ function App() {
         <Routes>
           {/* ── Public ──────────────────────────────────────────────────────── */}
           <Route element={<LoginPage />} path="/login" />
+          <Route element={<ForgotPasswordPage />} path="/forgot-password" />
           <Route element={<ForbiddenPage />} path="/403" />
 
           {/* ── All authenticated roles — Home (/) ──────────────────────────── */}
