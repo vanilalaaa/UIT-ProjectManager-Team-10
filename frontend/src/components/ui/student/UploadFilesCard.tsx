@@ -5,6 +5,7 @@ type SubmittedFile = {
   url: string
   name: string
   date: string
+  submissionRequirementId?: number | null
 }
 
 interface UploadFilesCardProps {
@@ -12,6 +13,7 @@ interface UploadFilesCardProps {
   isSubmitting?: boolean
   isLocked?: boolean
   currentSubmissions?: SubmittedFile[]
+  title?: string
 }
 
 const MAX_FILES = 5
@@ -23,6 +25,7 @@ export default function UploadFilesCard({
   isSubmitting = false,
   isLocked = false,
   currentSubmissions = [],
+  title,
 }: UploadFilesCardProps) {
   const [files, setFiles] = useState<File[]>([])
   const [deleteIds, setDeleteIds] = useState<number[]>([])
@@ -193,7 +196,7 @@ export default function UploadFilesCard({
       <div className="bg-surface border border-primary/20 rounded-[18px] p-6 shadow-soft transition-all">
         <h2 className="text-base font-bold text-text mb-4 flex items-center gap-2">
           <span className="size-2 rounded-full bg-secondary animate-pulse block"></span>
-          Bài đã nộp
+          {title ?? 'Bài đã nộp'}
         </h2>
 
         <div className="w-full bg-surface-soft p-5 rounded-xl border border-border space-y-3">
@@ -220,7 +223,7 @@ export default function UploadFilesCard({
   return (
     <div className={`bg-surface border rounded-[18px] p-6 shadow-soft transition-colors ${isLocked ? 'border-warning/50 bg-warning-soft/10 opacity-70' : 'border-border'}`}>
       <h2 className={`text-base font-bold mb-4 ${isLocked ? 'text-warning' : 'text-text'}`}>
-        {isLocked ? 'Bài nộp đã khóa' : (isEditing ? 'Cập nhật bài nộp' : 'Upload Files')}
+        {isLocked ? 'Bài nộp đã khóa' : (isEditing ? 'Cập nhật bài nộp' : (title ?? 'Upload Files'))}
       </h2>
 
       {isEditing && currentSubmissions.length > 0 && (

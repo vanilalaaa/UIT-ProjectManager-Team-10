@@ -9,6 +9,7 @@ public class ProjectSubmissionResponse {
     private Long submissionId;
     private String submittedAt;
     private String filePath;
+    private Long submissionRequirementId;
     private Long groupId;
     private String groupName;
     private Long submittedById;

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,9 @@ public class RequirementService {
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
     private final ProjectRepository projectRepository; 
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     public RequirementService(
             RequirementRepository requirementRepository,
@@ -177,7 +181,7 @@ public class RequirementService {
                                         .id(f.getId())
                                         .criterionId(c.getId())
                                         .label(f.getLabel())
-                                        .url(f.getUrl())
+                                        .url(fileUrl(f))
                                         .build())
                                 .toList())
                         .build())
@@ -191,7 +195,7 @@ public class RequirementService {
                                         .id(f.getId())
                                         .submissionRequirementId(item.getId())
                                         .label(f.getLabel())
-                                        .url(f.getUrl())
+                                        .url(fileUrl(f))
                                         .build())
                                 .toList())
                         .build())
@@ -205,6 +209,14 @@ public class RequirementService {
                 .criteria(criteria)
                 .submissionRequirements(submissionRequirements)
                 .build();
+    }
+
+    private String fileUrl(com.example.se330.entity.RequirementFile f) {
+        if (f.getUrl() == null || !f.getUrl().contains("/files/requirements/")) {
+            return f.getUrl();
+        }
+        Long courseId = f.getCourse() != null ? f.getCourse().getId() : null;
+        return baseUrl + "/api/courses/" + courseId + "/requirement/files/" + f.getId() + "/download";
     }
 
     private static RequirementResponse emptyResponse() {

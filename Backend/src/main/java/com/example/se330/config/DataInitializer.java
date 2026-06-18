@@ -438,6 +438,12 @@ public class DataInitializer implements CommandLineRunner {
             } catch (Exception ignored) {
             }
         }
+        if (tableExists("submissions") && !columnExists("submissions", "submission_requirement_id")) {
+            try {
+                jdbc.execute("ALTER TABLE submissions ADD COLUMN submission_requirement_id BIGINT NULL");
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private boolean tableExists(String table) {

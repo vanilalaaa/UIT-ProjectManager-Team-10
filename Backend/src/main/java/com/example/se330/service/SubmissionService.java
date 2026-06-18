@@ -7,6 +7,7 @@ import com.example.se330.entity.Submission;
 import com.example.se330.entity.User;
 import com.example.se330.repository.GroupRepository;
 import com.example.se330.repository.ProjectRepository;
+import com.example.se330.repository.RequirementSubmissionRequirementRepository;
 import com.example.se330.repository.SubmissionRepository;
 import com.example.se330.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,6 +36,7 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final ProjectRepository projectRepository;
     private final GroupRepository groupRepository;
+    private final RequirementSubmissionRequirementRepository submissionRequirementRepository;
     private final UserRepository userRepository;
     private final ProjectStatusService projectStatusService;
 
@@ -46,7 +48,12 @@ public class SubmissionService {
         return submissionRepository.findByProject_Id(projectId);
     }
 
-    public List<Submission> createSubmission(Long projectId, Long groupId, List<MultipartFile> files, Long userId) throws IOException {
+    public List<Submission> createSubmission(
+            Long projectId,
+            Long groupId,
+            Long submissionRequirementId,
+            List<MultipartFile> files,
+            Long userId) throws IOException {
         validateFiles(files);
 
         Project project = projectRepository.findById(projectId)
@@ -61,6 +68,18 @@ public class SubmissionService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
+
+        if (submissionRequirementId != null) {
+            boolean belongsToCourse = submissionRequirementRepository.findById(submissionRequirementId)
+                    .map(item -> item.getRequirement() != null
+                            && item.getRequirement().getCourse() != null
+                            && project.getCourse() != null
+                            && item.getRequirement().getCourse().getId().equals(project.getCourse().getId()))
+                    .orElse(false);
+            if (!belongsToCourse) {
+                throw new IllegalArgumentException("Yêu cầu nộp bài không thuộc lớp của đồ án này.");
+            }
+        }
 
         Path uploadPath = getSubmissionUploadRoot();
         if (!Files.exists(uploadPath)) {
@@ -83,6 +102,7 @@ public class SubmissionService {
                 String storedFileName = storeSubmissionFile(file, submissionFolder, usedNames);
                 return Submission.builder()
                         .filePath("/files/submissions/" + uniqueFolder + "/" + storedFileName)
+                        .submissionRequirementId(submissionRequirementId)
                         .project(project)
                         .group(group)
                         .submittedBy(user)

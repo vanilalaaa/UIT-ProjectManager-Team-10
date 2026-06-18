@@ -30,6 +30,9 @@ public class Submission {
     @Column(name = "file_path")
     private String filePath;
 
+    @Column(name = "submission_requirement_id")
+    private Long submissionRequirementId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;

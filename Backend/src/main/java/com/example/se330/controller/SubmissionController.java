@@ -26,6 +26,7 @@ public class SubmissionController {
     public List<Submission> create(
             @PathVariable Long id,
             @RequestParam("groupId") Long groupId,
+            @RequestParam(value = "submissionRequirementId", required = false) Long submissionRequirementId,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(value = "file", required = false) MultipartFile file,
             Authentication authentication
@@ -38,7 +39,7 @@ public class SubmissionController {
             files = List.of(file);
         }
 
-        return submissionService.createSubmission(id, groupId, files, userId);
+        return submissionService.createSubmission(id, groupId, submissionRequirementId, files, userId);
     }
 
     @PutMapping("/submissions/{id}")

@@ -263,6 +263,7 @@ public class ProjectService {
                 .submissionId(submission.getId())
                 .submittedAt(submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : null)
                 .filePath(submission.getFilePath())
+                .submissionRequirementId(submission.getSubmissionRequirementId())
                 .groupId(group != null ? group.getId() : null)
                 .groupName(group != null ? group.getName() : null)
                 .submittedById(submittedBy != null ? submittedBy.getId() : null)

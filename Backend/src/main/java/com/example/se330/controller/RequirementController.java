@@ -1,8 +1,12 @@
 package com.example.se330.controller;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -114,6 +118,22 @@ public class RequirementController {
             Authentication authentication) {
         requirementFileService.delete(courseId, fileId, currentUserId(authentication));
         return ApiResponse.success("Đã xóa tài liệu.");
+    }
+
+    @GetMapping("/files/{fileId}/download")
+    public ResponseEntity<Resource> downloadFile(
+            @PathVariable Long courseId,
+            @PathVariable Long fileId) {
+        RequirementFileService.RequirementFileDownload download = requirementFileService.download(courseId, fileId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(download.fileName(), StandardCharsets.UTF_8)
+                                .build()
+                                .toString())
+                .body(download.resource());
     }
 
     private Long currentUserId(Authentication authentication) {

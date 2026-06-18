@@ -1,13 +1,18 @@
 package com.example.se330.service;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +44,7 @@ public class RequirementFileService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
-    private static final String UPLOAD_DIR = "uploads/requirements/";
+    private static final String FILES_PREFIX = "/files/requirements/";
 
     @Transactional(readOnly = true)
     public List<RequirementFileResponse> list(Long courseId) {
@@ -146,6 +151,28 @@ public class RequirementFileService {
         fileRepository.delete(f);
     }
 
+    @Transactional(readOnly = true)
+    public RequirementFileDownload download(Long courseId, Long fileId) {
+        RequirementFile f = fileRepository.findById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy tệp."));
+        if (f.getCourse() == null || !f.getCourse().getId().equals(courseId)) {
+            throw new RuntimeException("Tệp không thuộc lớp này.");
+        }
+        if (!isLocalRequirementFileUrl(f.getUrl())) {
+            throw new IllegalArgumentException("Tài liệu này là liên kết ngoài, không phải file trên server.");
+        }
+
+        Path filePath = resolveStoredRequirementFile(f.getUrl());
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new EntityNotFoundException("File không còn tồn tại trên server.");
+        }
+
+        String fileName = f.getLabel() == null || f.getLabel().isBlank()
+                ? filePath.getFileName().toString()
+                : f.getLabel();
+        return new RequirementFileDownload(new FileSystemResource(filePath), fileName);
+    }
+
     private void assertLecturer(Course course, Long teacherId) {
         if (course.getLecturer() == null || !course.getLecturer().getId().equals(teacherId)) {
             throw new RuntimeException("Bạn không phải giảng viên của lớp này.");
@@ -175,7 +202,7 @@ public class RequirementFileService {
     }
 
     private String storeFile(Long courseId, MultipartFile file) throws IOException {
-        Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        Path uploadPath = getRequirementUploadRoot();
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -183,10 +210,103 @@ public class RequirementFileService {
         Path dir = uploadPath.resolve(folder);
         Files.createDirectories(dir);
 
-        String name = file.getOriginalFilename();
+        String name = safeStoredFileName(file.getOriginalFilename());
         Files.copy(file.getInputStream(), dir.resolve(name), StandardCopyOption.REPLACE_EXISTING);
 
-        return baseUrl + "/files/requirements/" + folder + "/" + name;
+        return baseUrl + "/files/requirements/" + folder + "/" + encodePathSegment(name);
+    }
+
+    private Path getRequirementUploadRoot() {
+        Path cwd = Paths.get("").toAbsolutePath().normalize();
+        Path backendDir = cwd.getFileName() != null
+                && "Backend".equalsIgnoreCase(cwd.getFileName().toString())
+                        ? cwd
+                        : cwd.resolve("Backend");
+        return backendDir.resolve("uploads").resolve("requirements").normalize();
+    }
+
+    private Path resolveStoredRequirementFile(String url) {
+        Path uploadRoot = getRequirementUploadRoot();
+        Path resolved = uploadRoot.resolve(decodeLocalRequirementPath(extractRequirementRelativePath(url))).normalize();
+        if (!resolved.startsWith(uploadRoot)) {
+            throw new IllegalArgumentException("Đường dẫn file không hợp lệ.");
+        }
+        return resolved;
+    }
+
+    private String downloadUrl(RequirementFile f) {
+        Long courseId = f.getCourse() != null ? f.getCourse().getId() : null;
+        return baseUrl + "/api/courses/" + courseId + "/requirement/files/" + f.getId() + "/download";
+    }
+
+    private boolean isLocalRequirementFileUrl(String url) {
+        return url != null && (
+                url.startsWith(baseUrl + FILES_PREFIX)
+                        || url.startsWith(FILES_PREFIX)
+                        || url.contains(FILES_PREFIX));
+    }
+
+    private String extractRequirementRelativePath(String url) {
+        int prefixIndex = url.indexOf(FILES_PREFIX);
+        if (prefixIndex < 0) {
+            throw new IllegalArgumentException("Đường dẫn file không hợp lệ.");
+        }
+        return url.substring(prefixIndex + FILES_PREFIX.length());
+    }
+
+    private Path decodeLocalRequirementPath(String relativePath) {
+        Path decoded = Paths.get("");
+        for (String segment : relativePath.split("/")) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+            decoded = decoded.resolve(decodePathSegment(segment));
+        }
+        return decoded;
+    }
+
+    private String decodePathSegment(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ignored) {
+            return value;
+        }
+    }
+
+    private String safeStoredFileName(String fileName) {
+        String original = fileName == null || fileName.isBlank()
+                ? "requirement-file"
+                : Paths.get(fileName).getFileName().toString();
+        int dotIndex = original.lastIndexOf('.');
+        String baseName = dotIndex > 0 ? original.substring(0, dotIndex) : original;
+        String extension = dotIndex > 0 ? original.substring(dotIndex) : "";
+        String safeBase = baseName
+                .replaceAll("[^A-Za-z0-9._-]+", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_+|_+$", "");
+        if (safeBase.isBlank()) {
+            safeBase = "requirement-file";
+        }
+        return System.currentTimeMillis() + "_" + safeBase + extension.toLowerCase();
+    }
+
+    private String encodeLocalFileUrl(String url) {
+        if (url == null || !url.startsWith(baseUrl + "/files/")) {
+            return url;
+        }
+        String path = url.substring(baseUrl.length());
+        StringBuilder encodedPath = new StringBuilder();
+        for (String segment : path.split("/")) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+            encodedPath.append('/').append(encodePathSegment(segment));
+        }
+        return baseUrl + encodedPath;
+    }
+
+    private String encodePathSegment(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private String normalizeUrl(String url) {
@@ -203,7 +323,10 @@ public class RequirementFileService {
                 .submissionRequirementId(
                         f.getSubmissionRequirement() != null ? f.getSubmissionRequirement().getId() : null)
                 .label(f.getLabel())
-                .url(f.getUrl())
+                .url(isLocalRequirementFileUrl(f.getUrl()) ? downloadUrl(f) : f.getUrl())
                 .build();
+    }
+
+    public record RequirementFileDownload(Resource resource, String fileName) {
     }
 }

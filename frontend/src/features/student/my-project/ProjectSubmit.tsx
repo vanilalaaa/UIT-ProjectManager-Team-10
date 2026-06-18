@@ -6,20 +6,34 @@ import UploadFilesCard from '../../../components/ui/student/UploadFilesCard'
 import type { Project } from '../../../types/api/project'
 import { getProjectById } from '../../../services/project.service'
 import { createSubmissionFormData, deleteSubmission } from '../../../services/submission.service'
+import { getRequirement, type SubmissionRequirement } from '../../../services/requirement.service'
 
 export default function ProjectSubmit() {
   const { projectId } = useParams()
   const [project, setProject] = useState<Project | null>(null)
+  const [submissionRequirements, setSubmissionRequirements] = useState<SubmissionRequirement[]>([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
-  const fetchProjectData = useCallback(() => {
+  const fetchProjectData = useCallback(async () => {
     setLoading(true)
-    getProjectById(projectId ?? '').then(data => {
+    try {
+      const data = await getProjectById(projectId ?? '')
       setProject(data)
+      if (data?.courseId) {
+        try {
+          const requirement = await getRequirement(data.courseId)
+          setSubmissionRequirements(requirement.submissionRequirements)
+        } catch {
+          setSubmissionRequirements([])
+        }
+      } else {
+        setSubmissionRequirements([])
+      }
+    } finally {
       setLoading(false)
-    })
+    }
   }, [projectId])
 
   useEffect(() => {
@@ -45,7 +59,22 @@ export default function ProjectSubmit() {
     new Date(b.submittedAt || 0).getTime() - new Date(a.submittedAt || 0).getTime()
   )
   const currentSubmissionRows = sortedSubmissions.filter((submission) => submission.groupId === project.groupId)
-  const latestSubmission = currentSubmissionRows[0] ?? null
+  const hasSubmissionRequirements = submissionRequirements.length > 0
+  const requiredRequirementIds = new Set(submissionRequirements.map((requirement) => Number(requirement.id)))
+  const submittedRequirementIds = new Set(
+    currentSubmissionRows
+      .map((submission) => submission.submissionRequirementId)
+      .filter((id): id is number => id != null),
+  )
+  const completedSubmissionRows = hasSubmissionRequirements
+    ? currentSubmissionRows.filter(
+      (submission) => submission.submissionRequirementId != null && requiredRequirementIds.has(submission.submissionRequirementId),
+    )
+    : currentSubmissionRows
+  const hasCompletedRequiredSubmissions = hasSubmissionRequirements
+    ? submissionRequirements.every((requirement) => submittedRequirementIds.has(Number(requirement.id)))
+    : currentSubmissionRows.length > 0
+  const latestCompletedSubmission = hasCompletedRequiredSubmissions ? completedSubmissionRows[0] ?? null : null
 
   const formatDuration = (milliseconds: number) => {
     const totalMinutes = Math.max(1, Math.floor(Math.abs(milliseconds) / (1000 * 60)))
@@ -82,8 +111,8 @@ export default function ProjectSubmit() {
     return { label: formatDuration(deadlineTime - now), tone: 'active' as const, deadlinePassed }
   }
 
-  const submissionTiming = getSubmissionTiming(project.endDate ?? null, latestSubmission?.submittedAt)
-  const hasCurrentSubmission = currentSubmissionRows.length > 0
+  const submissionTiming = getSubmissionTiming(project.endDate ?? null, latestCompletedSubmission?.submittedAt)
+  const hasCurrentSubmission = hasCompletedRequiredSubmissions
   const isOverdueWithoutSubmission = submissionTiming.deadlinePassed && !hasCurrentSubmission
   const isLocked = isOverdueWithoutSubmission || project.submissionLocked
   
@@ -92,9 +121,10 @@ export default function ProjectSubmit() {
     name: submission.filePath?.split('/').pop() || 'Tệp đính kèm',
     url: submission.filePath?.startsWith('http') ? submission.filePath : `http://localhost:8080${submission.filePath}`,
     date: new Date(submission.submittedAt || '').toLocaleString('vi-VN'),
+    submissionRequirementId: submission.submissionRequirementId,
   }))
 
-  const handleSubmit = async (files: File[], deleteIds: number[]) => {
+  const handleSubmit = async (files: File[], deleteIds: number[], submissionRequirementId?: string | number | null) => {
     if (!project.groupId) return toast.error('Nhóm của bạn chưa đăng ký đồ án!')
 
     setIsSubmitting(true)
@@ -107,6 +137,9 @@ export default function ProjectSubmit() {
         const formData = new FormData()
         files.forEach((file) => formData.append('files', file))
         formData.append('groupId', project.groupId.toString())
+        if (submissionRequirementId != null) {
+          formData.append('submissionRequirementId', String(submissionRequirementId))
+        }
 
         await createSubmissionFormData(project.projectId, formData)
       }
@@ -137,12 +170,60 @@ export default function ProjectSubmit() {
           status={submissionTiming.tone}
         />
 
-        <UploadFilesCard
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-          isLocked={isLocked}
-          currentSubmissions={currentSubmissions}
-        />
+        {hasSubmissionRequirements ? (
+          <div className="space-y-4">
+            {submissionRequirements.map((requirement, index) => {
+              const requirementSubmissions = currentSubmissions.filter(
+                (submission) => submission.submissionRequirementId === Number(requirement.id),
+              )
+
+              return (
+                <div key={requirement.id} className="space-y-3">
+                  <div className="rounded-xl border border-border bg-surface p-4 shadow-soft">
+                    <div className="flex items-start gap-3">
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-sm font-bold text-text">{requirement.content}</h2>
+                        {requirement.files && requirement.files.length > 0 ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {requirement.files.map((file) => (
+                              <a
+                                key={file.id}
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-border bg-surface-soft px-3 py-1 text-xs font-semibold text-primary hover:border-primary"
+                              >
+                                {file.label}
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <UploadFilesCard
+                    onSubmit={(files, deleteIds) => handleSubmit(files, deleteIds, requirement.id)}
+                    isSubmitting={isSubmitting}
+                    isLocked={isLocked}
+                    currentSubmissions={requirementSubmissions}
+                    title={`Nộp file cho yêu cầu ${index + 1}`}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <UploadFilesCard
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            isLocked={isLocked}
+            currentSubmissions={currentSubmissions}
+          />
+        )}
       </div>
     </div>
   )
