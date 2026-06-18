@@ -14,7 +14,7 @@ public class MemberTaskReport {
     private boolean leader;
 
     private long assignedTasks;
-    private long completedTasks;     // chỉ tính task hoàn thành ĐÚNG HẠN
+    private long completedTasks;     // tổng task đã hoàn thành (DONE), kể cả nộp trễ
     private long lateTasks;          // số lần trễ deadline
     private double completionRate;   // phần trăm đóng góp; nếu có task trễ deadline thì đã trừ 30%
     private Double avgCompletionDays;

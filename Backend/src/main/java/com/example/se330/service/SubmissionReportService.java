@@ -22,9 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Tổng hợp báo cáo công việc của các nhóm ĐÃ NỘP BÀI trong 1 đồ án, để giảng viên
-// xem được mỗi thành viên nhận bao nhiêu task, hoàn thành tỷ lệ bao nhiêu, mất bao
-// nhiêu ngày để hoàn thành.
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,12 +30,10 @@ public class SubmissionReportService {
     private final SubmissionRepository submissionRepository;
     private final TaskRepository taskRepository;
 
-    // Trễ deadline: trừ 30% trên phần trăm đóng góp (completionRate) của thành viên.
     private static final double LATE_PENALTY_RATE = 0.30;
 
     public List<GroupTaskReport> getReport(Long projectId) {
 
-        // Chỉ báo cáo những nhóm đã nộp bài (giữ thứ tự xuất hiện, loại trùng).
         Map<Long, Group> submittedGroups = new LinkedHashMap<>();
         for (Submission submission : submissionRepository.findByProject_Id(projectId)) {
             Group group = submission.getGroup();
@@ -60,8 +55,8 @@ public class SubmissionReportService {
         LocalDateTime now = LocalDateTime.now();
 
         long totalTasks = tasks.size();
-        // Task trễ deadline KHÔNG được tính là hoàn thành.
-        long groupCompleted = tasks.stream().filter(this::isCompletedOnTime).count();
+        // Task trễ deadline VẪN được tính là hoàn thành (chỉ bị trừ % đóng góp).
+        long groupCompleted = tasks.stream().filter(this::isCompleted).count();
         long groupLate = tasks.stream().filter(t -> isLate(t, now)).count();
 
         List<MemberTaskReport> memberReports = new ArrayList<>();
@@ -94,9 +89,9 @@ public class SubmissionReportService {
                         && t.getAssignedTo().getId().equals(user.getId()))
                 .toList();
 
-        // Chỉ những task hoàn thành ĐÚNG HẠN mới được tính là hoàn thành.
+        // Mọi task đã DONE đều được tính là hoàn thành (kể cả nộp trễ).
         long assignedCount = assigned.size();
-        long completedCount = assigned.stream().filter(this::isCompletedOnTime).count();
+        long completedCount = assigned.stream().filter(this::isCompleted).count();
         long lateCount = assigned.stream().filter(t -> isLate(t, now)).count();
 
         // Phần trăm đóng góp của thành viên; nếu có bất kỳ task trễ deadline thì trừ 30%.
@@ -123,16 +118,9 @@ public class SubmissionReportService {
                 .build();
     }
 
-    // Hoàn thành đúng hạn: đã DONE và (không có deadline hoặc nộp xong trước/đúng deadline).
-    private boolean isCompletedOnTime(Task t) {
-        if (t.getStatus() != TaskStatus.DONE) {
-            return false;
-        }
-        if (t.getDeadline() == null) {
-            return true;
-        }
-        LocalDateTime finishedAt = t.getUpdatedAt();
-        return finishedAt == null || !finishedAt.isAfter(t.getDeadline());
+    // Hoàn thành: task đã DONE (dù đúng hạn hay trễ deadline).
+    private boolean isCompleted(Task t) {
+        return t.getStatus() == TaskStatus.DONE;
     }
 
     // Trễ deadline: task DONE nhưng hoàn thành sau deadline, hoặc chưa xong mà đã quá deadline.
@@ -147,11 +135,9 @@ public class SubmissionReportService {
         return now.isAfter(t.getDeadline());
     }
 
-    // Thời gian hoàn thành trung bình (ngày) ≈ khoảng cách từ lúc tạo task tới lần cập nhật
-    // cuối, chỉ tính các task hoàn thành ĐÚNG HẠN có đủ mốc thời gian hợp lệ.
     private Double avgCompletionDays(List<Task> tasks) {
         List<Long> minutesToComplete = tasks.stream()
-                .filter(this::isCompletedOnTime)
+                .filter(this::isCompleted)
                 .filter(t -> t.getCreatedAt() != null && t.getUpdatedAt() != null)
                 .map(t -> Duration.between(t.getCreatedAt(), t.getUpdatedAt()).toMinutes())
                 .filter(m -> m >= 0)

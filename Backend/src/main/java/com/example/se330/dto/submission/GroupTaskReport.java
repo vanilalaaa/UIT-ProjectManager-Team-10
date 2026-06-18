@@ -12,7 +12,7 @@ public class GroupTaskReport {
     private String groupName;
 
     private long totalTasks;
-    private long completedTasks;     // chỉ tính task hoàn thành ĐÚNG HẠN
+    private long completedTasks;     // tổng task đã hoàn thành (DONE), kể cả nộp trễ
     private long lateTasks;          // tổng số lần trễ deadline
     private double completionRate;
     private Double avgCompletionDays; // thời gian hoàn thành trung bình của nhóm (ngày)

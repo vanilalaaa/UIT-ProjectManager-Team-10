@@ -226,7 +226,9 @@ public class DataInitializer implements CommandLineRunner {
                 "/files/submissions/demo/baocao_gamma.pdf");
         Submission subDelta = submission(pDelta, gDelta, s.get(11), LocalDateTime.now().minusDays(2),
                 "/files/submissions/demo/baocao_delta.pdf");
-        // pEpsilon: chưa nộp bài
+        // Nhóm Epsilon nộp bài (nộp trễ) → xuất hiện trong báo cáo với thành viên bị trừ 30%.
+        submission(pEpsilon, gEpsilon, s.get(14), LocalDateTime.now().minusDays(1),
+                "/files/submissions/demo/baocao_epsilon.pdf");
 
         // --- Điểm (đã chấm có nhận xét / nộp rồi nhưng chưa chấm) ---
         grade(subGamma, 8, 10, "Làm tốt, UI đẹp. Cần bổ sung unit test.", t.get(1),
@@ -319,6 +321,24 @@ public class DataInitializer implements CommandLineRunner {
                 now.minusDays(12), now.minusDays(6), now.minusDays(2)); // trễ 4 ngày
         task(pDelta, gDelta, "Viết báo cáo đồ án", "Tổng hợp tài liệu.", TaskStatus.TODO, s.get(13), s.get(11),
                 now.minusDays(6), now.minusDays(2), now.minusDays(1)); // quá hạn chưa xong
+
+        // === Nhóm Epsilon (pEpsilon) — leader Sơn(14), Trang(15) — nộp trễ nên bị trừ 30% ===
+        // s14: 2 đúng hạn + 2 trễ deadline → bị trừ 30% đóng góp
+        task(pEpsilon, gEpsilon, "Thiết kế màn chơi 2D", "Tilemap + level design.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(20), now.minusDays(11), now.minusDays(13));
+        task(pEpsilon, gEpsilon, "Cơ chế nhân vật chính", "Di chuyển, nhảy, va chạm.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(16), now.minusDays(8), now.minusDays(9));
+        task(pEpsilon, gEpsilon, "Hệ thống kẻ địch & AI", "Tuần tra, tấn công.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(12), now.minusDays(5), now.minusDays(2)); // trễ 3 ngày
+        task(pEpsilon, gEpsilon, "Tối ưu hiệu năng game", "Object pooling.", TaskStatus.DONE, s.get(14), s.get(14),
+                now.minusDays(8), now.minusDays(3), now.plusDays(0)); // trễ 3 ngày
+        // s15: 2 đúng hạn + 1 quá hạn chưa xong → bị trừ 30% đóng góp
+        task(pEpsilon, gEpsilon, "Âm thanh & hiệu ứng", "SFX + nhạc nền.", TaskStatus.DONE, s.get(15), s.get(14),
+                now.minusDays(18), now.minusDays(10), now.minusDays(11));
+        task(pEpsilon, gEpsilon, "Giao diện menu & HUD", "Màn hình chính, điểm số.", TaskStatus.DONE, s.get(15), s.get(14),
+                now.minusDays(13), now.minusDays(6), now.minusDays(7));
+        task(pEpsilon, gEpsilon, "Lưu/đọc tiến trình chơi", "Save game.", TaskStatus.IN_PROGRESS, s.get(15), s.get(14),
+                now.minusDays(7), now.minusDays(2), now.minusDays(1)); // quá hạn chưa xong
 
         // --- Thông báo (duyệt / từ chối kèm nhận xét; đã đọc / chưa đọc) ---
         notify(s.get(0), "APPROVED", "đã duyệt đề tài \"Website quản lý thư viện\"",

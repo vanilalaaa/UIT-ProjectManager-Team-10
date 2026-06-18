@@ -36,7 +36,7 @@ function MemberRow({ member }: { member: MemberTaskReport }) {
 
       <div className="col-span-2 text-center">
         <p className="font-bold text-text">{member.completedTasks}/{member.assignedTasks}</p>
-        <p className="text-text-soft">task đúng hạn</p>
+        <p className="text-text-soft">task hoàn thành</p>
       </div>
 
       <div className="col-span-3">
