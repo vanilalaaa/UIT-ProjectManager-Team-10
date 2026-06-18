@@ -45,10 +45,18 @@ public class Task {
 
     private LocalDateTime deadline;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "validator_id")
+    private User validator;
+
+    private String source;
+
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    private String comment;
 }

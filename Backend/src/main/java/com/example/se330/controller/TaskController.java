@@ -54,17 +54,22 @@ public class TaskController {
     @PutMapping("/tasks/{id}")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @PathVariable Long id,
-            @RequestBody UpdateTaskRequest request) {
+            @RequestBody UpdateTaskRequest request,
+            Authentication authentication) {
 
-        return ApiResponse.success(taskService.updateTask(id, request), "Cập nhật task thành công.");
+        Long currentUserId = currentUserId(authentication);
+        return ApiResponse.success(taskService.updateTask(id, request, currentUserId), "Cập nhật task thành công.");
     }
 
     @PatchMapping("/tasks/{id}/status")
     public ResponseEntity<ApiResponse<TaskResponse>> updateTaskStatus(
             @PathVariable Long id,
-            @RequestBody UpdateTaskStatusRequest request) {
+            @RequestBody UpdateTaskStatusRequest request,
+            Authentication authentication) {
 
-        return ApiResponse.success(taskService.updateTaskStatus(id, request.getStatus()), "Cập nhật trạng thái thành công.");
+        return ApiResponse.success(
+                taskService.updateTaskStatus(id, request.getStatus(), currentUserId(authentication)),
+                "Cập nhật trạng thái thành công.");
     }
 
     // Service tự enforce leader/ADMIN — chỉ cần đăng nhập là gọi được.

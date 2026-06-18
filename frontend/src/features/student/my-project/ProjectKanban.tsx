@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import TaskCard from '../../../components/ui/student/TaskCard'
 import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import CreateTaskModal from '../../../components/ui/student/CreateTaskModal'
+import TaskDetailModal from '../../../components/ui/student/TaskDetailModal'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import type { Task, UserLite, BoardGroup, NewTaskInput } from '../../../types/api/task'
 import {
@@ -29,6 +30,7 @@ export default function ProjectKanban() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -76,15 +78,28 @@ export default function ProjectKanban() {
       return
     }
 
+    // Task đang chờ kiểm tra: chỉ leader/người kiểm tra mới được duyệt/trả lại
+    // (BE cũng chặn). Người thực hiện duyệt review trong popup chi tiết.
+    const isReviewer = isLeader || taskToMove.validator?.id === currentUser.id
+    if (taskToMove.status === 'REVIEW' && newStatus !== 'REVIEW' && !isReviewer) {
+      toast.error('Chỉ leader hoặc người kiểm tra mới được duyệt/trả lại task đang chờ kiểm tra.')
+      return
+    }
+
     if (taskToMove.status === newStatus) return
     const prevStatus = taskToMove.status
 
     setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: newStatus } : t))
 
-    updateTaskStatus(taskId, { status: newStatus }).catch(() => {
-      setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: prevStatus } : t))
-      toast.error('Không cập nhật được trạng thái Task.')
-    })
+    updateTaskStatus(taskId, { status: newStatus })
+      .then(res => {
+        // Đồng bộ lại task (vd nhận xét/notify) từ phản hồi BE.
+        setTasks(prev => prev.map(t => t.taskId === taskId ? { ...res.data, priority: t.priority } : t))
+      })
+      .catch((err: { message?: string }) => {
+        setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: prevStatus } : t))
+        toast.error(err?.message || 'Không cập nhật được trạng thái Task.')
+      })
   }
 
   const handleDeleteTask = () => {
@@ -102,12 +117,18 @@ export default function ProjectKanban() {
       })
   }
 
+  const handleTaskUpdated = (updated: Task) => {
+    setTasks(prev => prev.map(t => t.taskId === updated.taskId ? updated : t))
+    setSelectedTask(updated)
+  }
+
   const handleCreateTask = (form: NewTaskInput) => {
     if (!currentGroup) return
     createTask(projectId ?? '', {
       title: form.title,
       description: form.description,
       assignedToId: form.assignedToId,
+      validatorId: form.validatorId ?? null,
       groupId: currentGroup.groupId,
       deadline: form.deadline,
     })
@@ -159,12 +180,10 @@ export default function ProjectKanban() {
               onDrop={(e) => onDrop(e, col.id)}
               className="flex flex-col gap-4 min-h-[300px] w-full min-w-[280px] max-w-[350px]"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2.5">
-                  <span className={`size-2.5 rounded-full ${col.dot}`}></span>
-                  <h3 className={`font-bold text-[17px] ${col.text}`}>{col.title}</h3>
-                </div>
-                <span className="bg-surface-soft text-text-soft text-xs font-bold px-2.5 py-0.5 rounded-full border border-border">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className={`size-2.5 rounded-full ${col.dot}`}></span>
+                <h3 className={`font-bold text-[17px] ${col.text}`}>{col.title}</h3>
+                <span className={`min-w-[30px] text-center text-base font-extrabold px-2.5 py-0.5 rounded-full bg-surface-soft border border-border ${col.text}`}>
                   {colTasks.length}
                 </span>
               </div>
@@ -174,6 +193,7 @@ export default function ProjectKanban() {
                   <TaskCard
                     task={task}
                     onDragStart={(e) => onDragStart(e, task.taskId)}
+                    onOpen={() => setSelectedTask(task)}
                   />
                   {isLeader && (
                     <button
@@ -204,6 +224,16 @@ export default function ProjectKanban() {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateTask}
         members={currentGroup.members}
+      />
+
+      <TaskDetailModal
+        key={selectedTask?.taskId ?? 'none'}
+        open={!!selectedTask}
+        task={selectedTask}
+        group={currentGroup}
+        currentUser={currentUser}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={handleTaskUpdated}
       />
 
       <ConfirmDialog

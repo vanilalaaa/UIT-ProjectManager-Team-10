@@ -16,6 +16,10 @@ public class CreateTaskRequest {
 
     private Long assignedToId;
 
+    private Long validatorId;
+
+    private String source;
+
     private Long groupId;
 
     private TaskStatus status;

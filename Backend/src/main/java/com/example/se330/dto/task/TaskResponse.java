@@ -1,5 +1,7 @@
 package com.example.se330.dto.task;
 
+import java.util.List;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,9 +15,13 @@ public class TaskResponse {
     private String description;
     private String status;
     private UserLiteResponse assignee;
+    private UserLiteResponse validator;
     private UserLiteResponse createdBy;
     private Long groupId;
+    private String source;
+    private List<TaskResourceResponse> resources;
     private String deadline;
     private String createdAt;
     private String updatedAt;
+    private String comment;
 }

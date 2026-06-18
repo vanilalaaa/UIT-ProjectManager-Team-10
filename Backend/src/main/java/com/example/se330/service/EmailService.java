@@ -44,6 +44,13 @@ public class EmailService {
         sendEmail(to, subject, content);
     }
 
+    @Async
+    public void sendPasswordResetOtpEmail(String to, String otp) {
+        String subject = "Your password reset code";
+        String content = buildPasswordResetOtpEmailContent(otp);
+        sendEmail(to, subject, content);
+    }
+
     private void sendEmail(String to, String subject, String content) {
         try {
             Objects.requireNonNull(fromEmail, "spring.mail.username must not be null");
@@ -111,6 +118,31 @@ public class EmailService {
                 "<p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p></div>");
         sb.append(
                 "<div class=\"footer\"><p>For security reasons, please do not share this link with anyone.</p></div>");
+        sb.append("</div></body></html>");
+        return sb.toString();
+    }
+
+    private String buildPasswordResetOtpEmailContent(String otp) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
+        sb.append("<style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }");
+        sb.append(".container { max-width: 600px; margin: 0 auto; padding: 20px; }");
+        sb.append(".header { background-color: #f44336; color: white; padding: 20px; text-align: center; }");
+        sb.append(".content { padding: 30px; background-color: #f9f9f9; }");
+        sb.append(".otp { display: inline-block; padding: 12px 30px; background-color: #fff; ");
+        sb.append("border: 2px dashed #f44336; color: #f44336; font-size: 32px; font-weight: bold; ");
+        sb.append("letter-spacing: 8px; border-radius: 5px; margin: 20px 0; }");
+        sb.append(".footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }</style></head>");
+        sb.append("<body><div class=\"container\">");
+        sb.append("<div class=\"header\"><h1>Password Reset</h1></div>");
+        sb.append("<div class=\"content\">");
+        sb.append("<p>You have requested to reset your password. Use the code below to proceed:</p>");
+        sb.append("<div style=\"text-align: center;\">");
+        sb.append("<span class=\"otp\">").append(otp).append("</span></div>");
+        sb.append(
+                "<p>This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.</p></div>");
+        sb.append(
+                "<div class=\"footer\"><p>For security reasons, please do not share this code with anyone.</p></div>");
         sb.append("</div></body></html>");
         return sb.toString();
     }
